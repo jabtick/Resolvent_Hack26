@@ -33,7 +33,7 @@
 | `pipeline/scraper/` | сурови JSON-и → обяви с тагове | Ники |
 | `pipeline/normalizer/` | страници → обяви + общият списък с тагове | Захари |
 | `docs/` | схемата на базата, отчети | |
-| `design/lovable/` | прототипът от Lovable, само за справка | Ицо |
+| `design/lovable/no-future-source/` | прототипът от Lovable (React), само за справка | Ицо |
 
 Папките се кръщават на това, което правят, не на човека.
 
@@ -78,29 +78,16 @@
 
 **За другите:** нова таблица или поле → Гошо и Ники. Кой какво може да вижда или променя → Боги, за да се добави RLS правило.
 
-### Изисквания към SQL-а на базата (за Гошо и Ники, от Боги)
+## Supabase (`supabase/`)
 
-1. `alter table … enable row level security;` на **всяка** таблица в `public`. Самите правила (policies) ги пише Боги.
-2. Всяка таблица с данни на потребител да има `references auth.users(id) on delete cascade` — иначе изтриването на акаунт (GDPR, функцията `delete-account`) оставя данни.
-3. В профила на ученика: `birth_date date` (родителско съгласие под 14 г.) и `terms_accepted_at timestamptz`.
-4. Верификацията на организатора (`organizer_details.verification_status`) се сменя **само от сървъра** — потребителят не може да я пише.
-
-Миграцията `rate_limits` на Боги е в отделна схема `private` и не пипа таблиците в `public`.
-
-### Сървър (`supabase/functions/`)
-
-- `_shared/http.ts` — CORS, JSON отговори, грешки. `_shared/supabase.ts` — `userClient` (с правата на потребителя, RLS важи), `adminClient` (пълни права — само след проверка), `requireUser`, `rateLimit`.
-- `delete-account` — потребителят трие акаунта си; body `{ "confirm": "DELETE" }`.
-- Supabase проект: `tjkwpebrakwfkhenpayl` (Frankfurt). Качени са: `delete-account` и миграциите `rate_limits`, `profiles_feed` (Гошо) и `organizer_rename_resets_verification` (верифициран организатор, който смени името си, става отново `pending`).
+Подробно: [supabase/README.md](supabase/README.md) — какво е качено, как се прави миграция и Edge Function, правилата за всяка таблица (RLS, `on delete cascade`, `birth_date`, верификация само от сървъра). Схемата: [docs/database-schema.md](docs/database-schema.md). Проект `tjkwpebrakwfkhenpayl` (Frankfurt).
 
 ## Приложение (`app/`)
 
-Flutter за web (после и телефон), хостинг в Netlify. Подробно: [app/README.md](app/README.md).
+Flutter за web (после и телефон), хостинг в Netlify. Подробно (пускане, папки, как се прави функционалност, визия): [app/README.md](app/README.md).
 
-- **Всеки пипа само своята папка** в `app/lib/features/`: `feed/` — Гошо, `calendar/` — Ники, `achievements/` — Захари; `auth/`, `profile/`, `settings/` и `core/` — Боги. Там вече има празен екран „скоро“.
-- **Екраните не викат Supabase директно:** за всяка функционалност има `<x>_repo.dart` (интерфейс) + `fake_<x>_repo.dart` (примерни данни) + `supabase_<x>_repo.dart`; repo-то се добавя в `core/services.dart`. Пример: `features/profile/`.
-- `flutter run -d chrome --dart-define=FAKE=true` пуска всичко на примерни данни (код от имейла: `123456`).
-- Визията е от дизайна в Lovable (`design/lovable/`, само за справка): ползвай `ZineBox`, `RansomText`, `ZineButton` и `context.zine.<цвят>`, не цветове на ръка.
+- **Всеки пипа само своята папка** в `app/lib/features/`: `feed/` — Гошо, `calendar/` — Ники, `achievements/` — Захари; `auth/`, `profile/`, `settings/` и `core/` — Боги.
+- **Екраните не викат Supabase директно** — през `<x>_repo.dart` + `fake_` + `supabase_` версия. Пример: `features/profile/`.
 - **За Claude:** пусни `flutter test` преди да кажеш, че нещо е готово; Flutter команди от PowerShell с главно `C:` в пътя.
 
 ## Решения и правила за работа
@@ -108,7 +95,7 @@ Flutter за web (после и телефон), хостинг в Netlify. По
 - Технологиите са Flutter + Dart и Supabase.
 - Сроковете от Trello (петък 18:00, събота 13:00 и т.н.) не са задължителни.
 - Репо: `Resolvent_Hack26` в GitHub. Всеки комитва на ръка — Claude сесиите само променят файлове, без commit и push.
-- Комуникацията е на български; кодът, имената на таблици и commit съобщенията — на английски.
+- Комуникацията е на български; кодът, имената на таблици, commit съобщенията и README файловете — на английски. Само този файл е на български.
 - Промени по схемата на базата минават през Гошо и Ники; правилата за достъп (RLS) — през Боги.
 - **За Claude:** прочети този файл преди работа и не пиши в чужда област, без да питаш човека си.
 

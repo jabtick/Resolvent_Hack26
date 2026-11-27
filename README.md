@@ -15,9 +15,9 @@ Flutter (web first, then mobile) + Supabase (Postgres with RLS, Auth, Storage, E
 | Folder | What |
 | --- | --- |
 | [app/](app/) | Flutter app. How to run: [app/README.md](app/README.md) |
-| [supabase/](supabase/) | Database migrations, Edge Functions, email templates |
+| [supabase/](supabase/) | Database migrations, Edge Functions, email templates: [supabase/README.md](supabase/README.md) |
 | [pipeline/](pipeline/) | Python tools that turn scraped opportunities into feed rows: [scraper](pipeline/scraper/), [normalizer](pipeline/normalizer/) |
 | [docs/](docs/) | Database schema ([database-schema.md](docs/database-schema.md)) and reports |
-| [design/](design/) | Lovable design prototype (reference only) |
+| [design/](design/) | Lovable design prototype, reference only: [design/README.md](design/README.md) |
 
 Team context and working rules (in Bulgarian): [CLAUDE.md](CLAUDE.md).
