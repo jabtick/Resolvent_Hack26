@@ -2,31 +2,63 @@
 
 Status: planning, no code yet.
 
-The scraper fills the feed with opportunities: competitions, olympiads, scholarships, internships and university open days. The work is split into two tasks.
+The scraper fills the feed with opportunities: competitions, olympiads, scholarships, internships and university open days.
 
-## Task 1: Test scraper (pull data from a known source)
+We don't search the whole internet for new sources. The raw data arrives as a bucket of JSON files, and this part reads them, pulls out the fields the feed needs and adds tags for search and filters.
 
-Goal: show what data we can get from a source we already know, and how clean it is.
+```
+bucket of raw JSONs  →  extract fields  →  add tags  →  clean opportunities JSON  →  (later) database / feed
+```
 
-- Source: the MON olympiads and national competitions page
+## Input: the bucket of JSONs
+
+- A folder (later a Supabase Storage bucket) with JSON files, one or more opportunities per file.
+- The files can come from different sources, so their shape can differ. An example source is the MON olympiads and national competitions page:
   https://www.mon.bg/dyasno-menyu/olimpiadi-i-sastezaniya/olimpiadi-i-natsionalni-sastezaniya/
-- Flow: fetch the page → collect PDF links (schedule order and rules documents) → extract structured data from each PDF → write `competitions.json`.
-- Extracted fields: name, subject, grades, rounds (school / regional / national) with date and city, registration deadline, source URL.
-- Scope: a local script working on 3–5 PDFs. No database, no schedule, no deduplication.
-- Open choices: Python or TypeScript; whether the first version uses AI extraction or only lists competitions and their PDF links.
+- Open: the exact format of the raw JSON. To agree on it with whoever fills the bucket (Захари).
 
-## Task 2: Opportunity discovery (find new sources on the internet)
+## Step 1: Extract fields
 
-Goal: find opportunities we don't already have a source for, instead of only scraping hand-picked sites.
+Turn each raw record into one fixed shape. Fields that are missing stay empty; nothing is guessed.
 
-- Search the web for opportunities (by type, subject, region, school year), for example with search queries or by crawling links from known sources.
-- Decide whether a found page is a real, current opportunity for school or university students.
-- Extract the same fields as in Task 1 and remove duplicates of things we already have.
-- Each new source that proves reliable becomes its own adapter, like MON in Task 1.
-- Harder part: filtering noise, outdated pages and duplicates; deciding which sources we can trust.
+| Field | Meaning |
+| --- | --- |
+| `title` | Name of the opportunity |
+| `type` | competition, olympiad, scholarship, internship, open_day |
+| `subject` | e.g. math, informatics, biology |
+| `grades` | Grades or age range it is for |
+| `rounds[]` | Stage (school / regional / national), date, city |
+| `registration_deadline` | Last day to sign up |
+| `organizer` | Who runs it |
+| `city` / `online` | Where it happens |
+| `source_url` | Where the data came from |
 
-## Later (not part of the test)
+## Step 2: Add tags
 
-- Run as a scheduled Supabase Edge Function. AI keys live only there.
-- Save to the database. The schema goes through Боги.
-- Agree with Гошо on how this relates to the AI normalizer.
+Tags come from a fixed list, not free text, so the filters can rely on them. Tags are in English; the app shows Bulgarian labels.
+
+- Type: `olympiad`, `competition`, `scholarship`, `internship`, `open-day`
+- Subject: `math`, `informatics`, `physics`, `biology`, ...
+- Level: `grades-1-4`, `grades-5-7`, `grades-8-12`, `university`
+- Place: city name (`burgas`, `sofia`, ...), `national`, `online`
+- Status: `registration-open`, `deadline-soon`, `past`
+
+First version: rule-based tagging (keyword matching in Bulgarian and English). AI only for records the rules can't tag, and only later, inside an Edge Function.
+
+## Output
+
+- One clean JSON file with all opportunities in the shape above, plus their tags.
+- Scope of the first version: a local script that runs on a handful of sample JSONs. No database, no schedule.
+- Simple deduplication: the same title + organizer + date counts as one opportunity.
+
+## Open questions
+
+- Raw JSON format: agree with Захари.
+- Tag list: agree with Гошо, since his filters and search use it.
+- Overlap with the AI normalizer: check with Гошо so it isn't built twice.
+- Language: Python (to match Захари's side) or TypeScript.
+
+## Later
+
+- Read straight from the Supabase Storage bucket and run as a scheduled Edge Function. AI keys live only there.
+- Save to the database. Schema through Гошо and Ники, access rules (RLS) through Боги.
