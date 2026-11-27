@@ -1,0 +1,33 @@
+[
+  {
+    "source_url": "https://example.org/olympiad-informatics-2027",
+    "title": "Национална олимпиада по информатика 2026/2027",
+    "text": "Олимпиадата е за ученици от 5 до 12 клас. Общинският кръг ще се проведе на 13 декември 2026 г. от 9:00 ч., областният кръг – на 24 януари 2027 г., а националният кръг – 12–14 март 2027 г. в Бургас. Регистрацията на участниците е до 5 декември 2026 г. Участието е безплатно. Задачите са по програмиране на C++ и алгоритми.",
+    "fetched_at": "2026-11-27T10:00:00+00:00"
+  },
+  {
+    "source_url": "https://example.org/open-day-burgas-university",
+    "title": "Ден на отворените врати в Бургаския свободен университет",
+    "text": "Каним всички абитуриенти и ученици от 11 и 12 клас на ден на отворените врати на 18.04.2027 г. в 10:30 ч. Ще представим специалностите по информатика, икономика, право и психология. Входът е свободен.",
+    "fetched_at": "2026-11-27T10:00:00+00:00"
+  },
+  {
+    "source_url": "https://example.org/summer-internship-software",
+    "title": "Платен летен стаж за студенти – Software Engineering Intern",
+    "text": "Търсим студенти по компютърни науки за 3-месечен платен стаж в София (хибрид). Работа с Python, JavaScript и machine learning. Срок за кандидатстване: 15 февруари 2027. Стажът започва на 1 юли 2027.",
+    "fetched_at": "2026-11-27T10:00:00+00:00"
+  },
+  {
+    "source_url": "https://example.org/scholarship-stem-girls",
+    "title": "Стипендия за момичета в STEM",
+    "text": "Програмата предлага стипендия от 3000 лв. за ученички от 10–12 клас с интерес към математика, физика и инженерство. Кандидатстването е онлайн. Краен срок: 31.01.2027.",
+    "fetched_at": "2026-11-27T10:00:00+00:00"
+  },
+  {
+    "source_url": "https://example.org/hackathon-climate",
+    "title": "Climate Hack Varna 2027",
+    "text": "A 48-hour hackathon for high school and university students on climate and sustainability. Teams of 3–5. Takes place on March 20, 2027 in Varna. Registration deadline: March 1, 2027. Prizes worth 10 000 BGN. Free of charge.",
+    "type": "competition",
+    "fetched_at": "2026-11-27T10:00:00+00:00"
+  }
+]

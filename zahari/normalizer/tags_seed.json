@@ -1,0 +1,258 @@
+[
+  {
+    "slug": "math",
+    "name": "Математика"
+  },
+  {
+    "slug": "stem",
+    "name": "STEM / природни науки"
+  },
+  {
+    "slug": "informatics",
+    "name": "Информатика"
+  },
+  {
+    "slug": "programming",
+    "name": "Програмиране"
+  },
+  {
+    "slug": "web-development",
+    "name": "Уеб разработка"
+  },
+  {
+    "slug": "ai-data",
+    "name": "Изкуствен интелект и данни"
+  },
+  {
+    "slug": "cybersecurity",
+    "name": "Киберсигурност"
+  },
+  {
+    "slug": "robotics",
+    "name": "Роботика"
+  },
+  {
+    "slug": "game-dev",
+    "name": "Разработка на игри"
+  },
+  {
+    "slug": "engineering",
+    "name": "Инженерство"
+  },
+  {
+    "slug": "physics",
+    "name": "Физика"
+  },
+  {
+    "slug": "astronomy",
+    "name": "Астрономия"
+  },
+  {
+    "slug": "chemistry",
+    "name": "Химия"
+  },
+  {
+    "slug": "biology",
+    "name": "Биология"
+  },
+  {
+    "slug": "medicine",
+    "name": "Медицина и здраве"
+  },
+  {
+    "slug": "ecology",
+    "name": "Екология и околна среда"
+  },
+  {
+    "slug": "geography",
+    "name": "География"
+  },
+  {
+    "slug": "bulgarian-literature",
+    "name": "Български език и литература"
+  },
+  {
+    "slug": "creative-writing",
+    "name": "Творческо писане"
+  },
+  {
+    "slug": "history",
+    "name": "История"
+  },
+  {
+    "slug": "philosophy",
+    "name": "Философия"
+  },
+  {
+    "slug": "civics",
+    "name": "Гражданско образование"
+  },
+  {
+    "slug": "law",
+    "name": "Право"
+  },
+  {
+    "slug": "economics",
+    "name": "Икономика"
+  },
+  {
+    "slug": "entrepreneurship",
+    "name": "Предприемачество"
+  },
+  {
+    "slug": "marketing",
+    "name": "Маркетинг"
+  },
+  {
+    "slug": "psychology",
+    "name": "Психология"
+  },
+  {
+    "slug": "journalism-media",
+    "name": "Журналистика и медии"
+  },
+  {
+    "slug": "debate",
+    "name": "Дебати и ораторство"
+  },
+  {
+    "slug": "foreign-languages",
+    "name": "Чужди езици"
+  },
+  {
+    "slug": "english",
+    "name": "Английски език"
+  },
+  {
+    "slug": "german",
+    "name": "Немски език"
+  },
+  {
+    "slug": "french",
+    "name": "Френски език"
+  },
+  {
+    "slug": "spanish",
+    "name": "Испански език"
+  },
+  {
+    "slug": "russian",
+    "name": "Руски език"
+  },
+  {
+    "slug": "arts",
+    "name": "Изобразително изкуство"
+  },
+  {
+    "slug": "design",
+    "name": "Дизайн"
+  },
+  {
+    "slug": "music",
+    "name": "Музика"
+  },
+  {
+    "slug": "film-photo",
+    "name": "Кино и фотография"
+  },
+  {
+    "slug": "theatre",
+    "name": "Театър"
+  },
+  {
+    "slug": "sports",
+    "name": "Спорт"
+  },
+  {
+    "slug": "olympiad",
+    "name": "Олимпиада"
+  },
+  {
+    "slug": "hackathon",
+    "name": "Хакатон"
+  },
+  {
+    "slug": "contest",
+    "name": "Конкурс"
+  },
+  {
+    "slug": "summer-school",
+    "name": "Лятно училище"
+  },
+  {
+    "slug": "workshop",
+    "name": "Обучение и уъркшоп"
+  },
+  {
+    "slug": "conference",
+    "name": "Конференция"
+  },
+  {
+    "slug": "mentorship",
+    "name": "Менторство"
+  },
+  {
+    "slug": "research",
+    "name": "Научна работа"
+  },
+  {
+    "slug": "volunteering",
+    "name": "Доброволчество"
+  },
+  {
+    "slug": "study-abroad",
+    "name": "Обучение в чужбина"
+  },
+  {
+    "slug": "career",
+    "name": "Кариера"
+  },
+  {
+    "slug": "team",
+    "name": "Отборно участие"
+  },
+  {
+    "slug": "national",
+    "name": "Национално"
+  },
+  {
+    "slug": "international",
+    "name": "Международно"
+  },
+  {
+    "slug": "regional",
+    "name": "Областно / регионално"
+  },
+  {
+    "slug": "free",
+    "name": "Безплатно"
+  },
+  {
+    "slug": "prizes",
+    "name": "Награди"
+  },
+  {
+    "slug": "paid",
+    "name": "Платено"
+  },
+  {
+    "slug": "grades-1-4",
+    "name": "1–4 клас"
+  },
+  {
+    "slug": "grades-5-7",
+    "name": "5–7 клас"
+  },
+  {
+    "slug": "grades-8-10",
+    "name": "8–10 клас"
+  },
+  {
+    "slug": "grades-11-12",
+    "name": "11–12 клас"
+  },
+  {
+    "slug": "university-students",
+    "name": "Студенти"
+  }
+]
