@@ -7,6 +7,8 @@
 
 Предложение за схемата на профилите и фийда: 8 таблици и 1 изглед в `public`. Пише Боги, за Гошо и Ники, които държат базата. Решават те; коментирайте в живата версия.
 
+**SQL:** [supabase/migrations/20261127200000_profiles_feed.sql](../supabase/migrations/20261127200000_profiles_feed.sql) — таблици, enum-и, индекси, права по колони, RLS и изгледът. Без данни: списъкът с тагове е празен.
+
 Значките и резултатите от Excel нарочно не са тук. Ще се добавят после като нови таблици, които сочат към `opportunities` (тип `competition`), без да се пипа нищо от тази схема.
 
 ## Профили
@@ -19,10 +21,10 @@
 | --- | --- | --- |
 | id | uuid PK | `references auth.users(id) on delete cascade` |
 | account_type | enum `student` / `organizer` | задава се при създаване на профила, после **само сървърът** го сменя |
-| username | text | за публичния линк `/u/<username>`; уникален индекс по `lower(username)`, за да не съществуват `Ivan` и `ivan` едновременно |
-| display_name | text | |
+| username | text | за публичния линк `/u/<username>`; 3–30 знака, само `A-Z a-z 0-9 _ . -`; уникален индекс по `lower(username)`, за да не съществуват `Ivan` и `ivan` едновременно |
+| display_name | text, задължително | до 80 знака |
 | avatar_url | text | път в Storage |
-| terms_accepted_at | timestamptz | кога е приел Условията; тук, за да важи и за организатори |
+| terms_accepted_at | timestamptz, задължително | кога е приел Условията; тук, за да важи и за организатори |
 | created_at | timestamptz | |
 
 **student_details**
@@ -30,12 +32,12 @@
 | Колона | Тип | Бележки |
 | --- | --- | --- |
 | profile_id | uuid PK | `references profiles(id) on delete cascade` |
-| birth_date | date | дата, не възраст; нужна за съгласието под 14 г.; задава се веднъж при регистрация, после **само сървърът** я сменя |
+| birth_date | date, задължително | дата, не възраст; нужна за съгласието под 14 г.; задава се веднъж при регистрация, после **само сървърът** я сменя |
 | gender | enum `male` / `female` / `other` / `prefer_not_to_say`, nullable | по желание, никога публично |
 | city | text | |
 | school | text | |
-| grade | smallint | |
-| bio | text | |
+| grade | smallint | 1–12; празно за студенти |
+| bio | text | до 1000 знака |
 | is_public | bool, default false | профилът е скрит, докато ученикът не го направи публичен |
 | guardian_email | text | само под 14 г.; пише се **само от сървъра** |
 | consent_token_hash | text | за линка за потвърждение към родителя; **само сървърът** |
@@ -46,7 +48,7 @@
 | Колона | Тип | Бележки |
 | --- | --- | --- |
 | profile_id | uuid PK | `references profiles(id) on delete cascade` |
-| org_name | text | |
+| org_name | text, задължително | до 120 знака |
 | org_type | enum `school` / `university` / `ngo` / `company` / `public_body` | |
 | website | text | |
 | verification_status | enum `pending` / `verified` / `rejected`, default `pending` | сменя се **само от сървъра**; засега на ръка от таблото на Supabase |
@@ -62,17 +64,18 @@
 | --- | --- | --- |
 | id | uuid PK | |
 | type | enum `competition` / `scholarship` / `internship` / `open_day` / `university_program` | |
-| organizer_id | uuid, nullable | `references profiles(id) on delete cascade`; null = изскрейпено |
-| title, description | text | |
+| organizer_id | uuid, nullable, default `auth.uid()` | `references profiles(id) on delete cascade`; null = изскрейпено; попълва се сам, клиентът не може да го подаде |
+| title | text, задължително | до 200 знака |
+| description | text | |
 | image_url | text | |
 | external_url | text | линкът за кандидатстване |
 | city | text | |
-| is_online | bool | |
-| audience | enum `school` / `university` / `both` | |
-| starts_at, ends_at | timestamptz, nullable | кога се случва |
+| is_online | bool, default false | |
+| audience | enum `school` / `university` / `both`, default `both` | |
+| starts_at, ends_at | timestamptz, nullable | кога се случва; `ends_at` не може да е преди `starts_at` |
 | deadline_at | timestamptz, nullable | срок за кандидатстване |
-| status | enum `draft` / `published` / `archived` | `published` само ако организаторът е `verified` |
-| source | enum `organizer` / `scraper` | от клиента винаги `organizer`; `scraper` само през service_role |
+| status | enum `draft` / `published` / `archived`, default `draft` | `published` само ако организаторът е `verified` |
+| source | enum `organizer` / `scraper`, default `organizer` | клиентът не може да го подаде; `scraper` само през service_role; `source = 'organizer'` винаги върви с попълнен `organizer_id` |
 | source_url | text unique | скрейпърът да не добавя два пъти едно и също |
 | search_vector | tsvector, generated | търсене по заглавие и описание; конфигурация `simple`, защото Postgres няма български речник |
 | created_at, updated_at | timestamptz | |
@@ -81,7 +84,7 @@
 
 | Таблица | Колони | Защо |
 | --- | --- | --- |
-| tags | id, name, slug | фиксиран списък, зареждаме го ние; клиентите не добавят |
+| tags | id (smallint identity), name, slug (и двете уникални) | фиксиран списък, зареждаме го ние; клиентите не добавят |
 | opportunity_tags | opportunity_id, tag_id | тагове на обявата, за филтри |
 | profile_interests | profile_id, tag_id | интереси на ученика, за препоръки |
 | saved_opportunities | profile_id, opportunity_id, created_at | запазени обяви = „моят календар“ |
@@ -93,7 +96,7 @@
 Публичният профил се чете от изгледа `public_profiles`, затова няма отделна таблица за споделяне. Линкът е `/u/<username>`.
 
 - **Показва:** username, display_name, avatar_url, bio, school, интереси.
-- **Само където** `is_public = true`.
+- **Само където** `is_public = true`. Под 14 г. без родителско съгласие профилът не се показва, дори да е публичен.
 - **Никога не показва:** birth_date, gender, city, guardian_email, имейл.
 
 По-късно значките се закачат към същата страница.
@@ -122,7 +125,7 @@ RLS е включено на всички 8 таблици. Правилата �
 
 Пет дупки, които трябва да са затворени, преди схемата да стане SQL. 1–4 Боги ги прави с RLS и права на ниво колона, таблиците не се променят. 5 е за Гошо и Ники при писане на таблицата.
 
-**Статус:** и петте са вписани в таблиците и в таблицата за достъп по-горе. Остава да се напишат като SQL.
+**Статус:** и петте са вписани в таблиците по-горе и са написани в SQL миграцията. Още не е тествана срещу истинска база.
 
 | # | Проблем | Какво може да направи някой | Поправка |
 | --- | --- | --- | --- |
@@ -138,6 +141,7 @@ RLS е включено на всички 8 таблици. Правилата �
 
 - `public_profiles` показва училището публично, включително на деца, а така дете може да бъде намерено. Предложение: под 14 години училището не се показва.
 - В `public_profiles` липсват организаторите, а и те трябва да имат публична страница.
+- Верифициран организатор може после да си смени `org_name` и да остане `verified`, т.е. да се представи за друга организация. Предложение: смяна на името връща статуса на `pending`.
 
 ## Отложено и отворени въпроси
 
@@ -150,4 +154,4 @@ RLS е включено на всички 8 таблици. Правилата �
 Отворени въпроси:
 
 - [ ] Кои са таговете в началния списък?
-- [ ] Гошо и Ники: съгласни ли сте със схемата и кой пише миграцията?
+- [ ] Гошо и Ники: прегледайте миграцията, преди да се пусне в Supabase.
