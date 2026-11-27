@@ -15,7 +15,7 @@ taxonomy.py                                   →  tags_seed.json       (rows fo
 ## Run
 
 ```
-cd zahari/normalizer
+cd pipeline/normalizer
 python normalize.py examples/raw_items.json -o examples/opportunities.json
 python normalize.py examples/raw_items.json --debug     # shows why each field/tag was chosen
 python fetch.py urls.txt -o out/raw_items.json          # simple one-page-per-opportunity sites
@@ -104,5 +104,5 @@ To tune: run with `--debug`, look at `tag_scores` / `date_mentions`, and add key
 ## Not done yet
 
 - Writing to Supabase (upsert by `source_url`, through service_role on the server).
-- Sources that need their own adapter (PDFs, lists of many items, JS pages), e.g. MON in `niki/scraper`.
+- Sources that need their own adapter (PDFs, lists of many items, JS pages), e.g. MON in `../scraper`.
 - An AI step for messy pages: it should output the same raw-item format, with this normalizer as a check after it.

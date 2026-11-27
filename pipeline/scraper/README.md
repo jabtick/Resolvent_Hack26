@@ -1,6 +1,6 @@
 # Scraper (Niki)
 
-Status: planning, no code yet.
+Status: works locally on the infos calendar sample (22 events). Does not write to the database yet.
 
 The scraper fills the feed with opportunities: competitions, olympiads, scholarships, internships and university open days.
 
@@ -50,7 +50,7 @@ First version: rule-based tagging (keyword matching in Bulgarian and English), e
 
 ## Output
 
-- One clean JSON file: the `tags` used, and an `opportunities` array of rows in the shape above, each with a `tags` array of slugs. Example: [samples/infos_calendar.opportunities.json](samples/infos_calendar.opportunities.json), made from [samples/infos_calendar.json](samples/infos_calendar.json).
+- One clean JSON file: the `tags` used, and an `opportunities` array of rows in the shape above, each with a `tags` array of slugs. Example: [out/opportunities.json](out/opportunities.json), made from [samples/infos_calendar.json](samples/infos_calendar.json).
 - Scope of the first version: a local script that runs on a handful of sample JSONs. No database, no schedule.
 - Deduplication: by `source_url` (unique in the database).
 
@@ -69,8 +69,7 @@ It takes files or folders of raw JSONs, parses dates and places from `raw_date_t
 
 - Raw JSON format: agree with Захари.
 - Tag list: agree with Гошо, since his filters and search use it.
-- Overlap with the AI normalizer: check with Гошо so it isn't built twice.
-- Language: Python (to match Захари's side) or TypeScript.
+- Overlap with the normalizer in [../normalizer](../normalizer): agree on one pipeline and one tag list so it isn't built twice.
 
 ## Later
 
