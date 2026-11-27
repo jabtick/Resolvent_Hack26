@@ -19,37 +19,40 @@ bucket of raw JSONs  →  extract fields  →  add tags  →  clean opportunitie
 
 ## Step 1: Extract fields
 
-Turn each raw record into one fixed shape. Fields that are missing stay empty; nothing is guessed.
+Each raw record becomes one row of the `opportunities` table from [docs/database-schema.md](../../docs/database-schema.md). Fields that are missing stay `null`; nothing is guessed. `id`, `search_vector`, `created_at` and `updated_at` are filled by the database, so the scraper leaves them out.
 
-| Field | Meaning |
+| Column | Rule |
 | --- | --- |
-| `title` | Name of the opportunity |
-| `type` | competition, olympiad, scholarship, internship, open_day |
-| `subject` | e.g. math, informatics, biology |
-| `grades` | Grades or age range it is for |
-| `rounds[]` | Stage (school / regional / national), date, city |
-| `registration_deadline` | Last day to sign up |
-| `organizer` | Who runs it |
-| `city` / `online` | Where it happens |
-| `source_url` | Where the data came from |
+| `type` | `competition` / `scholarship` / `internship` / `open_day` / `university_program`. Olympiads, tournaments and camps are all `competition`; the difference goes into tags. |
+| `organizer_id` | Always `null` (scraped). |
+| `title` | As on the source, in Bulgarian. |
+| `description` | Short text from the source. Also holds what has no column: the country of an event abroad, or "dates not announced yet". |
+| `image_url` | `null` unless the source has an image. |
+| `external_url` | The event's own link (apply / details). `null` if the source has none. |
+| `city` | City only, without "гр.". `null` if only a country is known. |
+| `is_online` | `true` if the source says "онлайн" (also for mixed events), otherwise `false`. |
+| `audience` | `school` / `university` / `both`. |
+| `starts_at`, `ends_at` | timestamptz in Bulgarian time (`+02:00` in winter, `+03:00` in summer). A date with no time means start at `00:00:00`, end at `23:59:59`. A time from the source ("9:00 часа") is used. "до 20 декември" sets only `ends_at`. "?" means `null`. |
+| `deadline_at` | Registration deadline, only if the source states one. |
+| `status` | `published` for upcoming and ongoing, `archived` for past. |
+| `source` | Always `scraper`. |
+| `source_url` | Must be unique. It is the calendar page + `#<short-slug>` (e.g. `…/calendar#ioi-2027`), not `external_url`: many events have no link, and some editions share one (`sofiacode.com/sti/` spring and autumn). |
 
 ## Step 2: Add tags
 
-Tags come from a fixed list, not free text, so the filters can rely on them. Tags are in English; the app shows Bulgarian labels.
+Tags come from the fixed `tags` list (`slug` + Bulgarian `name`), not free text. They go into `opportunity_tags`. Things that already have a column (type, city, online, dates, status) are not repeated as tags.
 
-- Type: `olympiad`, `competition`, `scholarship`, `internship`, `open-day`
-- Subject: `math`, `informatics`, `physics`, `biology`, ...
-- Level: `grades-1-4`, `grades-5-7`, `grades-8-12`, `university`
-- Place: city name (`burgas`, `sofia`, ...), `national`, `online`
-- Status: `registration-open`, `deadline-soon`, `past`
+- Subject: `informatics`, `math`, `physics`, `biology`, ...
+- Format: `olympiad`, `tournament`, `camp`, `team`, `girls-only`
+- Level: `level-municipal`, `level-regional`, `level-national`, `level-international`
 
-First version: rule-based tagging (keyword matching in Bulgarian and English). AI only for records the rules can't tag, and only later, inside an Edge Function.
+First version: rule-based tagging (keyword matching in Bulgarian and English), e.g. "олимпиада" gives `olympiad`, "Областен кръг" gives `level-regional`, "Международна / Балканска / Европейска" gives `level-international`. AI only for records the rules can't tag, and only later, inside an Edge Function.
 
 ## Output
 
-- One clean JSON file with all opportunities in the shape above, plus their tags.
+- One clean JSON file: the `tags` used, and an `opportunities` array of rows in the shape above, each with a `tags` array of slugs. Example: [samples/infos_calendar.opportunities.json](samples/infos_calendar.opportunities.json), made from [samples/infos_calendar.json](samples/infos_calendar.json).
 - Scope of the first version: a local script that runs on a handful of sample JSONs. No database, no schedule.
-- Simple deduplication: the same title + organizer + date counts as one opportunity.
+- Deduplication: by `source_url` (unique in the database).
 
 ## Open questions
 
