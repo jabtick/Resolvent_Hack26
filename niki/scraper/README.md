@@ -54,6 +54,17 @@ First version: rule-based tagging (keyword matching in Bulgarian and English), e
 - Scope of the first version: a local script that runs on a handful of sample JSONs. No database, no schedule.
 - Deduplication: by `source_url` (unique in the database).
 
+## Run
+
+[process_bucket.py](process_bucket.py) (Python 3.9+, standard library only) does steps 1 and 2:
+
+```
+python process_bucket.py                                  # samples/infos_calendar.json -> out/opportunities.json
+python process_bucket.py bucket/ -o out/opportunities.json --today 2026-11-27
+```
+
+It takes files or folders of raw JSONs, parses dates and places from `raw_date_text`, tags each event with the rules above, and prints one line per opportunity: date, place, status, tags. `--today` decides what counts as past (`archived`).
+
 ## Open questions
 
 - Raw JSON format: agree with Захари.
