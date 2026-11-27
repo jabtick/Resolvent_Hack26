@@ -1,0 +1,194 @@
+{
+  "source": "https://infos.infosbg.com/calendar",
+  "fetched_at": "2026-11-27",
+  "tags": [
+    {"slug": "informatics", "name": "Информатика"},
+    {"slug": "olympiad", "name": "Олимпиада"},
+    {"slug": "tournament", "name": "Турнир / състезание"},
+    {"slug": "camp", "name": "Лагер / школа"},
+    {"slug": "team", "name": "Отборно"},
+    {"slug": "girls-only", "name": "Само за момичета"},
+    {"slug": "level-municipal", "name": "Общински кръг"},
+    {"slug": "level-regional", "name": "Областен кръг"},
+    {"slug": "level-national", "name": "Национално"},
+    {"slug": "level-international", "name": "Международно"}
+  ],
+  "opportunities": [
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Национален есенен турнир по информатика “Джон Атанасов”", "description": null, "image_url": null,
+      "external_url": null, "city": "София", "is_online": false, "audience": "school",
+      "starts_at": "2026-11-27T00:00:00+02:00", "ends_at": "2026-11-29T23:59:59+02:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#john-atanasov-2026",
+      "tags": ["informatics", "tournament", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Общински кръг на Олимпиадата по информатика", "description": "Провежда се до 20 декември 2026 г.", "image_url": null,
+      "external_url": null, "city": null, "is_online": false, "audience": "school",
+      "starts_at": null, "ends_at": "2026-12-20T23:59:59+02:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#noi-municipal-2026",
+      "tags": ["informatics", "olympiad", "level-municipal"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Зимни онлайн състезания по информатика \"Д-р Младен Манев\"", "description": "За отборите в Габрово и онлайн за индивидуалното.", "image_url": null,
+      "external_url": "https://info-gabrovo.com/", "city": "Габрово", "is_online": true, "audience": "school",
+      "starts_at": "2027-01-08T00:00:00+02:00", "ends_at": "2027-01-10T23:59:59+02:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#mladen-manev-2027",
+      "tags": ["informatics", "tournament", "team", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Областен кръг на Олимпиадата по информатика", "description": null, "image_url": null,
+      "external_url": null, "city": null, "is_online": false, "audience": "school",
+      "starts_at": "2027-02-02T09:00:00+02:00", "ends_at": "2027-02-02T23:59:59+02:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#noi-regional-2027",
+      "tags": ["informatics", "olympiad", "level-regional"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "infO(1)Cup", "description": "Датата е февруари 2027 г., точният ден още не е обявен.", "image_url": null,
+      "external_url": "https://info1cup.com/", "city": null, "is_online": true, "audience": "school",
+      "starts_at": null, "ends_at": null, "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#info1cup-2027",
+      "tags": ["informatics", "tournament", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Национален кръг на Олимпиадата по информатика", "description": null, "image_url": null,
+      "external_url": null, "city": "Габрово", "is_online": false, "audience": "school",
+      "starts_at": "2027-03-12T00:00:00+02:00", "ends_at": "2027-03-15T23:59:59+02:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#noi-national-2027",
+      "tags": ["informatics", "olympiad", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Пролетно издание на Откритото първенство на София по информатика за ученици", "description": null, "image_url": null,
+      "external_url": "https://sofiacode.com/sti/", "city": "София", "is_online": false, "audience": "school",
+      "starts_at": "2027-04-01T00:00:00+03:00", "ends_at": "2027-04-01T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#sti-spring-2027",
+      "tags": ["informatics", "tournament"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Пролетни състезания по информатика", "description": "Съвместно с Международен турнир по информатика за напреднали (19 - 23 април 2027 г.).", "image_url": null,
+      "external_url": "https://iati-shu.org/", "city": "Бургас", "is_online": false, "audience": "school",
+      "starts_at": "2027-04-21T00:00:00+03:00", "ends_at": "2027-04-23T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#spring-burgas-2027",
+      "tags": ["informatics", "tournament", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Балканска олимпиада по информатика BOI", "description": "Провежда се в Турция.", "image_url": null,
+      "external_url": "https://www.boi-official.org", "city": null, "is_online": false, "audience": "school",
+      "starts_at": "2027-04-24T00:00:00+03:00", "ends_at": "2027-04-30T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#boi-2027",
+      "tags": ["informatics", "olympiad", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Отборно ученическо състезание", "description": "Съвместно с Републиканската студентска олимпиада по програмиране.", "image_url": null,
+      "external_url": "http://bcpc.eu/XXXVIII/", "city": "Пловдив", "is_online": false, "audience": "school",
+      "starts_at": "2027-05-13T00:00:00+03:00", "ends_at": "2027-05-15T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#team-contest-2027",
+      "tags": ["informatics", "tournament", "team", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Състезание по програмиране CODE@BURGAS", "description": null, "image_url": null,
+      "external_url": "https://codeburgas.com/", "city": null, "is_online": true, "audience": "school",
+      "starts_at": "2027-05-22T00:00:00+03:00", "ends_at": "2027-05-22T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#code-burgas-2027",
+      "tags": ["informatics", "tournament"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Международна отборна олимпиада по информатика IIOT", "description": null, "image_url": null,
+      "external_url": "https://iio.team/", "city": "Варна", "is_online": false, "audience": "school",
+      "starts_at": "2027-05-28T00:00:00+03:00", "ends_at": "2027-06-01T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#iiot-2027",
+      "tags": ["informatics", "olympiad", "team", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Национален летен турнир по информатика", "description": null, "image_url": null,
+      "external_url": null, "city": "Пловдив", "is_online": false, "audience": "school",
+      "starts_at": "2027-06-11T00:00:00+03:00", "ends_at": "2027-06-13T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#summer-tournament-2027",
+      "tags": ["informatics", "tournament", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Европейска олимпиада по информатика за момичета EGOI", "description": "Провежда се във Варшава, Полша.", "image_url": null,
+      "external_url": "https://egoi2027.pl/", "city": "Варшава", "is_online": false, "audience": "school",
+      "starts_at": "2027-07-05T00:00:00+03:00", "ends_at": "2027-07-11T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#egoi-2027",
+      "tags": ["informatics", "olympiad", "girls-only", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Европейска младежка олимпиада по информатика EJOI", "description": "Провежда се в курорт Бурабай, Казахстан.", "image_url": null,
+      "external_url": "https://ejoi.org/", "city": "Бурабай", "is_online": false, "audience": "school",
+      "starts_at": "2027-08-02T00:00:00+03:00", "ends_at": "2027-08-08T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#ejoi-2027",
+      "tags": ["informatics", "olympiad", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Национална лагер-школа по информатика", "description": "Август 2027 г., датите и мястото още не са обявени.", "image_url": null,
+      "external_url": null, "city": null, "is_online": false, "audience": "school",
+      "starts_at": null, "ends_at": null, "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#camp-2027",
+      "tags": ["informatics", "camp", "level-national"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Централноевропейска олимпиада по информатика CEOI", "description": "Провежда се в Познан, Полша.", "image_url": null,
+      "external_url": "https://ceoi2027.pl/", "city": "Познан", "is_online": false, "audience": "school",
+      "starts_at": "2027-08-30T00:00:00+03:00", "ends_at": "2027-09-05T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#ceoi-2027",
+      "tags": ["informatics", "olympiad", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Международна олимпиада по информатика IOI", "description": "Провежда се в Потсдам, Германия.", "image_url": null,
+      "external_url": "https://ioi2027.de/", "city": "Потсдам", "is_online": false, "audience": "school",
+      "starts_at": "2027-09-12T00:00:00+03:00", "ends_at": "2027-09-19T23:59:59+03:00", "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#ioi-2027",
+      "tags": ["informatics", "olympiad", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Младежка балканска олимпиада по информатика JBOI", "description": "2027 г., в Гърция; датите още не са обявени.", "image_url": null,
+      "external_url": "https://jboi-stats.vercel.app/", "city": null, "is_online": false, "audience": "school",
+      "starts_at": null, "ends_at": null, "deadline_at": null,
+      "status": "published", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#jboi-2027",
+      "tags": ["informatics", "olympiad", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Romanian Master of Informatics RMI", "description": "Провежда се в Букурещ, Румъния.", "image_url": null,
+      "external_url": "https://infos.infosbg.com/contests/RMI/2026", "city": "Букурещ", "is_online": false, "audience": "school",
+      "starts_at": "2026-11-18T00:00:00+02:00", "ends_at": "2026-11-21T23:59:59+02:00", "deadline_at": null,
+      "status": "archived", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#rmi-2026",
+      "tags": ["informatics", "tournament", "level-international"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Есенно издание на Откритото първенство на София по информатика за ученици", "description": null, "image_url": null,
+      "external_url": "https://sofiacode.com/sti/", "city": "София", "is_online": false, "audience": "school",
+      "starts_at": "2026-11-02T00:00:00+02:00", "ends_at": "2026-11-02T23:59:59+02:00", "deadline_at": null,
+      "status": "archived", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#sti-autumn-2026",
+      "tags": ["informatics", "tournament"]
+    },
+    {
+      "type": "competition", "organizer_id": null,
+      "title": "Stelele Informaticii", "description": null, "image_url": null,
+      "external_url": "https://steleleinformaticii.ichb.ro/", "city": null, "is_online": true, "audience": "school",
+      "starts_at": "2026-10-16T00:00:00+03:00", "ends_at": "2026-10-19T23:59:59+03:00", "deadline_at": null,
+      "status": "archived", "source": "scraper", "source_url": "https://infos.infosbg.com/calendar#stelele-2026",
+      "tags": ["informatics", "tournament", "level-international"]
+    }
+  ]
+}
