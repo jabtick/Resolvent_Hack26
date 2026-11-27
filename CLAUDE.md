@@ -77,7 +77,17 @@
 
 - `_shared/http.ts` — CORS, JSON отговори, грешки. `_shared/supabase.ts` — `userClient` (с правата на потребителя, RLS важи), `adminClient` (пълни права — само след проверка), `requireUser`, `rateLimit`.
 - `delete-account` — потребителят трие акаунта си; body `{ "confirm": "DELETE" }`.
-- Още няма Supabase проект в облака — нищо не е deploy-нато.
+- Supabase проект: `tjkwpebrakwfkhenpayl` (Frankfurt). Качени са: `delete-account` и миграциите `rate_limits`, `profiles_feed` (Гошо) и `organizer_rename_resets_verification` (верифициран организатор, който смени името си, става отново `pending`).
+
+## Приложение (`app/`)
+
+Flutter за web (после и телефон), хостинг в Netlify. Подробно: [app/README.md](app/README.md).
+
+- **Всеки пипа само своята папка** в `app/lib/features/`: `feed/` — Гошо, `calendar/` — Ники, `achievements/` — Захари; `auth/`, `profile/`, `settings/` и `core/` — Боги. Там вече има празен екран „скоро“.
+- **Екраните не викат Supabase директно:** за всяка функционалност има `<x>_repo.dart` (интерфейс) + `fake_<x>_repo.dart` (примерни данни) + `supabase_<x>_repo.dart`; repo-то се добавя в `core/services.dart`. Пример: `features/profile/`.
+- `flutter run -d chrome --dart-define=FAKE=true` пуска всичко на примерни данни (код от имейла: `123456`).
+- Визията е от дизайна в Lovable (`design/lovable/`, само за справка): ползвай `ZineBox`, `RansomText`, `ZineButton` и `context.zine.<цвят>`, не цветове на ръка.
+- **За Claude:** пусни `flutter test` преди да кажеш, че нещо е готово; Flutter команди от PowerShell с главно `C:` в пътя.
 
 ## Решения и правила за работа
 

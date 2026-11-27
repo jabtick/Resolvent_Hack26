@@ -1,0 +1,73 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/services.dart';
+import '../../../core/widgets/zine.dart';
+import '../validators.dart';
+import 'auth_widgets.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> with BusyAction {
+  final _form = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_form.currentState!.validate()) return;
+    final auth = ServicesScope.of(context).auth;
+    await run(() => auth.signIn(_email.text, _password.text));
+  }
+
+  @override
+  Widget build(BuildContext context) => Form(
+    key: _form,
+    child: AuthCard(
+      title: 'ВХОД',
+      children: [
+        ZineField(
+          label: 'Имейл',
+          controller: _email,
+          keyboard: TextInputType.emailAddress,
+          autofill: const [AutofillHints.email],
+          validator: validateEmail,
+        ),
+        ZineField(
+          label: 'Парола',
+          controller: _password,
+          obscure: true,
+          autofill: const [AutofillHints.password],
+        ),
+        const SizedBox(height: 6),
+        ZineButton(
+          label: busy ? 'ЧАКАЙ…' : 'ВЛИЗАМ',
+          pink: true,
+          onPressed: busy ? null : _submit,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            TextLink('Забравена парола?', onTap: () => context.go('/forgot')),
+            TextLink(
+              'Нямаш акаунт? Регистрация',
+              onTap: () => context.go('/join'),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
