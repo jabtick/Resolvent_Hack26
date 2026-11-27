@@ -18,8 +18,8 @@
 | Колона | Тип | Бележки |
 | --- | --- | --- |
 | id | uuid PK | `references auth.users(id) on delete cascade` |
-| account_type | enum `student` / `organizer` | |
-| username | text unique | за публичния линк `/u/<username>` |
+| account_type | enum `student` / `organizer` | задава се при създаване на профила, после **само сървърът** го сменя |
+| username | text | за публичния линк `/u/<username>`; уникален индекс по `lower(username)`, за да не съществуват `Ivan` и `ivan` едновременно |
 | display_name | text | |
 | avatar_url | text | път в Storage |
 | terms_accepted_at | timestamptz | кога е приел Условията; тук, за да важи и за организатори |
@@ -30,16 +30,16 @@
 | Колона | Тип | Бележки |
 | --- | --- | --- |
 | profile_id | uuid PK | `references profiles(id) on delete cascade` |
-| birth_date | date | дата, не възраст; нужна за съгласието под 14 г. |
+| birth_date | date | дата, не възраст; нужна за съгласието под 14 г.; задава се веднъж при регистрация, после **само сървърът** я сменя |
 | gender | enum `male` / `female` / `other` / `prefer_not_to_say`, nullable | по желание, никога публично |
 | city | text | |
 | school | text | |
 | grade | smallint | |
 | bio | text | |
 | is_public | bool, default false | профилът е скрит, докато ученикът не го направи публичен |
-| guardian_email | text | само под 14 г. |
-| consent_token_hash | text | за линка за потвърждение към родителя |
-| consent_granted_at | timestamptz | null = няма съгласие |
+| guardian_email | text | само под 14 г.; пише се **само от сървъра** |
+| consent_token_hash | text | за линка за потвърждение към родителя; **само сървърът** |
+| consent_granted_at | timestamptz | null = няма съгласие; **само сървърът**, когато родителят потвърди |
 
 **organizer_details**
 
@@ -71,8 +71,8 @@
 | audience | enum `school` / `university` / `both` | |
 | starts_at, ends_at | timestamptz, nullable | кога се случва |
 | deadline_at | timestamptz, nullable | срок за кандидатстване |
-| status | enum `draft` / `published` / `archived` | |
-| source | enum `organizer` / `scraper` | |
+| status | enum `draft` / `published` / `archived` | `published` само ако организаторът е `verified` |
+| source | enum `organizer` / `scraper` | от клиента винаги `organizer`; `scraper` само през service_role |
 | source_url | text unique | скрейпърът да не добавя два пъти едно и също |
 | search_vector | tsvector, generated | търсене по заглавие и описание; конфигурация `simple`, защото Postgres няма български речник |
 | created_at, updated_at | timestamptz | |
@@ -104,9 +104,10 @@ RLS е включено на всички 8 таблици. Правилата �
 
 | Таблица | Кой чете | Кой пише |
 | --- | --- | --- |
-| profiles, student_details | собственикът; другите само през `public_profiles` | собственикът |
-| organizer_details | всеки | собственикът, без `verification_status` и `verified_at` (те само от сървъра) |
-| opportunities | всеки, и без вход, ако е `published`; организаторът вижда и своите чернови | организаторът, само своите; скрейпърът през service_role |
+| profiles | собственикът; другите само през `public_profiles` | собственикът, без `account_type` след създаване (само сървърът) |
+| student_details | собственикът; другите само през `public_profiles` | собственикът, без `birth_date` след създаване и без `guardian_email`, `consent_token_hash`, `consent_granted_at` (само сървърът) |
+| organizer_details | всеки | собственикът, без `verification_status` и `verified_at` (само сървърът) |
+| opportunities | всеки, и без вход, ако е `published`; организаторът вижда и своите чернови | организаторът, само своите: `with check (organizer_id = auth.uid() and source = 'organizer')`; `published` само ако `verification_status = 'verified'`; скрейпърът през service_role |
 | tags, opportunity_tags | всеки | tags: никой от клиента; opportunity_tags: организаторът на обявата |
 | profile_interests, saved_opportunities | собственикът | собственикът |
 
@@ -120,6 +121,8 @@ RLS е включено на всички 8 таблици. Правилата �
 ## Сигурност: задължителни поправки (от Боги, 2026-11-27)
 
 Пет дупки, които трябва да са затворени, преди схемата да стане SQL. 1–4 Боги ги прави с RLS и права на ниво колона, таблиците не се променят. 5 е за Гошо и Ники при писане на таблицата.
+
+**Статус:** и петте са вписани в таблиците и в таблицата за достъп по-горе. Остава да се напишат като SQL.
 
 | # | Проблем | Какво може да направи някой | Поправка |
 | --- | --- | --- | --- |
