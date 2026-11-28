@@ -258,7 +258,7 @@ function CalendarPage() {
                         const multiDay = !isSameDay(from, to);
                         const text =
                           kind === "deadline"
-                            ? `КРАЕН СРОК ${when(from)}`
+                            ? `${from < new Date() ? "СРОКЪТ ИЗТЕЧЕ" : "КРАЕН СРОК"} ${when(from)}`
                             : multiDay
                               ? `${when(from)} – ${when(to)}`
                               : `НАЧАЛО ${when(from)}`;
@@ -269,13 +269,7 @@ function CalendarPage() {
                           <span
                             key={kind}
                             // The date that placed the card here stands out; past dates fade.
-                            className={
-                              kind === e.kind
-                                ? "text-primary"
-                                : to < today
-                                  ? "text-muted-foreground line-through"
-                                  : "text-muted-foreground"
-                            }
+                            className={kind === e.kind ? "text-primary" : "text-muted-foreground"}
                           >
                             {text}
                             {view === "day" && kind === e.kind && nth > 0 && (
