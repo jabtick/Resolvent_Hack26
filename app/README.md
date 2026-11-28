@@ -23,6 +23,24 @@ flutter build web --release                     # for Netlify → build/web
 
 FAKE mode: the email code is always `123456`; the username `ivan` is taken.
 
+Needs a Flutter whose Dart is **≥ 3.12.2** (`sdk:` in `pubspec.yaml`; check
+with `flutter --version`). If `flutter pub get` says the SDK is too old, run
+`flutter upgrade`. Don't lower the constraint in `pubspec.yaml` to make it
+build.
+
+### Before you open a PR
+
+1. `flutter test`: all green.
+2. `flutter analyze`: no new issues. Ignore "`package:flutter/material.dart`
+   is deprecated" (newer Flutter shows it on every file). **Never** run
+   `dart fix --apply` to silence it: it rewrites every import to
+   `package:material_ui`, and then nobody on an older Flutter can build.
+3. `dart format lib test`.
+4. `git status`: only files in your own feature folder (plus its tests).
+   Anything in `core/`, `pubspec.yaml` or another feature: ask the owner
+   first.
+5. No keys besides the publishable one, no `.env`, no `build/`.
+
 ## Folders
 
 ```
