@@ -62,13 +62,15 @@ TAGS: tuple[Tag, ...] = (
     # --- Subjects: humanities & social ---------------------------------------
     _t("bulgarian-literature", "Български език и литература", "subject", "български език",
        "литератур", "bulgarian language"),
-    _t("creative-writing", "Творческо писане", "subject", "творческо писане", "есе", "essay", "разказ",
+    _t("creative-writing", "Творческо писане", "subject", "творческо писане", "есе ", "есета", "essay", "разказ",
        "поезия", "стихотвор", "creative writing"),
     _t("history", "История", "subject", "история", "историч", "history", "цивилизаци"),
     _t("philosophy", "Философия", "subject", "философ", "philosoph", "етика", "ethics"),
     _t("civics", "Гражданско образование", "subject", "гражданск", "civic", "демократ", "democra",
        "права на човека", "human rights"),
-    _t("law", "Право", "subject", "право ", "правни", "юрид", "law ", "legal", "адвокат"),
+    # not plain "право": "има право да" (has the right to) is very common
+    _t("law", "Право", "subject", "право,", "право и ", "специалност право", "правни", "юрид",
+       "law ", "legal", "адвокат"),
     _t("economics", "Икономика", "subject", "икономи", "econom", "финанс", "financ", "счетовод"),
     _t("entrepreneurship", "Предприемачество", "subject", "предприемач", "entrepreneur", "стартъп",
        "startup", "бизнес идея", "бизнес план", "business"),
@@ -124,7 +126,9 @@ TAGS: tuple[Tag, ...] = (
     _t("free", "Безплатно", "money", "безплатн", "free of charge", "без такса", "no fee", "free",
        "входът е свободен", "вход свободен", "свободен вход"),
     _t("prizes", "Награди", "money", "наград", "prize", "award", "парична", "грамот"),
-    _t("paid", "Платено", "money", "заплат", "възнагражд", "paid internship", "платен стаж", "salary"),
+    _t("paid", "Платено", "money", "заплата", "възнагражд", "paid internship", "платен стаж", "salary"),
+    _t("has-fee", "С такса", "money", "такса за участие", "такса за школата", "заплатите", "participation fee",
+       "registration fee", "малка такса"),
 
     # --- Who it is for (grade bands; the app maps student_details.grade to one) ---
     _t("grades-1-4", "1–4 клас", "level"),

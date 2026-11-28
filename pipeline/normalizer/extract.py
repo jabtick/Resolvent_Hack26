@@ -153,7 +153,23 @@ def normalize_city(value: str | None) -> str | None:
     return cleaned or None
 
 
+FOREIGN_PLACES = ("чужбина", "румъния", "букурещ", "кипър", "пафос", "гърция", "атина", "солун",
+                  "сърбия", "белград", "турция", "истанбул", "северна македония", "скопие", "германия",
+                  "австрия", "унгария", "полша", "чехия", "словакия", "словения", "хърватия", "италия",
+                  "испания", "франция", "холандия", "нидерландия", "белгия", "великобритания", "англия",
+                  "швейцария", "молдова", "украйна", "грузия", "сащ", "египет", "япония", "китай",
+                  "romania", "bucharest", "cyprus", "greece", "serbia", "turkey", "germany", "austria",
+                  "hungary", "poland", "italy", "spain", "france", "netherlands", "uk", "usa", "abroad")
+
+
+def detect_abroad(title: str) -> str | None:
+    """A foreign place in the title means the event is held abroad."""
+    return first_keyword(title, FOREIGN_PLACES)
+
+
 def detect_city(title: str, body: str) -> tuple[str | None, dict[str, float]]:
+    if detect_abroad(title):
+        return None, {}
     scores: dict[str, float] = {}
     for name, full, adj in _CITY_PATTERNS:
         s = 3 * count_keywords(title, full) + count_keywords(body, full)
@@ -300,6 +316,8 @@ _YEAR = r"(?:\s*,?\s*(\d{4})\s*(?:г\.?|година)?)?"
 _TIME = re.compile(r"^\s*,?\s*(?:от|в|at|@)?\s*(\d{1,2})[:.](\d{2})\s*(?:ч\.?|часа|h)?")
 
 _DATE_PATTERNS: tuple[tuple[str, re.Pattern], ...] = (
+    # 28 май до 1 юни 2027 / 30 ноември – 2 декември
+    ("text_range2", re.compile(rf"(?<!\d)(\d{{1,2}}){_DAY_SUFFIX}\s+({_MONTH_RE})(?!\w)\s*(?:[-–—]|до)\s*(\d{{1,2}}){_DAY_SUFFIX}\s+({_MONTH_RE})(?!\w){_YEAR}")),
     # 12–14 март 2026 / 12 - 14 march
     ("text_range", re.compile(rf"(?<!\d)(\d{{1,2}}){_DAY_SUFFIX}\s*(?:[-–—]|до)\s*(\d{{1,2}}){_DAY_SUFFIX}\s+({_MONTH_RE})(?!\w){_YEAR}")),
     # 12.03 – 14.03.2026 / 12.03.2026 - 14.03.2026
@@ -312,6 +330,8 @@ _DATE_PATTERNS: tuple[tuple[str, re.Pattern], ...] = (
     ("text", re.compile(rf"(?<!\d)(\d{{1,2}}){_DAY_SUFFIX}\s+({_MONTH_RE})(?!\w){_YEAR}")),
     # March 15, 2026
     ("text_en", re.compile(rf"(?<!\w)({_MONTH_RE})\s+(\d{{1,2}}){_DAY_SUFFIX}(?:\s*,?\s*(\d{{4}}))?")),
+    # 28.11 (no year) — last, so it never eats part of a full date
+    ("num_short", re.compile(r"(?<![\d.,])(\d{1,2})\.(\d{1,2})(?![\d.,]*\d)")),
 )
 
 DEADLINE_WORDS = ("срок", "краен срок", "крайният срок", "до ", "кандидатст", "регистрац", "записван",
@@ -319,10 +339,10 @@ DEADLINE_WORDS = ("срок", "краен срок", "крайният срок"
                   "applications close", "registration", "submit", "не по-късно от")
 START_WORDS = ("провежда", "проведе", "провеждане", "начало", "започва", "старт", "ще се", "дата на",
                "на дата", "от ", "кръг", "етап", "събитието", "откриване", "held", "starts", "takes place",
-               "will be", "event date", "on ")
+               "will be", "event date", "on ", "състезателен ден", "денят на", "ден:", "day")
 END_WORDS = ("приключва", "завършва", "край на", "закриване", "ends", "until")
 IGNORE_WORDS = ("публикува", "публикацията", "обновен", "актуализ", "posted", "updated", "published",
-                "©", "copyright", "дата на раждане", "роден")
+                "©", "copyright", "дата на раждане", "роден", "версия", "version", "издание от")
 
 
 @dataclass
@@ -410,7 +430,17 @@ def find_dates(text: str, ref: date) -> list[DateMention]:
                 continue
             g = m.groups()
             start = end = None
-            if kind == "text_range":
+            if kind == "text_range2":
+                m1, m2 = MONTHS[g[1]], MONTHS[g[3]]
+                y2 = _infer_year(m2, int(g[2]), g[4], ref)
+                y1 = y2 - 1 if y2 and m1 > m2 else y2
+                start, end = _safe_date(y1, m1, int(g[0])), _safe_date(y2, m2, int(g[2]))
+            elif kind == "num_short":
+                d_, m_ = int(g[0]), int(g[1])
+                if not (1 <= m_ <= 12 and 1 <= d_ <= 31):
+                    continue
+                start = _safe_date(_infer_year(m_, d_, None, ref), m_, d_)
+            elif kind == "text_range":
                 month = MONTHS[g[2]]
                 y = _infer_year(month, int(g[0]), g[3], ref)
                 start, end = _safe_date(y, month, int(g[0])), _safe_date(y, month, int(g[1]))
@@ -453,8 +483,10 @@ def find_dates(text: str, ref: date) -> list[DateMention]:
     return found
 
 
-def resolve_dates(text: str, opp_type: str | None, ref: date) -> Dates:
-    mentions = find_dates(text, ref)
+def resolve_dates(title: str, body: str, opp_type: str | None, ref: date) -> Dates:
+    title_mentions = find_dates(title, ref)
+    body_mentions = find_dates(body, ref)
+    mentions = title_mentions + body_mentions
     usable = [d for d in mentions if d.role != "ignore"]
     out = Dates(mentions=mentions)
 
@@ -462,6 +494,12 @@ def resolve_dates(text: str, opp_type: str | None, ref: date) -> Dates:
     events = [d for d in usable if d.role in ("start", "range")]
     ends = [d for d in usable if d.role == "end"]
     unknown = [d for d in usable if d.role == "unknown"]
+
+    # A date in the title ("..., 27 - 29 ноември 2026 г.") is almost always when the event
+    # happens; the body often mentions other events (next rounds, related olympiads).
+    title_events = [d for d in title_mentions if d.role not in ("ignore", "deadline")]
+    if title_events:
+        events, ends, unknown = title_events, [], []
 
     # Nothing labelled: decide by type what a bare date most likely is.
     if not deadlines and not events and unknown:
@@ -486,8 +524,8 @@ def resolve_dates(text: str, opp_type: str | None, ref: date) -> Dates:
         if out.starts_at is None or e.start >= out.starts_at.date():
             out.ends_at = to_timestamptz(e.start, e.at, end_of_day=True)
 
-    # A deadline after the event start usually means we mislabeled; drop the deadline.
-    if out.deadline_at and out.starts_at and out.deadline_at.date() > (out.ends_at or out.starts_at).date():
+    # A deadline after the event has started usually means we mislabeled; drop the deadline.
+    if out.deadline_at and out.starts_at and out.deadline_at.date() > out.starts_at.date():
         out.deadline_at = None
     return out
 

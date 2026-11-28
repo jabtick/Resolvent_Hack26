@@ -19,8 +19,18 @@ cd pipeline/normalizer
 python normalize.py examples/raw_items.json -o examples/opportunities.json
 python normalize.py examples/raw_items.json --debug     # shows why each field/tag was chosen
 python fetch.py urls.txt -o out/raw_items.json          # simple one-page-per-opportunity sites
+python adapters/infos.py -o examples/infos_raw.json     # INFOS home feed (list of cards)
+python normalize.py examples/infos_raw.json -o examples/infos_opportunities.json
 python taxonomy.py                                      # prints the tag list
 ```
+
+## Adapters (one per site with many items per page)
+
+| Adapter | Site | Notes |
+| --- | --- | --- |
+| [adapters/infos.py](adapters/infos.py) | https://infos.infosbg.com/home | one item per `<article>` card; the site has no page per announcement, so `source_url` = `home#<hash of title>`; `external_url` = the competition's own site; PDFs go to `_source.attachments` |
+
+A raw item may carry a `_source` block with site-specific extras (upload time, attachments); the normalizer ignores it.
 
 ## Input: raw item (what every source/adapter outputs)
 
@@ -86,7 +96,7 @@ to the database. `tags` is not a column: on insert each slug becomes a row in `o
 
 ## Tags (for the feed / recommendations)
 
-`taxonomy.py` is the single fixed list (64 tags) that goes into the `tags` table (`tags_seed.json`).
+`taxonomy.py` is the single fixed list (65 tags) that goes into the `tags` table (`tags_seed.json`).
 Groups (only in code, not in the DB):
 
 - **subject:** math, informatics, programming, web-development, ai-data, cybersecurity, robotics, physics, biology, ecology, history, economics, entrepreneurship, languages, arts, music, sports, …

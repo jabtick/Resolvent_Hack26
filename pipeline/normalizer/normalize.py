@@ -17,7 +17,7 @@ import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from extract import (OPPORTUNITY_TYPES, detect_audience, detect_city, detect_grades, detect_online,
+from extract import (OPPORTUNITY_TYPES, detect_abroad, detect_audience, detect_city, detect_grades, detect_online,
                      detect_tags, detect_type, normalize_city, parse_hint_datetime, resolve_dates)
 from taxonomy import TAGS_BY_SLUG
 
@@ -79,13 +79,18 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
 
     # dates: explicit hints from the source win, the rest is read from the text
     hints = raw.get("dates") or {}
-    dates = resolve_dates(full, opp_type, ref)
+    dates = resolve_dates(t_low, b_low, opp_type, ref)
     starts_at = parse_hint_datetime(hints.get("starts_at"), False, ref) or dates.starts_at
     ends_at = parse_hint_datetime(hints.get("ends_at"), True, ref) or dates.ends_at
     deadline_at = parse_hint_datetime(hints.get("deadline_at"), True, ref) or dates.deadline_at
 
     # tags
-    tags, tag_scores = detect_tags(t_low, b_low, grades, audience, raw.get("tags"))
+    tag_hints = list(raw.get("tags") or [])
+    abroad = detect_abroad(t_low)
+    if abroad:
+        tag_hints += ["international", "study-abroad"]
+    no_urls = re.sub(r"https?://\S+|www\.\S+", " ", b_low)   # "jetbrains.media" is not a media topic
+    tags, tag_scores = detect_tags(t_low, no_urls, grades, audience, tag_hints)
 
     # status: scraped items are published, unless everything is already in the past
     last = max((d for d in (ends_at, starts_at, deadline_at) if d), default=None)
