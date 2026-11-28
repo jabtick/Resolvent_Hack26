@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { fakeClient, FakeServer, fakeUid, json, pgError } from "@/test/fakeSupabase";
 
-import { createProfilesApi, initialsOf, publicProfileUrl, validateAvatar } from "./profiles";
+import {
+  createProfilesApi,
+  initialsOf,
+  MAX_INTERESTS,
+  publicProfileUrl,
+  replaceInterests,
+  validateAvatar,
+} from "./profiles";
 
 async function signedIn() {
   const server = new FakeServer();
@@ -184,6 +191,51 @@ describe("public organizers", () => {
     expect(await api.loadPublicOrganizer("a*")).toBeNull();
     expect(server.readsOf("public_organizers")).toHaveLength(0);
     expect(await api.loadPublicOrganizer("nobody")).toBeNull();
+  });
+});
+
+describe("interests", () => {
+  it("lists only topic tags", async () => {
+    const { server, api } = await signedIn();
+    server.tags = [{ id: 1, name: "Математика" }];
+    expect(await api.interestTags()).toEqual([{ id: 1, name: "Математика" }]);
+    expect(server.readsOf("tags")[0]!.url.searchParams.get("kind")).toBe("eq.topic");
+  });
+
+  it("reads my picked ids", async () => {
+    const { server, api } = await signedIn();
+    server.profileInterests = [{ tag_id: 2 }, { tag_id: 5 }];
+    expect(await api.myInterestIds()).toEqual([2, 5]);
+  });
+
+  it("updateMine with interests removes the unwanted and adds the picked", async () => {
+    const { server, api } = await signedIn();
+    await api.updateMine({ interests: [4, 4, 9] });
+    const w = server.writesTo("profile_interests");
+    expect(w[0]!.method).toBe("DELETE");
+    expect(w[0]!.url.searchParams.get("tag_id")).toBe("not.in.(4,9)");
+    expect(w[1]!.body).toEqual([
+      { profile_id: expect.any(String), tag_id: 4 },
+      { profile_id: expect.any(String), tag_id: 9 },
+    ]);
+  });
+
+  it("no interests picked: removes them all and adds nothing", async () => {
+    const { server, api } = await signedIn();
+    await api.updateMine({ interests: [] });
+    const w = server.writesTo("profile_interests");
+    expect(w).toHaveLength(1);
+    expect(w[0]!.method).toBe("DELETE");
+    expect(w[0]!.url.searchParams.get("tag_id")).toBeNull();
+  });
+
+  it("caps the number and ignores values that are not whole positive numbers", async () => {
+    const server = new FakeServer();
+    const ids = [...Array.from({ length: 30 }, (_, i) => i + 1), -1, 2.5, Number.NaN];
+    await replaceInterests(fakeClient(server), "u1", ids);
+    const rows = server.writesTo("profile_interests")[1]!.body as { tag_id: number }[];
+    expect(rows).toHaveLength(MAX_INTERESTS);
+    expect(rows.every((r) => Number.isInteger(r.tag_id) && r.tag_id > 0)).toBe(true);
   });
 });
 

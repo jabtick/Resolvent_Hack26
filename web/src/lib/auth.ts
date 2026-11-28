@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 import { AppError, mapError } from "./errors";
+import { replaceInterests } from "./profiles";
 import { toIsoDate } from "./validators";
 
 export type AccountStatus = "signedOut" | "awaitingCode" | "needsProfile" | "signedIn";
@@ -33,6 +34,7 @@ export type NewProfile = {
   birthDate?: Date | undefined; // students
   orgName?: string | undefined; // organizers
   orgType?: OrgType | undefined; // organizers
+  interests?: number[] | undefined; // students, optional
 };
 
 /** Throws when a field the account type needs is missing. */
@@ -197,6 +199,11 @@ export function createAuthApi(db: Db) {
                 { ignoreDuplicates: true },
               ),
           );
+          // Interests are a bonus: if saving them fails the profile still exists, and the
+          // student can pick them later on the profile page.
+          if (p.interests?.length) {
+            await replaceInterests(db, uid, p.interests).catch(() => undefined);
+          }
         } else {
           ok(
             await db

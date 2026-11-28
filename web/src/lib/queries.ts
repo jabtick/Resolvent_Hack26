@@ -73,6 +73,25 @@ export function useRecommended() {
   });
 }
 
+/** Topics to pick interests from (changes only with a migration). */
+export function useInterestTags() {
+  return useQuery({
+    queryKey: ["interestTags"],
+    queryFn: api.profiles.interestTags,
+    staleTime: Infinity,
+  });
+}
+
+/** The tag ids the signed-in student picked. */
+export function useMyInterestIds(enabled: boolean) {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["interests", status],
+    queryFn: api.profiles.myInterestIds,
+    enabled: enabled && status === "signedIn",
+  });
+}
+
 export function useMyProfile() {
   const { status } = useAccount();
   return useQuery({

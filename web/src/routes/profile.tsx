@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { inputClass, useBusy } from "@/components/forms";
+import { InterestPicker } from "@/components/InterestPicker";
 import { Nav } from "@/components/Nav";
 import { OppDialog } from "@/components/OppDialog";
 import { ProfileHeader, Section } from "@/components/ProfileHeader";
@@ -20,7 +21,13 @@ import { api } from "@/lib/api";
 import { ACCOUNT_TYPE_LABEL, ORG_TYPE_LABEL } from "@/lib/auth";
 import { publicProfileUrl, type MyProfile, type ProfilePatch } from "@/lib/profiles";
 import type { OppStat } from "@/lib/opps";
-import { useMyProfile, useMyStats, useRefreshOpps } from "@/lib/queries";
+import {
+  useInterestTags,
+  useMyInterestIds,
+  useMyProfile,
+  useMyStats,
+  useRefreshOpps,
+} from "@/lib/queries";
 import { isUnder14, validateDisplayName, validateOrgName } from "@/lib/validators";
 
 export const Route = createFileRoute("/profile")({
@@ -45,6 +52,11 @@ function Profile() {
     try {
       await api.profiles.updateMine(p);
       await cache.invalidateQueries({ queryKey: ["me"] });
+      if (p.interests) {
+        await cache.invalidateQueries({ queryKey: ["interests"] });
+        // Different interests mean a different "For you" feed.
+        await cache.invalidateQueries({ queryKey: ["recommended"] });
+      }
       if (okMsg) toast.success(okMsg);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
@@ -176,6 +188,7 @@ function Body({
             title="УЧИЛИЩЕ"
             text={[s.school, s.grade ? `${s.grade} клас` : null].filter(Boolean).join(" · ")}
           />
+          <MyInterests />
         </>
       )}
       {o && (
@@ -324,6 +337,39 @@ function DeleteDialog({ opp, onClose }: { opp: OppStat; onClose: () => void }) {
   );
 }
 
+/** The topics the student picked, or a nudge to pick some. */
+function MyInterests() {
+  const ids = useMyInterestIds(true);
+  const tags = useInterestTags();
+  const names = (tags.data ?? []).filter((t) => ids.data?.includes(t.id)).map((t) => t.name);
+  return (
+    <section>
+      <h2 className="mb-4 font-heavy text-3xl">
+        <span className="ransom">ИНТЕРЕСИ</span>
+      </h2>
+      {names.length ? (
+        <div className="flex flex-wrap gap-2">
+          {names.map((n, i) => (
+            <span
+              key={n}
+              className={`border-[3px] border-ink px-3 py-1 font-heavy text-xl text-secondary-foreground ${i % 2 ? "bg-secondary" : "bg-accent"}`}
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+      ) : (
+        !ids.isPending && (
+          <p className="zine bg-card p-4 font-hand text-2xl">
+            Още не си избрал интереси. Натисни „Редактирай“ и ги избери — по тях ти подреждаме
+            обявите.
+          </p>
+        )
+      )}
+    </section>
+  );
+}
+
 function EditDialog({
   me,
   onClose,
@@ -337,6 +383,10 @@ function EditDialog({
   const [error, setError] = useState<string | null>(null);
   const s = me.student;
   const o = me.organizer;
+  const saved = useMyInterestIds(s != null);
+  // null = the person hasn't touched the picker: keep what's saved.
+  const [picked, setPicked] = useState<number[] | null>(null);
+  const interests = picked ?? saved.data ?? [];
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -359,6 +409,7 @@ function EditDialog({
       if (get("school") !== (s.school ?? "")) p.school = get("school");
       if (grade !== s.grade) p.grade = grade; // null clears it
       if (get("bio") !== (s.bio ?? "")) p.bio = get("bio");
+      if (picked) p.interests = picked;
     }
     if (o) {
       if (get("orgName") !== o.orgName) p.orgName = get("orgName");
@@ -397,6 +448,7 @@ function EditDialog({
                 За мен
                 <textarea name="bio" rows={4} defaultValue={s.bio ?? ""} className={inputClass} />
               </label>
+              <InterestPicker value={interests} onChange={setPicked} />
             </>
           )}
           {o && (
