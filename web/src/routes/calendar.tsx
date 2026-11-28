@@ -31,7 +31,10 @@ export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
 
-type Entry = { opp: Opp; kind: "deadline" | "start"; at: Date };
+/** One card per event, with its deadline and start date together. */
+type Entry = { opp: Opp; deadline: Date | null; start: Date | null };
+/** An entry in the list, sorted by `at`: the date that put it there. */
+type Row = Entry & { at: Date };
 
 const dayFmt = new Intl.DateTimeFormat("bg-BG", { weekday: "long", day: "numeric", month: "long" });
 const dateOnly = new Intl.DateTimeFormat("bg-BG", { day: "numeric", month: "short" });
@@ -77,22 +80,38 @@ function CalendarPage() {
   const hoveredPeriod = hovered ? periodOf(hovered) : null;
   const marked = useMemo(() => markDates(feed.data ?? []), [feed.data]);
 
-  const entries = useMemo<Entry[]>(() => {
-    const out: Entry[] = [];
-    for (const o of feed.data ?? []) {
-      if (o.deadlineAt) out.push({ opp: o, kind: "deadline", at: new Date(o.deadlineAt) });
-      if (o.startsAt) out.push({ opp: o, kind: "start", at: new Date(o.startsAt) });
-    }
-    return out.sort((a, b) => a.at.getTime() - b.at.getTime());
-  }, [feed.data]);
-
-  const visible = entries.filter((e) =>
-    view === "day"
-      ? e.at >= startOfDay(date) && e.at <= endOfDay(date)
-      : view === "saved"
-        ? saved.data?.has(e.opp.id)
-        : e.at >= startOfDay(new Date()),
+  const entries = useMemo<Entry[]>(
+    () =>
+      (feed.data ?? [])
+        .filter((o) => o.deadlineAt || o.startsAt)
+        .map((o) => ({
+          opp: o,
+          deadline: o.deadlineAt ? new Date(o.deadlineAt) : null,
+          start: o.startsAt ? new Date(o.startsAt) : null,
+        })),
+    [feed.data],
   );
+
+  const today = startOfDay(new Date());
+  const visible: Row[] = entries
+    .flatMap((e): Row[] => {
+      const dates = [e.deadline, e.start].filter((d): d is Date => d != null);
+      const upcoming = dates.filter((d) => d >= today);
+      // The earliest date that matches the view decides where the card goes.
+      const pick =
+        view === "day"
+          ? dates.filter((d) => d >= startOfDay(date) && d <= endOfDay(date))
+          : view === "saved"
+            ? saved.data?.has(e.opp.id)
+              ? upcoming.length
+                ? upcoming
+                : dates
+              : []
+            : upcoming;
+      if (!pick.length) return [];
+      return [{ ...e, at: new Date(Math.min(...pick.map((d) => d.getTime()))) }];
+    })
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
 
   return (
     <div className="min-h-screen">
@@ -148,10 +167,10 @@ function CalendarPage() {
             </div>
             <div className="border-l-[6px] border-primary pl-4">
               <p className="font-heavy text-3xl">
-                {entries.filter((e) => e.kind === "deadline").length} СРОКА
+                {entries.filter((e) => e.deadline).length} СРОКА
               </p>
               <p className="text-sm text-muted-foreground">
-                {entries.filter((e) => e.kind === "start").length} събития с начална дата
+                {entries.filter((e) => e.start).length} събития с начална дата
               </p>
             </div>
           </aside>
@@ -202,7 +221,7 @@ function CalendarPage() {
               <div className="space-y-5">
                 {visible.map((e, i) => (
                   <article
-                    key={`${e.opp.id}-${e.kind}`}
+                    key={e.opp.id}
                     className={`zine animate-in fade-in slide-in-from-bottom-2 fill-mode-both bg-card p-5 transition-colors ${hovered?.id === e.opp.id ? "outline outline-[3px] outline-primary" : ""}`}
                     style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
                     onMouseEnter={() => hoverStart(e.opp)}
@@ -210,10 +229,34 @@ function CalendarPage() {
                     onFocus={() => hoverStart(e.opp)}
                     onBlur={hoverEnd}
                   >
-                    <p className="mb-2 font-heavy text-xl text-primary">
-                      {when(e.at)} · {e.kind === "deadline" ? "КРАЕН СРОК" : "НАЧАЛО"} ·{" "}
-                      {OPP_TYPE_LABEL[e.opp.type]}
-                      {isSameDay(e.at, new Date()) && <span className="ransom ml-2">ДНЕС</span>}
+                    <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-heavy text-xl">
+                      {(
+                        [
+                          ["КРАЕН СРОК", e.deadline],
+                          ["НАЧАЛО", e.start],
+                        ] as const
+                      ).map(
+                        ([label, d]) =>
+                          d && (
+                            <span
+                              key={label}
+                              // The date that placed the card here stands out; past dates fade.
+                              className={
+                                d.getTime() === e.at.getTime()
+                                  ? "text-primary"
+                                  : d < today
+                                    ? "text-muted-foreground line-through"
+                                    : "text-muted-foreground"
+                              }
+                            >
+                              {label} {when(d)}
+                            </span>
+                          ),
+                      )}
+                      <span className="text-muted-foreground">· {OPP_TYPE_LABEL[e.opp.type]}</span>
+                      {[e.deadline, e.start].some((d) => d && isSameDay(d, new Date())) && (
+                        <span className="ransom">ДНЕС</span>
+                      )}
                     </p>
                     <Link
                       to="/opp/$id"
