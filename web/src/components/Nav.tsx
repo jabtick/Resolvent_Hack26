@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  Award,
   Bookmark,
   CalendarDays,
   Home,
@@ -69,6 +70,10 @@ export function Nav() {
                     <Link to="/profile" className={item}>
                       <User />
                       Профил
+                    </Link>
+                    <Link to="/achievements" className={item}>
+                      <Award />
+                      Значки
                     </Link>
                     <Link to="/saved" className={item}>
                       <Bookmark />

@@ -20,7 +20,7 @@ function Code() {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const code = String(new FormData(e.currentTarget).get("code") ?? "").trim();
-    const err = /^\d{6}$/.test(code) ? null : "Кодът е 6 цифри.";
+    const err = /^\d{6,8}$/.test(code) ? null : "Кодът е от 6 до 8 цифри.";
     setError(err);
     if (err) return;
     await run(() => confirmCode(code));
@@ -29,7 +29,7 @@ function Code() {
   return (
     <AuthPage title="ПРОВЕРИ ПОЩАТА">
       <p>
-        Пратихме 6-цифрен код на <b>{pendingEmail ?? "имейла ти"}</b>. Въведи го тук.
+        Пратихме код на <b>{pendingEmail ?? "имейла ти"}</b>. Въведи го тук.
       </p>
       <form noValidate className="mt-4 space-y-4" onSubmit={(e) => void submit(e)}>
         <Field
@@ -37,7 +37,7 @@ function Code() {
           name="code"
           inputMode="numeric"
           autoComplete="one-time-code"
-          maxLength={6}
+          maxLength={8}
           className="mt-1 w-full border-[3px] border-ink bg-background p-3 text-center font-heavy text-4xl tracking-[0.5em] outline-none transition-shadow focus:shadow-brutal-pink"
           error={error}
         />
