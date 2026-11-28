@@ -17,7 +17,7 @@ Project `tjkwpebrakwfkhenpayl` (Frankfurt). Schema overview: [docs/database-sche
 | `20261127200000_profiles_feed.sql` | Profiles and feed: 8 tables, 1 view, RLS |
 | `20261127200100_organizer_rename_resets_verification.sql` | A verified organizer who changes `org_name` goes back to `pending` |
 | `20261128090000_schema_comments.sql` | Table and column descriptions for the dashboard (documentation only). **Not confirmed live yet** |
-| `20261128140000_badges.sql` | `event_results`, `badges`, view `public_badges`, RLS. Schema only, no upload/awarding yet. **Not pushed yet** |
+| `20261128140000_badges.sql` | `event_results`, `badges`, view `public_badges`, RLS. Schema only, no upload/awarding yet |
 | `delete-account` function | The user deletes their own account |
 
 Check before relying on this table: `supabase migration list` and `supabase functions list`.
