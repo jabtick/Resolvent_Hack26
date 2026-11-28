@@ -1,0 +1,240 @@
+// The feed: published opportunities from Supabase (`opportunities`, owned by
+// Gosho and Niki), plus the signed-in person's saved ones. While the table is
+// empty the feed shows clearly marked sample items instead.
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { SAMPLE_OPPS } from "@/data/sampleOpps";
+import type { Database } from "@/integrations/supabase/types";
+
+import { AppError, mapError } from "./errors";
+
+type Db = SupabaseClient<Database>;
+export type OppType = Database["public"]["Enums"]["opportunity_type"];
+
+export const OPP_TYPE_LABEL: Record<OppType, string> = {
+  competition: "Състезание",
+  scholarship: "Стипендия",
+  internship: "Стаж",
+  open_day: "Отворени врати",
+  university_program: "Програма",
+};
+
+export const OPP_TYPES = Object.keys(OPP_TYPE_LABEL) as OppType[];
+
+export type OppColor = "primary" | "secondary" | "accent";
+
+export type Opp = {
+  id: string;
+  title: string;
+  org: string;
+  type: OppType;
+  tags: string[];
+  city: string | null;
+  online: boolean;
+  deadlineAt: string | null; // ISO
+  startsAt: string | null; // ISO
+  description: string;
+  externalUrl: string | null;
+  color: OppColor;
+  isSample: boolean;
+};
+
+export type NewOpp = {
+  title: string;
+  type: OppType;
+  city: string | null;
+  online: boolean;
+  startsAt: string | null;
+  deadlineAt: string | null;
+  description: string;
+  externalUrl: string | null;
+  publish: boolean;
+};
+
+const COLORS: OppColor[] = ["primary", "secondary", "accent"];
+
+/** Same item, same colour, every time. */
+export function colorFor(id: string): OppColor {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return COLORS[h % COLORS.length]!;
+}
+
+const MONTHS = ["яну", "фев", "мар", "апр", "май", "юни", "юли", "авг", "сеп", "окт", "ное", "дек"];
+
+/** "до 20 дек", "изтекъл", or "без срок". */
+export function formatDeadline(iso: string | null, now = new Date()): string {
+  if (!iso) return "без срок";
+  const d = new Date(iso);
+  if (d < now) return "изтекъл";
+  return `до ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+export function placeOf(o: Pick<Opp, "city" | "online">): string {
+  if (o.online && o.city) return `${o.city} · онлайн`;
+  if (o.online) return "Онлайн";
+  return o.city ?? "—";
+}
+
+/** Org name for a scraped item: the site it came from. */
+export function hostOf(url: string | null): string {
+  if (!url) return "Изскрейпено";
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Изскрейпено";
+  }
+}
+
+async function guard<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    throw mapError(e);
+  }
+}
+
+const SELECT =
+  "id, title, type, city, is_online, deadline_at, starts_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
+
+type Row = {
+  id: string;
+  title: string;
+  type: OppType;
+  city: string | null;
+  is_online: boolean;
+  deadline_at: string | null;
+  starts_at: string | null;
+  description: string | null;
+  external_url: string | null;
+  source_url: string | null;
+  organizer_id: string | null;
+  opportunity_tags: { tags: { name: string } | null }[] | null;
+};
+
+export function createOppsApi(db: Db) {
+  async function orgNames(ids: string[]): Promise<Map<string, string>> {
+    if (!ids.length) return new Map();
+    const { data, error } = await db
+      .from("organizer_details")
+      .select("profile_id, org_name")
+      .in("profile_id", ids);
+    if (error) throw error;
+    return new Map((data ?? []).map((o) => [o.profile_id, o.org_name]));
+  }
+
+  async function toOpps(rows: Row[]): Promise<Opp[]> {
+    const ids = [...new Set(rows.map((r) => r.organizer_id).filter((x): x is string => !!x))];
+    const names = await orgNames(ids);
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      org: r.organizer_id ? (names.get(r.organizer_id) ?? "Организатор") : hostOf(r.source_url),
+      type: r.type,
+      tags: (r.opportunity_tags ?? []).map((t) => t.tags?.name).filter((x): x is string => !!x),
+      city: r.city,
+      online: r.is_online,
+      deadlineAt: r.deadline_at,
+      startsAt: r.starts_at,
+      description: r.description ?? "",
+      externalUrl: r.external_url ?? r.source_url,
+      color: colorFor(r.id),
+      isSample: false,
+    }));
+  }
+
+  async function uid(): Promise<string | null> {
+    const { data } = await db.auth.getSession();
+    return data.session?.user.id ?? null;
+  }
+
+  return {
+    /** Published items, soonest deadline first. Samples while the table is empty. */
+    listFeed: () =>
+      guard(async (): Promise<Opp[]> => {
+        const { data, error } = await db
+          .from("opportunities")
+          .select(SELECT)
+          .eq("status", "published")
+          .order("deadline_at", { ascending: true, nullsFirst: false })
+          .limit(200);
+        if (error) throw error;
+        const opps = await toOpps((data ?? []) as unknown as Row[]);
+        return opps.length ? opps : SAMPLE_OPPS;
+      }),
+
+    /** One item (a sample id works too). Null when it doesn't exist. */
+    get: (id: string) =>
+      guard(async (): Promise<Opp | null> => {
+        const sample = SAMPLE_OPPS.find((o) => o.id === id);
+        if (sample) return sample;
+        if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+        const { data, error } = await db
+          .from("opportunities")
+          .select(SELECT)
+          .eq("id", id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return null;
+        return (await toOpps([data as unknown as Row]))[0]!;
+      }),
+
+    /** Ids the signed-in person saved (empty when signed out). */
+    savedIds: () =>
+      guard(async (): Promise<Set<string>> => {
+        const me = await uid();
+        if (!me) return new Set();
+        const { data, error } = await db
+          .from("saved_opportunities")
+          .select("opportunity_id")
+          .eq("profile_id", me);
+        if (error) throw error;
+        return new Set((data ?? []).map((r) => r.opportunity_id));
+      }),
+
+    /**
+     * An organizer's new item. `organizer_id` and `source` are filled by the
+     * database (clients may not set them); publishing needs a verified org.
+     */
+    create: (p: NewOpp) =>
+      guard(async () => {
+        const { error } = await db.from("opportunities").insert({
+          title: p.title.trim(),
+          type: p.type,
+          city: p.city,
+          is_online: p.online,
+          starts_at: p.startsAt,
+          deadline_at: p.deadlineAt,
+          description: p.description,
+          external_url: p.externalUrl,
+          status: p.publish ? "published" : "draft",
+        });
+        if (error) {
+          if (p.publish && error.code === "42501") {
+            throw new AppError(
+              "Публикуването е само за проверени организатори. Запази като чернова.",
+            );
+          }
+          throw error;
+        }
+      }),
+
+    setSaved: (opp: Pick<Opp, "id" | "isSample">, saved: boolean) =>
+      guard(async () => {
+        const me = await uid();
+        if (!me) throw new AppError("Влез, за да запазваш обяви.");
+        if (opp.isSample) throw new AppError("Това е примерна обява — не може да се запази.");
+        const q = saved
+          ? db.from("saved_opportunities").insert({ profile_id: me, opportunity_id: opp.id })
+          : db
+              .from("saved_opportunities")
+              .delete()
+              .eq("profile_id", me)
+              .eq("opportunity_id", opp.id);
+        const { error } = await q;
+        if (error) throw error;
+      }),
+  };
+}
+
+export type OppsApi = ReturnType<typeof createOppsApi>;

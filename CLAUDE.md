@@ -18,16 +18,17 @@
 
 ## Технологии
 
-- **Frontend:** Flutter + Dart, с пакета `supabase_flutter`.
+- **Frontend (от 2026-11-28):** React — TanStack Start + Tailwind v4 + shadcn, в `web/`. Тръгна от прототипа от Lovable, свързан с нашия Supabase. Сайтът се рендерира и на сървъра (Netlify), за да има картинка и име при споделяне на `/u/<име>`.
 - **Backend:** Supabase — Postgres база, Auth (вход и потвърждение на имейл), Storage (файлове, напр. Excel с резултати), Edge Functions (сървърна логика).
 - **Сигурност:** достъпът до данните се контролира с RLS (Row Level Security) в Postgres.
-- **API ключове:** във Flutter се слага само публичният ключ (`sb_publishable_…`). Ключове за AI и `service_role` живеят само в Edge Functions.
+- **API ключове:** в сайта се слага само публичният ключ (`sb_publishable_…`). Ключове за AI и `service_role` живеят само в Edge Functions.
 
 ## Папки в репото
 
 | Папка | Какво | Чие |
 | --- | --- | --- |
-| `app/` | Flutter приложението (подробно по-долу) | всеки в своята `features/<x>/` |
+| `web/` | **сайтът** (React, подробно по-долу) | всеки в своите страници |
+| `app/` | старото Flutter приложение — **не се развива**, остава за справка | |
 | `supabase/migrations/` | SQL миграции | схема — Гошо, Ники; RLS — Боги |
 | `supabase/functions/` | Edge Functions (сървърът) | Боги, Гошо |
 | `pipeline/scraper/` | сурови JSON-и → обяви с тагове | Ники |
@@ -69,7 +70,7 @@
 
 Базата е на Гошо и Ники; Боги пише правилата за достъп (RLS) върху тяхната схема и прави сървъра заедно с Гошо.
 
-- **Сървър (с Гошо):** Edge Functions — логиката, която не може да живее във Flutter: тайни ключове, проверки, действия с повече права.
+- **Сървър (с Гошо):** Edge Functions — логиката, която не може да живее в браузъра: тайни ключове, проверки, действия с повече права.
 - **Профили:** какво съдържа профилът на ученик и на организатор, верификация на организатори, кой какво вижда публично.
 - **Споделяне (с Ицо):** публичен линк към профил или значка, който работодател може да провери.
 - **Киберсигурност (с Гошо):** RLS на всяка таблица, rate limits, captcha при регистрация, потвърждение на имейл.
@@ -82,17 +83,21 @@
 
 Подробно: [supabase/README.md](supabase/README.md) — какво е качено, как се прави миграция и Edge Function, правилата за всяка таблица (RLS, `on delete cascade`, `birth_date`, верификация само от сървъра). Схемата: [docs/database-schema.md](docs/database-schema.md). Проект `tjkwpebrakwfkhenpayl` (Frankfurt).
 
-## Приложение (`app/`)
+## Сайтът (`web/`)
 
-Flutter за web (после и телефон), хостинг в Netlify. Подробно (пускане, папки, как се прави функционалност, визия): [app/README.md](app/README.md).
+React (TanStack Start), хостинг в Netlify. Подробно: [web/README.md](web/README.md).
 
-- **Всеки пипа само своята папка** в `app/lib/features/`: `feed/` — Гошо, `calendar/` — Ники, `achievements/` — Захари; `auth/`, `profile/`, `settings/` и `core/` — Боги.
-- **Екраните не викат Supabase директно** — през `<x>_repo.dart` + `fake_` + `supabase_` версия. Пример: `features/profile/`.
-- **За Claude:** пусни `flutter test` преди да кажеш, че нещо е готово; Flutter команди от PowerShell с главно `C:` в пътя.
+- **Пускане:** `cd web` → `npm install` → `npm run dev` → http://localhost:8080. Тестове: `npm test`. Проверка: `npm run typecheck` и `npm run lint`.
+- **Страниците** са в `web/src/routes/` (един файл = един адрес). Чии са: `index`, `opp.$id`, `saved` — Гошо (фийд); `calendar` — Ники; постиженията (нова страница) — Захари; `join`, `login`, `code`, `create-profile`, `forgot`, `profile`, `u.$username`, `settings` — Боги.
+- **Страниците не викат Supabase директно:** данните минават през `web/src/lib/` (`auth.ts`, `profiles.ts`, `opps.ts`, събрани в `api.ts`; React Query куките в `queries.ts`). Всеки модул има тестове с фалшив сървър (`web/src/test/fakeSupabase.ts`).
+- **Акаунтът** (вписан ли е, чака ли код, има ли профил) е в `components/AccountProvider.tsx`; пренасочването е в `lib/redirect.ts`.
+- **Визията** е от дизайна в Lovable: класовете `zine`, `zine-pink`, `ransom`, `tape`, `jitter`, `tilt-l/r` и цветовете от `src/styles.css` — не цветове на ръка. Шрифтовете са с кирилица и се качват със сайта (не от Google — GDPR).
+- **Типовете на базата** (`web/src/integrations/supabase/types.ts`) се генерират от живата схема след всяка миграция: `npx supabase gen types typescript --project-id tjkwpebrakwfkhenpayl --schema public > web/src/integrations/supabase/types.ts`.
+- **За Claude:** `npm test`, `npm run typecheck` и `npm run lint` в `web/` преди да кажеш, че нещо е готово.
 
 ## Решения и правила за работа
 
-- Технологиите са Flutter + Dart и Supabase.
+- Технологиите са React (TanStack Start) и Supabase. До 2026-11-28 беше Flutter — сменено, защото демото е сайт, а дизайнът от Lovable вече е на React.
 - Сроковете от Trello (петък 18:00, събота 13:00 и т.н.) не са задължителни.
 - Репо: `Resolvent_Hack26` в GitHub. Всеки комитва на ръка — Claude сесиите само променят файлове, без commit и push.
 - Комуникацията е на български; кодът, имената на таблици, commit съобщенията и README файловете — на английски. Само този файл е на български.
