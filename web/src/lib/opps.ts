@@ -19,7 +19,12 @@ export const OPP_TYPE_LABEL: Record<OppType, string> = {
   university_program: "Програма",
 };
 
-export const OPP_TYPES = Object.keys(OPP_TYPE_LABEL) as OppType[];
+/**
+ * Types offered in the UI (feed counts, filters, the organizer form). `open_day` and
+ * `university_program` still exist in the database and keep their labels above, so an
+ * existing item of that type still shows correctly; they are just not offered.
+ */
+export const OPP_TYPES: OppType[] = ["competition", "scholarship", "internship"];
 
 export type OppColor = "primary" | "secondary" | "accent";
 
@@ -106,6 +111,30 @@ export function formatStatus(
 ): string {
   if (isOngoing(o, now)) return "тече сега";
   return formatDeadline(o.deadlineAt, now);
+}
+
+/**
+ * The days an event happens, for the calendar: start through end (or just the start day).
+ * Falls back to the deadline day for items with no start (e.g. most scholarships).
+ */
+export function periodOf(
+  o: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">,
+): { from: Date; to: Date } | null {
+  if (o.startsAt) {
+    const from = new Date(o.startsAt);
+    const to = o.endsAt ? new Date(o.endsAt) : from;
+    return { from, to: to < from ? from : to };
+  }
+  if (o.deadlineAt) {
+    const d = new Date(o.deadlineAt);
+    return { from: d, to: d };
+  }
+  return null;
+}
+
+/** One calendar mark per event: its start day, or its deadline day if it has no start. */
+export function markDates(opps: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">[]): Date[] {
+  return opps.map((o) => periodOf(o)?.from).filter((d): d is Date => !!d);
 }
 
 /**
