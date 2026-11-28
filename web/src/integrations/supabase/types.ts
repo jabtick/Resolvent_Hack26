@@ -80,6 +80,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "opportunities_organizer_id_fkey";
+            columns: ["organizer_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       opportunity_tags: {
@@ -145,6 +152,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "organizer_details_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       profile_interests: {
@@ -167,6 +181,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_interests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
           },
           {
             foreignKeyName: "profile_interests_tag_id_fkey";
@@ -238,6 +259,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "saved_opportunities_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       student_details: {
@@ -288,6 +316,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "student_details_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       tags: {
@@ -310,6 +345,19 @@ export type Database = {
       };
     };
     Views: {
+      public_organizers: {
+        Row: {
+          avatar_url: string | null;
+          display_name: string | null;
+          org_name: string | null;
+          org_type: Database["public"]["Enums"]["org_type"] | null;
+          profile_id: string | null;
+          username: string | null;
+          verification_status: Database["public"]["Enums"]["verification_status"] | null;
+          website: string | null;
+        };
+        Relationships: [];
+      };
       public_profiles: {
         Row: {
           avatar_url: string | null;
@@ -326,6 +374,15 @@ export type Database = {
       check_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
+      };
+      my_opportunity_stats: {
+        Args: never;
+        Returns: {
+          opportunity_id: string;
+          saves: number;
+          status: Database["public"]["Enums"]["opportunity_status"];
+          title: string;
+        }[];
       };
     };
     Enums: {

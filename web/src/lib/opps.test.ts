@@ -228,3 +228,24 @@ describe("organizer posts", () => {
     ).rejects.toThrow("Публикуването е само за проверени организатори. Запази като чернова.");
   });
 });
+
+describe("organizer pages and dashboard", () => {
+  it("lists only that organizer's published items", async () => {
+    const { server, api } = setup();
+    server.opportunities = [
+      { id: OPP, title: "Купа", type: "competition", is_online: false, organizer_id: ORG },
+    ];
+    server.organizers = [{ profile_id: ORG, org_name: "TechSchool" }];
+    const list = await api.listByOrganizer(ORG);
+    expect(list.map((o) => o.org)).toEqual(["TechSchool"]);
+    const q = server.readsOf("opportunities")[0]!.url.searchParams;
+    expect(q.get("organizer_id")).toBe(`eq.${ORG}`);
+    expect(q.get("status")).toBe("eq.published");
+  });
+
+  it("dashboard stats: numbers come back as numbers", async () => {
+    const { server, api } = setup();
+    server.stats = [{ opportunity_id: OPP, title: "Купа", status: "draft", saves: "3" }];
+    expect(await api.myStats()).toEqual([{ id: OPP, title: "Купа", status: "draft", saves: 3 }]);
+  });
+});

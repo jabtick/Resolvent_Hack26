@@ -40,6 +40,14 @@ export type Opp = {
   isSample: boolean;
 };
 
+/** One line of the organizer dashboard. */
+export type OppStat = {
+  id: string;
+  title: string;
+  status: "draft" | "published" | "archived";
+  saves: number;
+};
+
 export type NewOpp = {
   title: string;
   type: OppType;
@@ -209,6 +217,33 @@ export function createOppsApi(db: Db) {
         if (error) throw error;
         if (!data) return null;
         return (await toOpps([data as unknown as Row]))[0]!;
+      }),
+
+    /** An organizer's published items, soonest deadline first. */
+    listByOrganizer: (profileId: string) =>
+      guard(async (): Promise<Opp[]> => {
+        const { data, error } = await db
+          .from("opportunities")
+          .select(SELECT)
+          .eq("organizer_id", profileId)
+          .eq("status", "published")
+          .order("deadline_at", { ascending: true, nullsFirst: false })
+          .limit(100);
+        if (error) throw error;
+        return toOpps((data ?? []) as unknown as Row[]);
+      }),
+
+    /** Dashboard numbers for the signed-in organizer: saves per own item. */
+    myStats: () =>
+      guard(async (): Promise<OppStat[]> => {
+        const { data, error } = await db.rpc("my_opportunity_stats");
+        if (error) throw error;
+        return (data ?? []).map((r) => ({
+          id: r.opportunity_id,
+          title: r.title,
+          status: r.status,
+          saves: Number(r.saves),
+        }));
       }),
 
     /** Ids the signed-in person saved (empty when signed out). */
