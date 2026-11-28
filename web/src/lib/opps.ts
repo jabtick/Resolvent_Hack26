@@ -79,7 +79,38 @@ export type NewOpp = {
   description: string;
   externalUrl: string | null;
   publish: boolean;
+  /** Tag ids from `tags`. Left out = tags are not touched. */
+  tagIds?: number[] | undefined;
 };
+
+/** One of the organizer's own items, as the edit form needs it. */
+export type EditableOpp = NewOpp & { id: string; status: OppStat["status"]; tagIds: number[] };
+
+export type Tag = { id: number; name: string };
+
+const NOT_VERIFIED = "Публикуването е само за проверени организатори. Запази като чернова.";
+const NOT_YOURS = "Обявата я няма или не е твоя.";
+
+/** The columns an organizer may write (the rest are filled by the database). */
+function toColumns(p: NewOpp) {
+  return {
+    title: p.title.trim(),
+    type: p.type,
+    city: p.city,
+    is_online: p.online,
+    starts_at: p.startsAt,
+    deadline_at: p.deadlineAt,
+    description: p.description,
+    external_url: p.externalUrl,
+    status: p.publish ? ("published" as const) : ("draft" as const),
+  };
+}
+
+function writeError(p: NewOpp, error: { code?: string }): unknown {
+  return p.publish && error.code === "42501" ? new AppError(NOT_VERIFIED) : error;
+}
+
+const UUID = /^[0-9a-f-]{36}$/i;
 
 const COLORS: OppColor[] = ["primary", "secondary", "accent"];
 
@@ -199,6 +230,15 @@ export function titleFontSize(title: string): string {
   return `min(${size}cqw, 3rem)`;
 }
 
+/** ISO → the value a datetime-local input wants, in local time ("2026-12-10T11:00"). */
+export function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function placeOf(o: Pick<Opp, "city" | "online">): string {
   if (o.online && o.city) return `${o.city} · онлайн`;
   if (o.online) return "Онлайн";
@@ -272,6 +312,18 @@ export function createOppsApi(db: Db) {
       color: colorFor(r.id),
       isSample: false,
     }));
+  }
+
+  /** Replace an item's tags with exactly these. */
+  async function setTags(id: string, tagIds: number[]) {
+    const del = await db.from("opportunity_tags").delete().eq("opportunity_id", id);
+    if (del.error) throw del.error;
+    const unique = [...new Set(tagIds)];
+    if (!unique.length) return;
+    const ins = await db
+      .from("opportunity_tags")
+      .insert(unique.map((tag_id) => ({ opportunity_id: id, tag_id })));
+    if (ins.error) throw ins.error;
   }
 
   async function uid(): Promise<string | null> {
@@ -386,26 +438,85 @@ export function createOppsApi(db: Db) {
      * database (clients may not set them); publishing needs a verified org.
      */
     create: (p: NewOpp) =>
+      guard(async (): Promise<string> => {
+        const { data, error } = await db
+          .from("opportunities")
+          .insert(toColumns(p))
+          .select("id")
+          .single();
+        if (error) throw writeError(p, error);
+        if (p.tagIds?.length) await setTags(data.id, p.tagIds);
+        return data.id;
+      }),
+
+    /** Every tag, A to Z, for the organizer form. */
+    listTags: () =>
+      guard(async (): Promise<Tag[]> => {
+        const { data, error } = await db.from("tags").select("id, name").order("name");
+        if (error) throw error;
+        return data ?? [];
+      }),
+
+    /** One of my own items (any status) for the edit form. Null when not mine. */
+    getForEdit: (id: string) =>
+      guard(async (): Promise<EditableOpp | null> => {
+        const me = await uid();
+        if (!me || !UUID.test(id)) return null;
+        const { data, error } = await db
+          .from("opportunities")
+          .select(
+            "id, title, type, city, is_online, starts_at, deadline_at, description, external_url, status, opportunity_tags(tag_id)",
+          )
+          .eq("id", id)
+          .eq("organizer_id", me)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return null;
+        return {
+          id: data.id,
+          title: data.title,
+          type: data.type,
+          city: data.city,
+          online: data.is_online,
+          startsAt: data.starts_at,
+          deadlineAt: data.deadline_at,
+          description: data.description ?? "",
+          externalUrl: data.external_url,
+          publish: data.status === "published",
+          status: data.status,
+          tagIds: (data.opportunity_tags ?? []).map((t) => t.tag_id),
+        };
+      }),
+
+    /** Change one of my items. Database rules stop changes to anyone else's. */
+    update: (id: string, p: NewOpp) =>
       guard(async () => {
-        const { error } = await db.from("opportunities").insert({
-          title: p.title.trim(),
-          type: p.type,
-          city: p.city,
-          is_online: p.online,
-          starts_at: p.startsAt,
-          deadline_at: p.deadlineAt,
-          description: p.description,
-          external_url: p.externalUrl,
-          status: p.publish ? "published" : "draft",
-        });
-        if (error) {
-          if (p.publish && error.code === "42501") {
-            throw new AppError(
-              "Публикуването е само за проверени организатори. Запази като чернова.",
-            );
-          }
-          throw error;
-        }
+        const me = await uid();
+        if (!me) throw new AppError("Влез, за да промениш обявата.");
+        const { data, error } = await db
+          .from("opportunities")
+          .update(toColumns(p))
+          .eq("id", id)
+          .eq("organizer_id", me)
+          .select("id");
+        if (error) throw writeError(p, error);
+        if (!data?.length) throw new AppError(NOT_YOURS);
+        if (p.tagIds) await setTags(id, p.tagIds);
+      }),
+
+    /** Delete one of my items (its tags and saves go with it). */
+    remove: (id: string) =>
+      guard(async () => {
+        const me = await uid();
+        if (!me) throw new AppError("Влез, за да изтриеш обявата.");
+        const { data, error } = await db
+          .from("opportunities")
+          .delete()
+          .eq("id", id)
+          .eq("organizer_id", me)
+          .select("id");
+        if (error) throw error;
+        if (!data?.length) throw new AppError(NOT_YOURS);
       }),
 
     setSaved: (opp: Pick<Opp, "id" | "isSample">, saved: boolean) =>

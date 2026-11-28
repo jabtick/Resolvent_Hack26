@@ -7,17 +7,9 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { useAccount } from "@/components/AccountProvider";
-import { inputClass, useBusy } from "@/components/forms";
 import { Nav } from "@/components/Nav";
+import { OppDialog } from "@/components/OppDialog";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { api } from "@/lib/api";
 import {
   markDates,
   OPP_TYPE_LABEL,
@@ -247,125 +239,12 @@ function CalendarPage() {
           </section>
         </div>
         {adding && (
-          <NewOppDialog
+          <OppDialog
             verified={me.data?.organizer?.verificationStatus === "verified"}
             onClose={() => setAdding(false)}
           />
         )}
       </main>
     </div>
-  );
-}
-
-function NewOppDialog({ verified, onClose }: { verified: boolean; onClose: () => void }) {
-  const cache = useQueryClient();
-  const { busy, run } = useBusy();
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const d = new FormData(e.currentTarget);
-    const get = (k: string) => String(d.get(k) ?? "").trim();
-    const iso = (k: string) => (get(k) ? new Date(get(k)).toISOString() : null);
-    if (!get("title")) return setError("Въведи заглавие.");
-    if (get("title").length > 200) return setError("Заглавието е до 200 знака.");
-    setError(null);
-    await run(async () => {
-      await api.opps.create({
-        title: get("title"),
-        type: get("type") as OppType,
-        city: get("city") || null,
-        online: d.get("online") === "on",
-        startsAt: iso("startsAt"),
-        deadlineAt: iso("deadlineAt"),
-        description: get("description"),
-        externalUrl: get("externalUrl") || null,
-        publish: d.get("publish") === "on",
-      });
-      await cache.invalidateQueries({ queryKey: ["feed"] });
-      toast.success(d.get("publish") === "on" ? "Публикувано" : "Запазено като чернова");
-      onClose();
-    });
-  }
-
-  return (
-    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto border-[3px] border-ink bg-card sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle className="font-heavy text-4xl">НОВА ОБЯВА</DialogTitle>
-          <DialogDescription>
-            {verified
-              ? "Организацията ти е проверена — можеш да публикуваш."
-              : "Докато организацията не е проверена, обявите остават чернови."}
-          </DialogDescription>
-        </DialogHeader>
-        <form noValidate className="space-y-4" onSubmit={(e) => void submit(e)}>
-          <label className="block text-sm font-bold">
-            Заглавие
-            <input name="title" className={inputClass} />
-          </label>
-          <label className="block text-sm font-bold">
-            Вид
-            <select name="type" defaultValue="competition" className={inputClass}>
-              {OPP_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {OPP_TYPE_LABEL[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-bold">
-              Начало
-              <input name="startsAt" type="datetime-local" className={inputClass} />
-            </label>
-            <label className="block text-sm font-bold">
-              Краен срок
-              <input name="deadlineAt" type="datetime-local" className={inputClass} />
-            </label>
-          </div>
-          <label className="block text-sm font-bold">
-            Град
-            <input name="city" className={inputClass} />
-          </label>
-          <label className="flex items-center gap-2 text-sm font-bold">
-            <input name="online" type="checkbox" className="h-5 w-5 accent-[var(--primary)]" />
-            Онлайн
-          </label>
-          <label className="block text-sm font-bold">
-            Линк за кандидатстване
-            <input name="externalUrl" type="url" placeholder="https://" className={inputClass} />
-          </label>
-          <label className="block text-sm font-bold">
-            Описание
-            <textarea name="description" rows={4} className={inputClass} />
-          </label>
-          {verified && (
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input name="publish" type="checkbox" className="h-5 w-5 accent-[var(--primary)]" />
-              Публикувай веднага
-            </label>
-          )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="border-[3px] border-ink px-4 py-2 font-heavy text-lg"
-            >
-              ОТКАЗ
-            </button>
-            <button
-              type="submit"
-              disabled={busy}
-              className="zine-pink jitter bg-ink px-4 py-2 font-heavy text-lg text-paper"
-            >
-              {busy ? "ЗАПАЗВАМ…" : "ЗАПАЗИ"}
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
