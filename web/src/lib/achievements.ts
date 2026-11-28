@@ -17,8 +17,8 @@ export type Badge = {
   date: string;
   /** 1, 2, 3 for a podium place; null for participation. */
   place: 1 | 2 | 3 | null;
-  isHidden: boolean;
-  isSample: boolean;
+  isHidden?: boolean | undefined;
+  isSample?: boolean | undefined;
 };
 
 const MONTHS = ["Яну", "Фев", "Мар", "Апр", "Май", "Юни", "Юли", "Авг", "Сеп", "Окт", "Ное", "Дек"];
