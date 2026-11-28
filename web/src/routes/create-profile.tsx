@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 
 import { useAccount } from "@/components/AccountProvider";
 import { AuthPage, Field, inputClass, SubmitButton, useBusy } from "@/components/forms";
+import { InterestPicker } from "@/components/InterestPicker";
 import { ORG_TYPE_LABEL, type AccountType, type OrgType } from "@/lib/auth";
 import {
   isUnder14,
@@ -29,6 +30,7 @@ function CreateProfile() {
   const [type, setType] = useState<AccountType>(side ?? "student");
   const [birth, setBirth] = useState("");
   const [terms, setTerms] = useState(false);
+  const [interests, setInterests] = useState<number[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const birthDate = parseBgDate(birth);
   const under14 = birthDate != null && isUnder14(birthDate, new Date());
@@ -55,6 +57,7 @@ function CreateProfile() {
         username,
         displayName,
         birthDate: type === "student" ? birthDate! : undefined,
+        interests: type === "student" ? interests : undefined,
         orgName: type === "organizer" ? orgName : undefined,
         orgType: type === "organizer" ? orgType! : undefined,
       }),
@@ -102,6 +105,7 @@ function CreateProfile() {
                 Профилът ти ще е скрит, докато родител не даде съгласие.
               </p>
             )}
+            <InterestPicker value={interests} onChange={setInterests} />
           </>
         ) : (
           <>
