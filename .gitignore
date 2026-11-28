@@ -8,6 +8,18 @@
 *.keystore
 **/android/key.properties
 
+# Node / React site (web/): dependencies and build output, recreated by npm install / npm run build
+node_modules/
+dist/
+dist-ssr/
+.netlify/
+.tanstack/
+.output/
+.nitro/
+.vinxi/
+*.local
+npm-debug.log*
+
 # Dart / Flutter
 .dart_tool/
 .packages
