@@ -4,7 +4,7 @@ import type { AccountStatus } from "./auth";
 const AUTH_ONLY = new Set(["/login", "/join", "/code", "/create-profile", "/forgot"]);
 
 /** Pages that need an account with a profile. */
-const PRIVATE = new Set(["/profile", "/settings", "/saved"]);
+const PRIVATE = new Set(["/profile", "/settings", "/saved", "/achievements"]);
 
 /** Where to send someone, given their account state. Null = stay. */
 export function authRedirect(status: AccountStatus, path: string): string | null {

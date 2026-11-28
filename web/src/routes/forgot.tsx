@@ -38,7 +38,7 @@ function Forgot() {
     const code = String(d.get("code") ?? "").trim();
     const password = String(d.get("password") ?? "");
     const next = {
-      code: /^\d{6}$/.test(code) ? null : "Кодът е 6 цифри.",
+      code: /^\d{6,8}$/.test(code) ? null : "Кодът е от 6 до 8 цифри.",
       password: validatePassword(password),
     };
     setErrors(next);
@@ -66,7 +66,7 @@ function Forgot() {
               name="code"
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={8}
               error={errors.code}
             />
             <Field
