@@ -20,6 +20,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as BIdRouteImport } from './routes/b.$id'
 import { Route as OppIdRouteImport } from './routes/opp.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BIdRoute = BIdRouteImport.update({
+  id: '/b/$id',
+  path: '/b/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OppIdRoute = OppIdRouteImport.update({
   id: '/opp/$id',
   path: '/opp/$id',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/settings'
+    | '/b/$id'
     | '/opp/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/settings'
+    | '/b/$id'
     | '/opp/$id'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/settings'
+    | '/b/$id'
     | '/opp/$id'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SavedRoute: typeof SavedRoute
   SettingsRoute: typeof SettingsRoute
+  BIdRoute: typeof BIdRoute
   OppIdRoute: typeof OppIdRoute
 }
 
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/b/$id': {
+      id: '/b/$id'
+      path: '/b/$id'
+      fullPath: '/b/$id'
+      preLoaderRoute: typeof BIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/opp/$id': {
       id: '/opp/$id'
       path: '/opp/$id'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SavedRoute: SavedRoute,
   SettingsRoute: SettingsRoute,
+  BIdRoute: BIdRoute,
   OppIdRoute: OppIdRoute,
 }
 export const routeTree = rootRouteImport
