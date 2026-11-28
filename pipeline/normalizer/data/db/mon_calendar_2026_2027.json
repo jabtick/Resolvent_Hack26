@@ -17,13 +17,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#f1aeefa718",
     "tags": [
       "math",
-      "olympiad",
-      "regional",
-      "national",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -45,13 +38,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#2d53cc3f35",
     "tags": [
       "math",
-      "olympiad",
-      "regional",
-      "national",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -72,11 +58,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#4c587f1e02",
     "tags": [
-      "national",
       "math",
-      "olympiad",
-      "grades-11-12",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -98,9 +80,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#cd3a38afaf",
     "tags": [
       "math",
-      "national",
-      "grades-11-12",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -121,12 +100,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#dca0e1909d",
     "tags": [
-      "international",
       "math",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -148,9 +122,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#1dc6a5993f",
     "tags": [
       "math",
-      "national",
-      "grades-11-12",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -171,13 +142,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#efd6e32233",
     "tags": [
-      "olympiad",
-      "regional",
       "informatics",
-      "national",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -198,13 +163,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#6f5c4931cc",
     "tags": [
-      "olympiad",
       "informatics",
-      "regional",
-      "national",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -225,12 +184,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#511b404599",
     "tags": [
-      "national",
-      "olympiad",
       "informatics",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -251,12 +205,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#245a41ea3b",
     "tags": [
-      "national",
       "informatics",
-      "tournament",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -278,10 +227,7 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#2f08ee44d9",
     "tags": [
       "informatics",
-      "national",
       "engineering",
-      "grades-11-12",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -302,13 +248,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#6837fbdf71",
     "tags": [
-      "linguistics",
-      "olympiad",
-      "regional",
-      "national",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -328,13 +268,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#e0eecc19a5",
     "tags": [
-      "linguistics",
-      "olympiad",
-      "regional",
-      "national",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -354,11 +288,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#3af6967cd3",
     "tags": [
-      "national",
-      "linguistics",
-      "olympiad",
-      "grades-11-12",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -378,11 +308,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#4fce1e0880",
     "tags": [
-      "linguistics",
-      "national",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -403,12 +329,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#15f946d1d0",
     "tags": [
       "math",
-      "national",
-      "tournament",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -430,10 +350,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#9ff9e564d2",
     "tags": [
       "math",
-      "olympiad",
-      "workshop",
-      "grades-11-12",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -454,13 +370,8 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#721f7912ed",
     "tags": [
-      "conference",
       "informatics",
       "math",
-      "research",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -483,10 +394,6 @@
     "tags": [
       "math",
       "informatics",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -509,10 +416,6 @@
     "tags": [
       "math",
       "informatics",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -534,8 +437,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#04a1a7a821",
     "tags": [
       "math",
-      "tournament",
-      "grades-11-12",
       "stem"
     ]
   },
@@ -557,9 +458,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#833bb17b33",
     "tags": [
       "math",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -581,10 +479,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#d4f5c4ba1b",
     "tags": [
       "math",
-      "regional",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -606,11 +500,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#f8a1f2e48b",
     "tags": [
       "math",
-      "regional",
-      "grades-1-4",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -632,10 +521,6 @@
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#7b8d2d9b2a",
     "tags": [
       "math",
-      "team",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -656,11 +541,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#2fd496fa7a",
     "tags": [
-      "linguistics",
-      "tournament",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -682,9 +563,6 @@
     "tags": [
       "informatics",
       "linguistics",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10",
       "stem"
     ]
   },
@@ -705,11 +583,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#0f058949b5",
     "tags": [
-      "linguistics",
-      "tournament",
-      "grades-11-12",
-      "grades-5-7",
-      "grades-8-10"
+      "linguistics"
     ]
   },
   {
@@ -729,11 +603,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#e588940d0e",
     "tags": [
-      "international",
-      "olympiad",
       "math",
-      "study-abroad",
-      "girls-only",
       "stem"
     ]
   },
@@ -754,10 +624,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#dd860e5142",
     "tags": [
-      "international",
-      "olympiad",
       "math",
-      "study-abroad",
       "stem"
     ]
   },
@@ -778,11 +645,8 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#32ba4e43ab",
     "tags": [
-      "international",
-      "olympiad",
       "ai-data",
       "informatics",
-      "study-abroad",
       "programming",
       "stem"
     ]
@@ -804,10 +668,7 @@
     "source": "scraper",
     "source_url": "https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf#a450dc60e6",
     "tags": [
-      "international",
-      "olympiad",
-      "linguistics",
-      "study-abroad"
+      "linguistics"
     ]
   }
 ]

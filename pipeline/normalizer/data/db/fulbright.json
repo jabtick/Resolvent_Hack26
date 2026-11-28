@@ -18,13 +18,8 @@
     "tags": [
       "english",
       "stem",
-      "international",
-      "study-abroad",
-      "grades-11-12",
-      "grades-8-10",
       "creative-writing",
-      "foreign-languages",
-      "workshop"
+      "foreign-languages"
     ]
   },
   {
@@ -44,11 +39,7 @@
     "source": "scraper",
     "source_url": "https://www.fulbright.bg/doktoranti-research/",
     "tags": [
-      "international",
-      "study-abroad",
       "english",
-      "research",
-      "university-students",
       "medicine",
       "foreign-languages",
       "stem"

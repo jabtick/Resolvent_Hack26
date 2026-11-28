@@ -16,15 +16,10 @@
     "source": "scraper",
     "source_url": "https://liberhack.org/",
     "tags": [
-      "hackathon",
       "journalism-media",
       "design",
       "civics",
-      "free",
-      "mentorship",
-      "prizes",
       "programming",
-      "team",
       "cybersecurity",
       "informatics",
       "web-development"
@@ -47,9 +42,6 @@
     "source": "scraper",
     "source_url": "https://liberhack.org/#edition-1",
     "tags": [
-      "hackathon",
-      "prizes",
-      "team",
       "programming"
     ]
   }

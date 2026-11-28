@@ -154,6 +154,12 @@ TAGS: tuple[Tag, ...] = (
 
 TAGS_BY_SLUG: dict[str, Tag] = {t.slug: t for t in TAGS}
 
+# The tags a student can pick as interests (the "subject" group: Математика, Информатика,
+# Английски език, ...). Rows for the database carry only these, so every tag on an
+# opportunity can match a profile_interests row. Format, reach, money and grade-band tags
+# stay available to the normalizer but are not written to the database files.
+INTEREST_SLUGS: frozenset[str] = frozenset(t.slug for t in TAGS if t.group == "subject")
+
 # Old or alternative slugs -> the canonical slug above. Anything that reads tag slugs from
 # outside (scraper rules, raw-file hints, old JSON outputs) passes them through canonical().
 ALIASES: dict[str, str] = {
