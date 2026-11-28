@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/language.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/sticky_rail.dart';
 import '../../../core/widgets/zine.dart';
 import '../feed_sample.dart';
 import '../widgets/opp_card.dart';
@@ -26,11 +27,11 @@ class FeedPage extends StatelessWidget {
     return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(width: 220, child: _LeftRail()),
+        SizedBox(width: 220, child: StickyRail(child: _LeftRail())),
         SizedBox(width: 32),
         Expanded(child: main),
         SizedBox(width: 32),
-        SizedBox(width: 260, child: _RightRail()),
+        SizedBox(width: 260, child: StickyRail(child: _RightRail())),
       ],
     );
   }

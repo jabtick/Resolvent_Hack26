@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/language.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/sticky_rail.dart';
 import '../../../core/widgets/zine.dart';
 import '../feed_sample.dart';
 
@@ -78,7 +79,7 @@ class OppPage extends StatelessWidget {
                   children: [
                     Expanded(child: main),
                     const SizedBox(width: 32),
-                    SizedBox(width: 300, child: side),
+                    SizedBox(width: 300, child: StickyRail(child: side)),
                   ],
                 );
               },

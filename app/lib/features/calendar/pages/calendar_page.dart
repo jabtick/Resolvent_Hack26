@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/language.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/palette.dart';
+import '../../../core/widgets/sticky_rail.dart';
 import '../../../core/widgets/zine.dart';
 
 /// The calendar (owner: Niki), UI only — a copy of the Lovable calendar
@@ -200,7 +201,7 @@ class _CalendarPageState extends State<CalendarPage> {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 340, child: aside),
+                SizedBox(width: 340, child: StickyRail(child: aside)),
                 const SizedBox(width: 32),
                 Expanded(child: list),
               ],
