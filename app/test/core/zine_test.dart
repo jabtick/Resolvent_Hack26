@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nofuture/core/theme/app_theme.dart';
-import 'package:nofuture/core/theme/palette.dart';
-import 'package:nofuture/core/widgets/zine.dart';
+import 'package:nofuture/core/ui.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: buildTheme(ZineVibe.zine),
@@ -78,5 +76,80 @@ void main() {
   testWidgets('HalftoneBackground renders its child', (tester) async {
     await tester.pumpWidget(_wrap(const HalftoneBackground(child: Text('в'))));
     expect(find.text('в'), findsOneWidget);
+  });
+
+  testWidgets('ZineBox with onTap is tappable', (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      _wrap(ZineBox(onTap: () => taps++, child: const Text('tap'))),
+    );
+    await tester.tap(find.text('tap'));
+    expect(taps, 1);
+  });
+
+  testWidgets('bright ZineButton is lime with dark text', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        ZineButton(label: 'ADD', kind: ZineButtonKind.bright, onPressed: () {}),
+      ),
+    );
+    final p = Palette.of(ZineVibe.zine);
+    expect(_decorationOf(tester).color, p.secondary);
+    expect(tester.widget<Text>(find.text('ADD')).style!.color, p.onBright);
+  });
+
+  testWidgets('ZineGrid splits the width into columns', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 416,
+          child: ZineGrid(
+            columns: (w) => 2,
+            spacing: 16,
+            children: const [Text('a'), Text('b')],
+          ),
+        ),
+      ),
+    );
+    final boxes = tester.widgetList<SizedBox>(
+      find.descendant(of: find.byType(Wrap), matching: find.byType(SizedBox)),
+    );
+    expect(boxes.map((b) => b.width), [200, 200]);
+  });
+
+  testWidgets('PageHeading shows kicker, title and ransom words', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const PageHeading(kicker: 'hello', title: 'YOUR ', ransom: 'BADGES'),
+      ),
+    );
+    expect(find.text('hello'), findsOneWidget);
+    expect(find.byType(RansomText), findsOneWidget);
+  });
+
+  testWidgets('dates follow the language', (tester) async {
+    final lang = LanguageController();
+    late BuildContext ctx;
+    await tester.pumpWidget(
+      LanguageScope(
+        controller: lang,
+        child: Builder(
+          builder: (c) {
+            ctx = c;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final d = DateTime(2026, 12, 3, 9, 5);
+    expect(ctx.shortDate(d), '03 Dec');
+    expect(ctx.weekdayName(d.weekday), 'Thursday');
+    expect(hhmm(d), '09:05');
+    lang.set(AppLang.bg);
+    await tester.pump();
+    expect(ctx.shortDate(d), '03 дек');
+    expect(ctx.weekdayInitials.first, 'Пн');
   });
 }

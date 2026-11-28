@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../profile_models.dart';
 
 /// Pink cover strip with the round initials avatar overlapping it
@@ -34,33 +33,19 @@ class ProfileHeader extends StatelessWidget {
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: p.primary,
-                  border: Border(bottom: BorderSide(color: p.ink, width: 3)),
+                  border: Border(
+                    bottom: BorderSide(color: p.ink, width: ZineSize.border),
+                  ),
                 ),
                 child: const SizedBox(height: 140),
               ),
               Positioned(
                 left: 24,
                 bottom: -48,
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: p.secondary,
-                    border: Border.all(color: p.ink, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: p.ink,
-                        offset: const Offset(6, 6),
-                        blurRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    initialsOf(displayName),
-                    style: ZineText.heavy(36, color: const Color(0xFF070707)),
-                  ),
+                child: InitialsAvatar(
+                  initialsOf(displayName),
+                  size: 96,
+                  shadow: true,
                 ),
               ),
             ],
@@ -100,7 +85,8 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
-/// A section with a ransom heading and dashed-ink feel.
+/// A ransom heading with a paragraph under it; says "not added yet" when
+/// [text] is empty.
 class ProfileSection extends StatelessWidget {
   final String title;
   final String? text;
@@ -109,6 +95,7 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
+    final empty = (text ?? '').trim().isEmpty;
     return Padding(
       padding: const EdgeInsets.only(top: 28),
       child: Column(
@@ -117,11 +104,8 @@ class ProfileSection extends StatelessWidget {
           RansomText(title),
           const SizedBox(height: 12),
           Text(
-            (text ?? '').trim().isEmpty ? 'Още няма нищо тук.' : text!,
-            style: TextStyle(
-              color: (text ?? '').trim().isEmpty ? p.mutedFg : p.ink,
-              height: 1.5,
-            ),
+            empty ? context.tr('Not added yet', 'Още няма нищо тук.') : text!,
+            style: TextStyle(color: empty ? p.mutedFg : p.ink, height: 1.5),
           ),
         ],
       ),

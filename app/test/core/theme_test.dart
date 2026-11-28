@@ -17,9 +17,9 @@ void main() {
 
   test('vibes have Bulgarian labels', () {
     expect(ZineVibe.values.map((v) => v.label), [
-      'Ксерокс',
-      'Мазе',
-      'Киселина',
+      'Photocopy',
+      'Basement',
+      'Acid',
     ]);
   });
 

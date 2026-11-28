@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/services.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import 'auth_widgets.dart';
 
 /// Enter the 6-digit code from the confirmation email.
@@ -28,52 +28,58 @@ class _CodePageState extends State<CodePage> with BusyAction {
     return Form(
       key: _form,
       child: AuthCard(
-        title: 'ПРОВЕРИ ПОЩАТА',
+        title: context.tr('CHECK YOUR EMAIL', 'ПРОВЕРИ ПОЩАТА'),
         children: [
           Text(
-            'Пратихме 6-цифрен код на ${auth.pendingEmail ?? 'имейла ти'}. '
-            'Въведи го тук.',
+            context.tr(
+              'We sent a 6-digit code to ${auth.pendingEmail ?? 'your email'}. '
+                  'Enter it here.',
+              'Пратихме 6-цифрен код на ${auth.pendingEmail ?? 'имейла ти'}. '
+                  'Въведи го тук.',
+            ),
           ),
           const SizedBox(height: 16),
           ZineField(
-            label: 'Код',
+            label: context.tr('Code', 'Код'),
             controller: _code,
             keyboard: TextInputType.number,
             autofill: const [AutofillHints.oneTimeCode],
             validator: (v) => RegExp(r'^\d{6}$').hasMatch(v.trim())
                 ? null
-                : 'Кодът е 6 цифри.',
+                : context.tr('The code is 6 digits.', 'Кодът е 6 цифри.'),
           ),
-          ZineButton(
-            label: busy ? 'ЧАКАЙ…' : 'ПОТВЪРДИ',
-            pink: true,
-            onPressed: busy
-                ? null
-                : () {
-                    if (_form.currentState!.validate()) {
-                      run(() => auth.confirmCode(_code.text));
-                    }
-                  },
+          SubmitButton(
+            busy: busy,
+            label: context.tr('CONFIRM', 'ПОТВЪРДИ'),
+            onPressed: () {
+              if (_form.currentState!.validate()) {
+                run(() => auth.confirmCode(_code.text));
+              }
+            },
           ),
           const SizedBox(height: 12),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             children: [
               TextLink(
-                'Прати нов код',
+                context.tr('Send a new code', 'Прати нов код'),
                 onTap: () {
                   if (busy) return;
                   run(() async {
                     await auth.resendCode();
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Пратихме нов код.')),
+                      showSnack(
+                        context,
+                        context.tr('New code sent.', 'Пратихме нов код.'),
                       );
                     }
                   });
                 },
               ),
-              TextLink('Започни отначало', onTap: () => auth.signOut()),
+              TextLink(
+                context.tr('Start over', 'Започни отначало'),
+                onTap: () => auth.signOut(),
+              ),
             ],
           ),
         ],

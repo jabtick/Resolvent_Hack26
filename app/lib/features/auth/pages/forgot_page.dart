@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/services.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
 
@@ -48,27 +48,32 @@ class _ForgotPageState extends State<ForgotPage> with BusyAction {
   Widget build(BuildContext context) => Form(
     key: _form,
     child: AuthCard(
-      title: 'НОВА ПАРОЛА',
+      title: context.tr('NEW PASSWORD', 'НОВА ПАРОЛА'),
       children: [
         ZineField(
-          label: 'Имейл',
+          label: context.tr('Email', 'Имейл'),
           controller: _email,
           keyboard: TextInputType.emailAddress,
           validator: validateEmail,
         ),
         if (_sent) ...[
-          const Text('Ако има акаунт с този имейл, пратихме код.'),
+          Text(
+            context.tr(
+              'If there is an account with this email, we sent a code.',
+              'Ако има акаунт с този имейл, пратихме код.',
+            ),
+          ),
           const SizedBox(height: 14),
           ZineField(
-            label: 'Код',
+            label: context.tr('Code', 'Код'),
             controller: _code,
             keyboard: TextInputType.number,
             validator: (v) => RegExp(r'^\d{6}$').hasMatch(v.trim())
                 ? null
-                : 'Кодът е 6 цифри.',
+                : context.tr('The code is 6 digits.', 'Кодът е 6 цифри.'),
           ),
           ZineField(
-            label: 'Нова парола',
+            label: context.tr('New password', 'Нова парола'),
             controller: _password,
             obscure: true,
             autofill: const [AutofillHints.newPassword],
@@ -76,17 +81,18 @@ class _ForgotPageState extends State<ForgotPage> with BusyAction {
           ),
         ],
         const SizedBox(height: 6),
-        ZineButton(
-          label: busy
-              ? 'ЧАКАЙ…'
-              : _sent
-              ? 'СМЕНИ ПАРОЛАТА'
-              : 'ПРАТИ КОД',
-          pink: true,
-          onPressed: busy ? null : _submit,
+        SubmitButton(
+          busy: busy,
+          label: _sent
+              ? context.tr('CHANGE PASSWORD', 'СМЕНИ ПАРОЛАТА')
+              : context.tr('SEND CODE', 'ПРАТИ КОД'),
+          onPressed: _submit,
         ),
         const SizedBox(height: 12),
-        TextLink('Обратно към вход', onTap: () => context.go('/login')),
+        TextLink(
+          context.tr('Back to log in', 'Обратно към вход'),
+          onTap: () => context.go('/login'),
+        ),
       ],
     ),
   );

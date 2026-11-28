@@ -17,11 +17,11 @@ enum AccountType {
 }
 
 enum OrgType {
-  school('school', 'Училище'),
-  university('university', 'Университет'),
-  ngo('ngo', 'Неправителствена организация'),
-  company('company', 'Компания'),
-  publicBody('public_body', 'Държавна институция');
+  school('school', 'School'),
+  university('university', 'University'),
+  ngo('ngo', 'NGO'),
+  company('company', 'Company'),
+  publicBody('public_body', 'Public institution');
 
   final String db;
   final String label;

@@ -1,20 +1,40 @@
 import 'package:flutter/painting.dart';
 
 /// The three looks from the Lovable design ("pick your vibe").
+/// To add a vibe: add a value here, a [Palette] below, and a case in
+/// [Palette.of]. Everything else picks it up on its own.
 enum ZineVibe {
-  zine('Ксерокс'),
-  basement('Мазе'),
-  acid('Киселина');
+  zine('Photocopy', 'Ксерокс'),
+  basement('Basement', 'Мазе'),
+  acid('Acid', 'Киселина');
 
-  final String label;
-  const ZineVibe(this.label);
+  final String label, labelBg;
+  const ZineVibe(this.label, this.labelBg);
 }
 
 /// Colours of one vibe, converted from the design's oklch tokens
-/// (design/lovable, src/styles.css).
+/// (design/lovable, src/styles.css). Read them in a widget with
+/// `context.zine.primary` etc. — never write a `Color(0x…)` in a page.
 class Palette {
-  final Color background, ink, card, primary, secondary, accent;
-  final Color muted, mutedFg, destructive;
+  /// Page background ("paper").
+  final Color background;
+
+  /// Text, borders and hard shadows.
+  final Color ink;
+
+  /// Inside of boxes and cards.
+  final Color card;
+
+  /// The three loud block colours (pink, lime, yellow in the default vibe).
+  final Color primary, secondary, accent;
+
+  /// Quiet surfaces and secondary text (captions, dates, hints).
+  final Color muted, mutedFg;
+
+  /// Errors and the delete button.
+  final Color destructive;
+
+  /// Dark vibe (sets Material's brightness).
   final bool dark;
 
   const Palette({
@@ -30,8 +50,12 @@ class Palette {
     this.dark = false,
   });
 
-  /// Text/surface on top of [primary] and [ink] blocks.
+  /// Text on [primary] and [destructive] blocks.
   Color get onPrimary => const Color(0xFFFCFCFC);
+
+  /// Text on the bright [secondary] and [accent] blocks. Stays dark in every
+  /// vibe, because those blocks stay bright.
+  Color get onBright => const Color(0xFF070707);
 
   static const _zine = Palette(
     background: Color(0xFFF9F5E6),
@@ -75,4 +99,23 @@ class Palette {
     ZineVibe.basement => _basement,
     ZineVibe.acid => _acid,
   };
+}
+
+/// One of the three loud block colours, with the text colour that goes on
+/// it. Use it to paint a card: `color: tone.bg(p)`, text `tone.fg(p)`.
+enum ZineTone {
+  primary,
+  secondary,
+  accent;
+
+  Color bg(Palette p) => switch (this) {
+    ZineTone.primary => p.primary,
+    ZineTone.secondary => p.secondary,
+    ZineTone.accent => p.accent,
+  };
+
+  Color fg(Palette p) => this == ZineTone.primary ? p.onPrimary : p.onBright;
+
+  /// Cycles primary → secondary → accent, like the design's sample data.
+  static ZineTone cycle(int i) => values[i % values.length];
 }

@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:nofuture/core/app.dart';
 import 'package:nofuture/core/services.dart';
 import 'package:nofuture/features/auth/auth_repo.dart';
-import 'package:nofuture/features/profile/fake_profile_repo.dart';
 import 'package:nofuture/features/auth/fake_auth_repo.dart';
+import 'package:nofuture/features/profile/fake_profile_repo.dart';
 import 'package:nofuture/features/profile/profile_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -91,11 +91,11 @@ void main() {
     testWidgets('a hidden profile says so and offers a switch', (tester) async {
       await pumpAt(tester, '/profile', before: (s) => signUpStudent(s.auth));
       expect(find.text('Петя Иванова'), findsOneWidget);
-      expect(find.text('Профилът ти е скрит'), findsOneWidget);
+      expect(find.text('Your profile is hidden'), findsOneWidget);
       expect(find.byType(Switch), findsOneWidget);
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
-      expect(find.text('Профилът ти е публичен'), findsOneWidget);
+      expect(find.text('Your profile is public'), findsOneWidget);
     });
 
     testWidgets('copy link puts the public URL on the clipboard', (
@@ -112,10 +112,10 @@ void main() {
         },
       );
       await pumpAt(tester, '/profile', before: (s) => signUpStudent(s.auth));
-      await tester.tap(find.text('КОПИРАЙ ЛИНК'));
+      await tester.tap(find.text('COPY LINK'));
       await tester.pumpAndSettle();
       expect(copied, endsWith('/u/petya'));
-      expect(find.text('Линкът е копиран.'), findsOneWidget);
+      expect(find.text('Link copied.'), findsOneWidget);
     });
 
     testWidgets('edit dialog saves the bio', (tester) async {
@@ -124,13 +124,13 @@ void main() {
         '/profile',
         before: (s) => signUpStudent(s.auth),
       );
-      await tester.tap(find.text('РЕДАКТИРАЙ'));
+      await tester.tap(find.text('EDIT'));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'За мен'),
+        find.widgetWithText(TextFormField, 'About'),
         'Здрасти',
       );
-      await tester.tap(find.text('ЗАПАЗИ'));
+      await tester.tap(find.text('SAVE'));
       await tester.pumpAndSettle();
       expect(find.text('Здрасти'), findsOneWidget);
       expect((await s.profiles.loadMine()).student!.bio, 'Здрасти');
@@ -157,7 +157,7 @@ void main() {
 
     testWidgets('unknown or hidden username', (tester) async {
       await pumpAt(tester, '/u/maria');
-      expect(find.text('Няма такъв профил'), findsOneWidget);
+      expect(find.text('NO SUCH PROFILE'), findsOneWidget);
     });
   });
 

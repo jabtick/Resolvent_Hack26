@@ -18,19 +18,20 @@ void main() {
   testWidgets('header shows the brand and the join button', (tester) async {
     await pumpApp(tester);
     expect(find.text('NO FUTURE?'), findsOneWidget);
-    expect(find.text('ВХОД'), findsOneWidget);
+    expect(find.text('JOIN'), findsOneWidget);
   });
 
   testWidgets('menu opens with the main sections', (tester) async {
     await pumpApp(tester);
-    await tester.tap(find.byTooltip('Меню'));
+    await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
     for (final item in [
-      'Фийд',
-      'Профил',
-      'Календар',
-      'Постижения',
-      'Настройки',
+      'Feed',
+      'Profile',
+      'Calendar',
+      'Achievements',
+      'Saved',
+      'Settings',
     ]) {
       expect(find.text(item), findsWidgets, reason: item);
     }
@@ -40,9 +41,9 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.byTooltip('Меню'));
+    await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Настройки'));
+    await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('page:/login')), findsOneWidget);
   });

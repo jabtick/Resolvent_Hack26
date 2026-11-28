@@ -35,19 +35,19 @@ void main() {
   group('join', () {
     testWidgets('asks which side first', (tester) async {
       await pumpAt(tester, '/join');
-      expect(find.text('УЧЕНИК'), findsOneWidget);
-      expect(find.text('ОРГАНИЗАТОР'), findsOneWidget);
+      expect(find.text('CANDIDATE'), findsOneWidget);
+      expect(find.text('ORGANISER'), findsOneWidget);
     });
 
     testWidgets('a weak password is refused before calling the server', (
       tester,
     ) async {
       final s = await pumpAt(tester, '/join');
-      await tester.tap(find.text('УЧЕНИК'));
+      await tester.tap(find.text('CANDIDATE'));
       await tester.pumpAndSettle();
-      await tester.enterText(field('Имейл'), 'petya@example.com');
-      await tester.enterText(field('Парола'), 'abc');
-      await tester.tap(find.text('ДАВАЙ'));
+      await tester.enterText(field('Email'), 'petya@example.com');
+      await tester.enterText(field('Password'), 'abc');
+      await tester.tap(find.text('LET’S GO'));
       await tester.pumpAndSettle();
       expect(find.text('Паролата трябва да е поне 10 знака.'), findsOneWidget);
       expect(s.auth.status, AuthStatus.signedOut);
@@ -55,11 +55,11 @@ void main() {
 
     testWidgets('a good sign-up goes to the code page', (tester) async {
       final s = await pumpAt(tester, '/join');
-      await tester.tap(find.text('ОРГАНИЗАТОР'));
+      await tester.tap(find.text('ORGANISER'));
       await tester.pumpAndSettle();
-      await tester.enterText(field('Имейл'), 'org@example.com');
-      await tester.enterText(field('Парола'), 'abcdefghi1');
-      await tester.tap(find.text('ДАВАЙ'));
+      await tester.enterText(field('Email'), 'org@example.com');
+      await tester.enterText(field('Password'), 'abcdefghi1');
+      await tester.tap(find.text('LET’S GO'));
       await tester.pumpAndSettle();
       expect(s.auth.status, AuthStatus.awaitingCode);
       expect(find.byKey(const ValueKey('page:/code')), findsOneWidget);
@@ -70,8 +70,8 @@ void main() {
   group('code', () {
     testWidgets('a wrong code shows an error', (tester) async {
       await pumpAt(tester, '/code', before: toCode);
-      await tester.enterText(field('Код'), '000000');
-      await tester.tap(find.text('ПОТВЪРДИ'));
+      await tester.enterText(field('Code'), '000000');
+      await tester.tap(find.text('CONFIRM'));
       await tester.pumpAndSettle();
       expect(find.text('Кодът е грешен или изтекъл.'), findsOneWidget);
       expect(find.byKey(const ValueKey('page:/code')), findsOneWidget);
@@ -79,8 +79,8 @@ void main() {
 
     testWidgets('the right code leads to create-profile', (tester) async {
       await pumpAt(tester, '/code', before: toCode);
-      await tester.enterText(field('Код'), '123456');
-      await tester.tap(find.text('ПОТВЪРДИ'));
+      await tester.enterText(field('Code'), '123456');
+      await tester.tap(find.text('CONFIRM'));
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('page:/create-profile')),
@@ -95,9 +95,9 @@ void main() {
       String username = 'petya',
       String birth = '01.05.2008',
     }) async {
-      await tester.enterText(field('Потребителско име'), username);
-      await tester.enterText(field('Име'), 'Петя');
-      await tester.enterText(field('Дата на раждане (ДД.ММ.ГГГГ)'), birth);
+      await tester.enterText(field('Username'), username);
+      await tester.enterText(field('Name'), 'Петя');
+      await tester.enterText(field('Date of birth (DD.MM.YYYY)'), birth);
       await tester.pumpAndSettle();
     }
 
@@ -106,12 +106,12 @@ void main() {
     ) async {
       final s = await pumpAt(tester, '/create-profile', before: toProfile);
       await fillStudent(tester);
-      await tester.tap(find.text('СЪЗДАЙ ПРОФИЛ'));
+      await tester.tap(find.text('CREATE PROFILE'));
       await tester.pumpAndSettle();
       expect(s.auth.status, AuthStatus.needsProfile);
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
-      await tester.tap(find.text('СЪЗДАЙ ПРОФИЛ'));
+      await tester.tap(find.text('CREATE PROFILE'));
       await tester.pumpAndSettle();
       expect(s.auth.status, AuthStatus.signedIn);
     });
@@ -122,7 +122,9 @@ void main() {
       await pumpAt(tester, '/create-profile', before: toProfile);
       await fillStudent(tester, birth: '01.01.2020');
       expect(
-        find.text('Профилът ти ще е скрит, докато родител не даде съгласие.'),
+        find.text(
+          'Your profile will stay hidden until a parent gives consent.',
+        ),
         findsOneWidget,
       );
     });
@@ -134,7 +136,7 @@ void main() {
       await fillStudent(tester, username: 'IVAN');
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
-      await tester.tap(find.text('СЪЗДАЙ ПРОФИЛ'));
+      await tester.tap(find.text('CREATE PROFILE'));
       await tester.pumpAndSettle();
       expect(find.text('Това потребителско име е заето'), findsOneWidget);
       expect(s.auth.status, AuthStatus.needsProfile);
@@ -151,17 +153,17 @@ void main() {
           await toProfile(s);
         },
       );
-      expect(field('Име на организацията'), findsOneWidget);
-      expect(field('Дата на раждане (ДД.ММ.ГГГГ)'), findsNothing);
+      expect(field('Organisation name'), findsOneWidget);
+      expect(field('Date of birth (DD.MM.YYYY)'), findsNothing);
     });
   });
 
   group('login and forgot', () {
     testWidgets('wrong password shows an error', (tester) async {
       await pumpAt(tester, '/login');
-      await tester.enterText(field('Имейл'), 'nobody@example.com');
-      await tester.enterText(field('Парола'), 'abcdefghi1');
-      await tester.tap(find.text('ВЛИЗАМ'));
+      await tester.enterText(field('Email'), 'nobody@example.com');
+      await tester.enterText(field('Password'), 'abcdefghi1');
+      await tester.tap(find.text('GET IN'));
       await tester.pumpAndSettle();
       expect(find.text('Грешен имейл или парола.'), findsOneWidget);
     });
@@ -185,12 +187,12 @@ void main() {
           await s.auth.signOut();
         },
       );
-      await tester.enterText(field('Имейл'), 'petya@example.com');
-      await tester.tap(find.text('ПРАТИ КОД'));
+      await tester.enterText(field('Email'), 'petya@example.com');
+      await tester.tap(find.text('SEND CODE'));
       await tester.pumpAndSettle();
-      await tester.enterText(field('Код'), '123456');
-      await tester.enterText(field('Нова парола'), 'novaparola2');
-      await tester.tap(find.text('СМЕНИ ПАРОЛАТА'));
+      await tester.enterText(field('Code'), '123456');
+      await tester.enterText(field('New password'), 'novaparola2');
+      await tester.tap(find.text('CHANGE PASSWORD'));
       await tester.pumpAndSettle();
       expect(s.auth.status, AuthStatus.signedIn);
     });

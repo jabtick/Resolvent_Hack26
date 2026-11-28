@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/services.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
 
@@ -35,34 +35,37 @@ class _LoginPageState extends State<LoginPage> with BusyAction {
   Widget build(BuildContext context) => Form(
     key: _form,
     child: AuthCard(
-      title: 'ВХОД',
+      title: context.tr('LOG IN', 'ВХОД'),
       children: [
         ZineField(
-          label: 'Имейл',
+          label: context.tr('Email', 'Имейл'),
           controller: _email,
           keyboard: TextInputType.emailAddress,
           autofill: const [AutofillHints.email],
           validator: validateEmail,
         ),
         ZineField(
-          label: 'Парола',
+          label: context.tr('Password', 'Парола'),
           controller: _password,
           obscure: true,
           autofill: const [AutofillHints.password],
         ),
         const SizedBox(height: 6),
-        ZineButton(
-          label: busy ? 'ЧАКАЙ…' : 'ВЛИЗАМ',
-          pink: true,
-          onPressed: busy ? null : _submit,
+        SubmitButton(
+          busy: busy,
+          label: context.tr('GET IN', 'ВЛИЗАМ'),
+          onPressed: _submit,
         ),
         const SizedBox(height: 12),
         Wrap(
           alignment: WrapAlignment.spaceBetween,
           children: [
-            TextLink('Забравена парола?', onTap: () => context.go('/forgot')),
             TextLink(
-              'Нямаш акаунт? Регистрация',
+              context.tr('Forgot password?', 'Забравена парола?'),
+              onTap: () => context.go('/forgot'),
+            ),
+            TextLink(
+              context.tr('No account? Sign up', 'Нямаш акаунт? Регистрация'),
               onTap: () => context.go('/join'),
             ),
           ],
