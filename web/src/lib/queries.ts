@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { useAccount } from "@/components/AccountProvider";
 
+import type { Badge } from "./achievements";
 import { api } from "./api";
 import type { Opp } from "./opps";
 
@@ -64,5 +65,40 @@ export function useMyProfile() {
     queryKey: ["me", status],
     queryFn: api.profiles.loadMine,
     enabled: status === "signedIn",
+  });
+}
+
+/** The signed-in student's badges. */
+export function useMyBadges() {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["badges", status],
+    queryFn: api.achievements.listMine,
+    enabled: status === "signedIn",
+  });
+}
+
+/** Hide / show a badge on the public profile, with an instant switch. */
+export function useToggleBadgeHidden() {
+  const cache = useQueryClient();
+  const { status } = useAccount();
+  const key = ["badges", status];
+  return useMutation({
+    mutationFn: ({ badge, hidden }: { badge: Badge; hidden: boolean }) =>
+      api.achievements.setHidden(badge, hidden),
+    onMutate: async ({ badge, hidden }) => {
+      await cache.cancelQueries({ queryKey: key });
+      const before = cache.getQueryData<Badge[]>(key);
+      cache.setQueryData<Badge[]>(key, (list) =>
+        list?.map((b) => (b.id === badge.id ? { ...b, hidden } : b)),
+      );
+      return { before };
+    },
+    onError: (e, _v, ctx) => {
+      cache.setQueryData(key, ctx?.before);
+      toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
+    },
+    onSuccess: (_d, { hidden }) =>
+      toast.success(hidden ? "Скрита от публичния профил" : "Видима в публичния профил"),
   });
 }

@@ -59,6 +59,8 @@ export class FakeServer {
   opportunities: Record<string, unknown>[] = [];
   organizers: Record<string, unknown>[] = [];
   saved: Record<string, unknown>[] = [];
+  badges: Record<string, unknown>[] = [];
+  publicBadges: Record<string, unknown>[] = [];
   readonly requests: Seen[] = [];
   private overrides = new Map<string, Handler>();
 
@@ -112,6 +114,10 @@ export class FakeServer {
         return rows(this.organizers);
       case "GET /rest/v1/saved_opportunities":
         return rows(this.saved);
+      case "GET /rest/v1/badges":
+        return rows(this.badges);
+      case "GET /rest/v1/public_badges":
+        return rows(this.publicBadges);
       case "POST /functions/v1/delete-account":
         return json({ deleted: true });
     }

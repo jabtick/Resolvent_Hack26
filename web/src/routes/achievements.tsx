@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Award, Hourglass, ShieldCheck } from "lucide-react";
+import { Award, Eye, EyeOff, Hourglass, ShieldCheck } from "lucide-react";
 
 import { Nav } from "@/components/Nav";
 import { type Badge, PLACE_LABEL, SAMPLE_BADGES, badgeStats } from "@/lib/achievements";
+import { useMyBadges, useToggleBadgeHidden } from "@/lib/queries";
 
 export const Route = createFileRoute("/achievements")({
   head: () => ({
@@ -20,8 +21,12 @@ const PLACE_BG: Record<number, string> = {
 };
 
 function Achievements() {
-  // Sample data until the badges table exists (see lib/achievements.ts).
-  const badges = SAMPLE_BADGES;
+  const mine = useMyBadges();
+  const toggle = useToggleBadgeHidden();
+  // Clearly marked samples until the first real badge arrives.
+  const real = mine.data ?? [];
+  const isSample = !real.length;
+  const badges = isSample ? SAMPLE_BADGES : real;
   const stats = badgeStats(badges);
   return (
     <div className="min-h-screen">
@@ -31,23 +36,41 @@ function Achievements() {
         <h1 className="mb-6 font-heavy text-6xl">
           ТВОИТЕ <span className="ransom">ЗНАЧКИ</span>
         </h1>
-        <p className="mb-6 inline-block bg-accent px-2 font-mono text-sm font-bold">
-          ПРИМЕРНИ ДАННИ — истинските значки идват от резултатите на организаторите
-        </p>
-        <div className="mb-10 flex flex-wrap gap-4">
-          <Stat n={stats.total} label="значки" className="bg-accent" />
-          <Stat
-            n={stats.podium}
-            label="места на подиума"
-            className="bg-primary text-primary-foreground"
-          />
-          <Stat n={stats.orgs} label="организатори" className="bg-secondary" />
-        </div>
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          {badges.map((b, i) => (
-            <BadgeCard key={b.id} b={b} i={i} />
-          ))}
-        </div>
+        {mine.isPending ? (
+          <p>Зареждам…</p>
+        ) : mine.isError ? (
+          <p className="mb-6 font-bold text-destructive">{mine.error.message}</p>
+        ) : null}
+        {isSample && !mine.isPending && (
+          <p className="mb-6 inline-block bg-accent px-2 font-mono text-sm font-bold">
+            ПРИМЕРНИ ДАННИ — истинските значки идват от резултатите на организаторите
+          </p>
+        )}
+        {mine.isPending ? null : (
+          <>
+            <div className="mb-10 flex flex-wrap gap-4">
+              <Stat n={stats.total} label="значки" className="bg-accent" />
+              <Stat
+                n={stats.podium}
+                label="места на подиума"
+                className="bg-primary text-primary-foreground"
+              />
+              <Stat n={stats.orgs} label="организатори" className="bg-secondary" />
+            </div>
+            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+              {badges.map((b, i) => (
+                <BadgeCard
+                  key={b.id}
+                  b={b}
+                  i={i}
+                  onToggleHidden={
+                    b.isSample ? undefined : () => toggle.mutate({ badge: b, hidden: !b.hidden })
+                  }
+                />
+              ))}
+            </div>
+          </>
+        )}
         <div className="zine tape mt-14 flex items-center gap-4 bg-card p-6">
           <Hourglass className="size-8 shrink-0 text-primary" />
           <div>
@@ -71,11 +94,19 @@ function Stat({ n, label, className }: { n: number; label: string; className: st
   );
 }
 
-function BadgeCard({ b, i }: { b: Badge; i: number }) {
+function BadgeCard({
+  b,
+  i,
+  onToggleHidden,
+}: {
+  b: Badge;
+  i: number;
+  onToggleHidden?: (() => void) | undefined;
+}) {
   const tone = b.place ? PLACE_BG[b.place] : "bg-card";
   return (
     <article
-      className={`${b.place === 1 ? "zine-pink" : "zine"} ${TILT[i % TILT.length]} animate-in fade-in slide-in-from-bottom-4 fill-mode-both bg-card transition-transform duration-200 hover:-translate-y-1`}
+      className={`${b.place === 1 ? "zine-pink" : "zine"} ${TILT[i % TILT.length]} ${b.hidden ? "opacity-60" : ""} animate-in fade-in slide-in-from-bottom-4 fill-mode-both bg-card transition-transform duration-200 hover:-translate-y-1`}
       style={{ animationDelay: `${i * 60}ms` }}
     >
       <div className={`${tone} flex flex-col items-center gap-3 p-6`}>
@@ -99,6 +130,17 @@ function BadgeCard({ b, i }: { b: Badge; i: number }) {
           <ShieldCheck className="size-4 text-primary" />
           Потвърдено от организатора
         </p>
+        {onToggleHidden && (
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            aria-pressed={b.hidden}
+            className="mt-3 flex items-center gap-2 text-sm underline underline-offset-2"
+          >
+            {b.hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {b.hidden ? "Скрита от публичния профил — покажи" : "Видима публично — скрий"}
+          </button>
+        )}
       </div>
     </article>
   );
