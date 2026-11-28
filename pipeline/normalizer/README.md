@@ -122,11 +122,11 @@ to the database. `tags` is not a column: on insert each slug becomes a row in `o
 
 ## Tags (for the feed / recommendations)
 
-`taxonomy.py` is the single fixed list (65 tags) that goes into the `tags` table (`tags_seed.json`).
+`taxonomy.py` is the single fixed list (68 tags) for the whole project. It goes into the `tags` table (`tags_seed.json` / `tags_seed.sql`), and the scraper in [../scraper](../scraper) imports it too. Old or alternative slugs (`level-national`, `camp`, ...) are mapped by `ALIASES` / `canonical()`, so hints and old files still work.
 Groups (only in code, not in the DB):
 
 - **subject:** math, informatics, programming, web-development, ai-data, cybersecurity, robotics, physics, biology, ecology, history, economics, entrepreneurship, languages, arts, music, sports, …
-- **format:** olympiad, hackathon, contest, summer-school, workshop, conference, mentorship, research, volunteering, study-abroad, career, team
+- **format:** olympiad, hackathon, contest, tournament, summer-school, workshop, conference, mentorship, research, volunteering, study-abroad, career, team, girls-only
 - **reach / money:** national, international, regional, free, prizes, paid
 - **level:** `grades-1-4`, `grades-5-7`, `grades-8-10`, `grades-11-12`, `university-students` — the app maps `student_details.grade` to the band, so a grade-9 student gets items tagged `grades-8-10`
 

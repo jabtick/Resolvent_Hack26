@@ -180,6 +180,10 @@
     "name": "Конкурс"
   },
   {
+    "slug": "tournament",
+    "name": "Турнир"
+  },
+  {
     "slug": "summer-school",
     "name": "Лагери и летни училища"
   },
@@ -214,6 +218,10 @@
   {
     "slug": "team",
     "name": "В отбор"
+  },
+  {
+    "slug": "girls-only",
+    "name": "Само за момичета"
   },
   {
     "slug": "national",

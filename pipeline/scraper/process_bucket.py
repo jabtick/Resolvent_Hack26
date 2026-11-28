@@ -21,22 +21,11 @@ HERE = Path(__file__).parent
 
 # ---------------------------------------------------------------- tags
 
-TAGS = {
-    "informatics": "Информатика",
-    "math": "Математика",
-    "physics": "Физика",
-    "chemistry": "Химия",
-    "biology": "Биология",
-    "olympiad": "Олимпиада",
-    "tournament": "Турнир / състезание",
-    "camp": "Лагер / школа",
-    "team": "Отборно",
-    "girls-only": "Само за момичета",
-    "level-municipal": "Общински кръг",
-    "level-regional": "Областен кръг",
-    "level-national": "Национално",
-    "level-international": "Международно",
-}
+# The tag list is shared with the normalizer: ../normalizer/taxonomy.py is the only one.
+sys.path.insert(0, str(HERE.parent / "normalizer"))
+from taxonomy import TAGS as _ALL_TAGS, TAGS_BY_SLUG  # noqa: E402
+
+TAG_ORDER = {t.slug: i for i, t in enumerate(_ALL_TAGS)}
 
 # (tag, regex on lowercased title + description)
 TAG_RULES = [
@@ -46,15 +35,18 @@ TAG_RULES = [
     ("chemistry", r"химия|chemistry"),
     ("biology", r"биологи|biology"),
     ("olympiad", r"олимпиад|olympiad"),
-    ("camp", r"лагер|школа|\bcamp\b"),
+    ("summer-school", r"лагер|школа|\bcamp\b"),
     ("tournament", r"турнир|състезани|първенство|\bcup\b|contest|master"),
     ("team", r"отбор|\bteam"),
     ("girls-only", r"момичета|\bgirls"),
-    ("level-municipal", r"общински"),
-    ("level-regional", r"областен"),
-    ("level-national", r"национал|републиканск"),
-    ("level-international", r"международ|балканск|европейск|international|balkan|european"),
+    ("regional", r"общински|областен"),
+    ("national", r"национал|републиканск"),
+    ("international", r"международ|балканск|европейск|international|balkan|european"),
 ]
+
+# Every slug used here must be in the shared list; fail loudly instead of writing a bad tag.
+_unknown = {t for t, _ in TAG_RULES} - TAGS_BY_SLUG.keys()
+assert not _unknown, f"scraper tags missing from normalizer/taxonomy.py: {_unknown}"
 
 # Tags every event of a source gets (the infos calendar is informatics only).
 SOURCE_DEFAULT_TAGS = {
@@ -186,7 +178,7 @@ def classify_audience(title):
 
 # Matched on the title only: descriptions often name a *different*, co-located
 # event ("съвместно с Международен турнир ..."), which would give wrong tags.
-TITLE_ONLY_TAGS = {"olympiad", "level-municipal", "level-regional", "level-national", "level-international"}
+TITLE_ONLY_TAGS = {"olympiad", "regional", "national", "international"}
 
 
 def build_tags(text, title, country, source_host):
@@ -196,12 +188,12 @@ def build_tags(text, title, country, source_host):
         if re.search(rx, haystack) and tag not in tags:
             tags.append(tag)
     # A title with no Cyrillic on a Bulgarian site, or an event abroad, is international.
-    if (country or not re.search(r"[а-яА-Я]", title)) and "level-international" not in tags:
-        tags.append("level-international")
+    if (country or not re.search(r"[а-яА-Я]", title)) and "international" not in tags:
+        tags.append("international")
     # A competition that is neither an olympiad nor a camp is a tournament.
-    if not {"olympiad", "camp", "tournament"} & set(tags):
+    if not {"olympiad", "summer-school", "tournament"} & set(tags):
         tags.append("tournament")
-    return sorted(tags, key=list(TAGS).index)
+    return sorted(tags, key=TAG_ORDER.__getitem__)
 
 
 def sentence(s):
@@ -290,10 +282,10 @@ def main():
             seen.add(opp["source_url"])
             opportunities.append(opp)
 
-    used = sorted({t for o in opportunities for t in o["tags"]}, key=list(TAGS).index)
+    used = sorted({t for o in opportunities for t in o["tags"]}, key=TAG_ORDER.__getitem__)
     out = {
         "generated_at": today.isoformat(),
-        "tags": [{"slug": t, "name": TAGS[t]} for t in used],
+        "tags": [{"slug": t, "name": TAGS_BY_SLUG[t].name} for t in used],
         "opportunities": opportunities,
     }
     out_path = Path(args.output)

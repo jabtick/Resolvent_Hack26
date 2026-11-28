@@ -11,35 +11,31 @@
     },
     {
       "slug": "tournament",
-      "name": "Турнир / състезание"
+      "name": "Турнир"
     },
     {
-      "slug": "camp",
-      "name": "Лагер / школа"
+      "slug": "summer-school",
+      "name": "Лагери и летни училища"
     },
     {
       "slug": "team",
-      "name": "Отборно"
+      "name": "В отбор"
     },
     {
       "slug": "girls-only",
       "name": "Само за момичета"
     },
     {
-      "slug": "level-municipal",
-      "name": "Общински кръг"
+      "slug": "national",
+      "name": "Национално ниво"
     },
     {
-      "slug": "level-regional",
-      "name": "Областен кръг"
+      "slug": "international",
+      "name": "Международно ниво"
     },
     {
-      "slug": "level-national",
-      "name": "Национално"
-    },
-    {
-      "slug": "level-international",
-      "name": "Международно"
+      "slug": "regional",
+      "name": "Областно ниво"
     }
   ],
   "opportunities": [
@@ -62,7 +58,7 @@
       "tags": [
         "informatics",
         "tournament",
-        "level-national"
+        "national"
       ]
     },
     {
@@ -84,7 +80,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-municipal"
+        "regional"
       ]
     },
     {
@@ -128,7 +124,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-regional"
+        "regional"
       ]
     },
     {
@@ -150,7 +146,7 @@
       "tags": [
         "informatics",
         "tournament",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -172,7 +168,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-national"
+        "national"
       ]
     },
     {
@@ -236,7 +232,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -302,7 +298,7 @@
         "informatics",
         "olympiad",
         "team",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -324,7 +320,7 @@
       "tags": [
         "informatics",
         "tournament",
-        "level-national"
+        "national"
       ]
     },
     {
@@ -347,7 +343,7 @@
         "informatics",
         "olympiad",
         "girls-only",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -369,7 +365,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -390,8 +386,8 @@
       "source_url": "https://infos.infosbg.com/calendar#natsionalna-lager-shkola-po-informatika-2027",
       "tags": [
         "informatics",
-        "camp",
-        "level-national"
+        "summer-school",
+        "national"
       ]
     },
     {
@@ -413,7 +409,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -435,7 +431,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -457,7 +453,7 @@
       "tags": [
         "informatics",
         "olympiad",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -479,7 +475,7 @@
       "tags": [
         "informatics",
         "tournament",
-        "level-international"
+        "international"
       ]
     },
     {
@@ -522,7 +518,7 @@
       "tags": [
         "informatics",
         "tournament",
-        "level-international"
+        "international"
       ]
     }
   ]

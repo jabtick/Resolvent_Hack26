@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 
-from taxonomy import GRADE_BANDS, IMPLIED, TAGS
+from taxonomy import GRADE_BANDS, IMPLIED, TAGS, canonical
 
 # ---------------------------------------------------------------------------
 # Keyword helpers
@@ -283,7 +283,7 @@ def detect_tags(title: str, body: str, grades: set[int], audience: str,
     get a fixed score so they always appear, but after the strong topic tags.
     """
     hint_text = " ".join(extra_hints or []).lower()
-    hint_slugs = {h.strip().lower() for h in extra_hints or []}
+    hint_slugs = {canonical(h) for h in extra_hints or []} - {None}   # old slugs work too
     scores: dict[str, float] = {}
     for tag in TAGS:
         s = 3 if tag.slug in hint_slugs else 0   # a hinted slug counts even for keyword-less tags (grade bands)
