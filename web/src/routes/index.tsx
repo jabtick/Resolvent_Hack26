@@ -87,8 +87,16 @@ function Feed() {
           <div className="sticky top-24 space-y-4">
             {status === "signedIn" && me.data ? (
               <div className="zine bg-card p-4 text-center">
-                <div className="mx-auto mb-2 grid h-16 w-16 place-items-center rounded-full border-[3px] border-ink bg-secondary font-heavy text-2xl text-secondary-foreground">
-                  {initialsOf(me.data.displayName)}
+                <div className="mx-auto mb-2 grid h-16 w-16 place-items-center overflow-hidden rounded-full border-[3px] border-ink bg-secondary font-heavy text-2xl text-secondary-foreground">
+                  {me.data.avatarUrl ? (
+                    <img
+                      src={me.data.avatarUrl}
+                      alt={me.data.displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initialsOf(me.data.displayName)
+                  )}
                 </div>
                 <p className="font-heavy text-2xl">{me.data.displayName}</p>
                 <p className="text-xs text-muted-foreground">@{me.data.username}</p>

@@ -1,0 +1,51 @@
+[
+  {
+    "type": "scholarship",
+    "organizer_id": null,
+    "title": "„Енергия за бъдещето“ – стипендии от Електрохолд за ученици от XII клас (електротехника)",
+    "description": "Ежегодно състезание на Електрохолд за ученици от XII клас в професионалните гимназии с електротехнически профил, които се обучават по професиите Електротехник и Електромонтьор, на територията на ЕРМ Запад (областите София град, София област, Видин, Враца, Монтана, Ловеч, Плевен, Перник, Кюстендил и Благоевград). Победителите получават стипендии за втория учебен срок на XII клас. Състезанието се провежда от 2012 г. и е част от графика на МОН за националните състезания по професии. Регламентът и формулярът за кандидатстване са на сайта „Енергия за бъдещето“.",
+    "image_url": null,
+    "external_url": "https://energyforthefuture.electrohold.bg/bg/sstezaniya/stani-stipendiant-na-elektrohold-za-uchenici/",
+    "city": null,
+    "is_online": false,
+    "audience": "school",
+    "starts_at": null,
+    "ends_at": null,
+    "deadline_at": null,
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://energyforthefuture.electrohold.bg/bg/sstezaniya/stani-stipendiant-na-elektrohold-za-uchenici/",
+    "tags": [
+      "engineering",
+      "career",
+      "regional",
+      "grades-11-12",
+      "national",
+      "stem"
+    ]
+  },
+  {
+    "type": "scholarship",
+    "organizer_id": null,
+    "title": "Стипендиантска програма M.O.V.E. на Електрохолд за студенти по енергетика",
+    "description": "Стипендиантската програма M.O.V.E. (Modern Oriented Vision for Energy) на Електрохолд е за студенти от II до IV курс (бакалавър) и магистри, редовна и задочна форма, от Технически университет – София, Техническия колеж към ТУ – София, Технически университет – Габрово и Софийския университет „Св. Климент Охридски“. Стипендиантите работят по реални бизнес и инженерни проекти с гъвкава заетост, съобразена с учебния график. За изданието през 2026 г. стипендията беше 550 евро на месец до края на семестъра, кандидатстването беше по документи до 20 февруари, а резултатите – на 4 март. Следващото издание се обявява на сайта „Енергия за бъдещето“.",
+    "image_url": null,
+    "external_url": "https://energyforthefuture.electrohold.bg/bg/nashite-proekti-v-obrazovanieto/stipendiantska-programa-za-studenti-move/",
+    "city": "София",
+    "is_online": false,
+    "audience": "university",
+    "starts_at": null,
+    "ends_at": null,
+    "deadline_at": null,
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://energyforthefuture.electrohold.bg/bg/nashite-proekti-v-obrazovanieto/stipendiantska-programa-za-studenti-move/",
+    "tags": [
+      "engineering",
+      "university-students",
+      "career",
+      "paid",
+      "stem"
+    ]
+  }
+]
