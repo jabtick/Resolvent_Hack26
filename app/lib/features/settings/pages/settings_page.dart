@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/app_error.dart';
+import '../../../core/app_shell.dart' show LanguagePicker;
+import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/palette.dart';
@@ -19,6 +21,15 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   Future<MyProfile>? _me;
+
+  /// UI only for now: these switches are not saved anywhere.
+  final _notify = {
+    ('Email me new matches', 'Пращай ми нови съвпадения'): true,
+    ('Deadline reminders', 'Напомняния за срокове'): true,
+    ('Show my profile to organisers', 'Показвай профила ми на организатори'):
+        false,
+    ('Weekly zine digest', 'Седмичен бюлетин'): false,
+  };
 
   @override
   void didChangeDependencies() {
@@ -56,14 +67,17 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('НАСТРОЙКИ', style: ZineText.heavy(64, color: p.ink)),
+            Text(
+              context.tr('SETTINGS', 'НАСТРОЙКИ'),
+              style: ZineText.heavy(64, color: p.ink),
+            ),
             const SizedBox(height: 24),
             ZineBox(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const RansomText('ВИЗИЯ'),
+                  RansomText(context.tr('THEME', 'ВИЗИЯ')),
                   const SizedBox(height: 16),
                   ListenableBuilder(
                     listenable: s.theme,
@@ -87,15 +101,72 @@ class _SettingsPageState extends State<SettingsPage> {
             ZineBox(
               padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: RansomText(context.tr('LANGUAGE', 'ЕЗИК')),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.tr(
+                      'Changes the site\'s buttons and headings. Posts stay in the language the organiser wrote them in.',
+                      'Сменя бутоните и заглавията на сайта. Обявите остават на езика, на който ги е написал организаторът.',
+                    ),
+                    style: TextStyle(fontSize: 13, color: p.mutedFg),
+                  ),
+                  const SizedBox(height: 16),
+                  const SizedBox(
+                    width: 372,
+                    child: LanguagePicker(fontSize: 24, padding: 16),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ZineBox(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: RansomText(context.tr('NOTIFICATIONS', 'ИЗВЕСТИЯ')),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final (i, e) in _notify.entries.indexed) ...[
+                    if (i > 0) const DashedLine(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(context.tr(e.key.$1, e.key.$2))),
+                          Switch(
+                            value: e.value,
+                            onChanged: (v) =>
+                                setState(() => _notify[e.key] = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ZineBox(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const RansomText('АКАУНТ'),
+                  RansomText(context.tr('ACCOUNT', 'АКАУНТ')),
                   const SizedBox(height: 16),
                   FutureBuilder<MyProfile>(
                     future: _me,
                     builder: (context, snap) => Text(
                       snap.hasData
-                          ? 'Тип акаунт: ${snap.data!.type == AccountType.student ? 'ученик' : 'организатор'}'
+                          ? '${context.tr('Role', 'Роля')}: '
+                                '${snap.data!.type == AccountType.student ? context.tr('Candidate', 'Ученик') : context.tr('Organiser', 'Организатор')}'
                           : ' ',
                     ),
                   ),
@@ -105,7 +176,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     runSpacing: 16,
                     children: [
                       ZineButton(
-                        label: 'ИЗХОД',
+                        label: context.tr('LOG OUT', 'ИЗХОД'),
                         onPressed: () => s.auth.signOut(),
                       ),
                       OutlinedButton(
@@ -119,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         onPressed: _delete,
                         child: Text(
-                          'ИЗТРИЙ АКАУНТА',
+                          context.tr('DELETE ACCOUNT', 'ИЗТРИЙ АКАУНТА'),
                           style: ZineText.heavy(22, color: p.destructive),
                         ),
                       ),
@@ -161,7 +232,7 @@ class _VibeButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: Text(
-                  vibe.label,
+                  context.tr(vibe.label, vibe.labelBg),
                   style: ZineText.heavy(
                     24,
                     color: selected ? p.onPrimary : p.ink,
@@ -176,7 +247,7 @@ class _VibeButton extends StatelessWidget {
   }
 }
 
-/// Asks for the word ИЗТРИЙ: deleting is forever.
+/// Asks for the word DELETE (ИЗТРИЙ in Bulgarian): deleting is forever.
 class _DeleteDialog extends StatefulWidget {
   const _DeleteDialog();
 
@@ -196,21 +267,33 @@ class _DeleteDialogState extends State<_DeleteDialog> {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
-    final ok = _word.text.trim() == 'ИЗТРИЙ';
+    final ok = _word.text.trim() == context.tr('DELETE', 'ИЗТРИЙ');
     return AlertDialog(
-      title: Text('ИЗТРИВАНЕ НА АКАУНТА', style: ZineText.heavy(30)),
+      title: Text(
+        context.tr('DELETE ACCOUNT?', 'ИЗТРИВАНЕ НА АКАУНТА?'),
+        style: ZineText.heavy(30),
+      ),
       content: SizedBox(
         width: 460,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Профилът, постиженията и всичко, което си запазил(а), '
-              'се изтриват завинаги. Това не може да се върне.',
+            Text(
+              context.tr(
+                'Your profile, badges and everything you saved are deleted '
+                    'forever. This cannot be undone.',
+                'Профилът, значките и всичко запазено се изтриват завинаги. '
+                    'Това не може да се върне.',
+              ),
             ),
             const SizedBox(height: 16),
-            const Text('Напиши ИЗТРИЙ, за да потвърдиш:'),
+            Text(
+              context.tr(
+                'Type DELETE to confirm:',
+                'Напиши ИЗТРИЙ, за да потвърдиш:',
+              ),
+            ),
             const SizedBox(height: 8),
             TextField(controller: _word, onChanged: (_) => setState(() {})),
           ],
@@ -219,12 +302,12 @@ class _DeleteDialogState extends State<_DeleteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('ОТКАЗ'),
+          child: Text(context.tr('CANCEL', 'ОТКАЗ')),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: p.destructive),
           onPressed: ok ? () => Navigator.pop(context, true) : null,
-          child: const Text('ИЗТРИЙ ЗАВИНАГИ'),
+          child: Text(context.tr('DELETE FOREVER', 'ИЗТРИЙ ЗАВИНАГИ')),
         ),
       ],
     );

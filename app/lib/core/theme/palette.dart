@@ -2,12 +2,12 @@ import 'package:flutter/painting.dart';
 
 /// The three looks from the Lovable design ("pick your vibe").
 enum ZineVibe {
-  zine('Ксерокс'),
-  basement('Мазе'),
-  acid('Киселина');
+  zine('Photocopy', 'Ксерокс'),
+  basement('Basement', 'Мазе'),
+  acid('Acid', 'Киселина');
 
-  final String label;
-  const ZineVibe(this.label);
+  final String label, labelBg;
+  const ZineVibe(this.label, this.labelBg);
 }
 
 /// Colours of one vibe, converted from the design's oklch tokens

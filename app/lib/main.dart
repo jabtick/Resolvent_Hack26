@@ -22,6 +22,7 @@ Future<void> main() async {
     await services.auth.restore();
   }
   await services.theme.load();
+  await services.lang.load();
 
   runApp(NoFutureApp(services: services));
 }

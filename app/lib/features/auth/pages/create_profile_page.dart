@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/zine.dart';
@@ -80,7 +81,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
     return Form(
       key: _form,
       child: AuthCard(
-        title: 'ТВОЯТ ПРОФИЛ',
+        title: context.tr('YOUR PROFILE', 'ТВОЯТ ПРОФИЛ'),
         children: [
           Wrap(
             spacing: 8,
@@ -88,7 +89,9 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
               for (final t in AccountType.values)
                 ChoiceChip(
                   label: Text(
-                    t == AccountType.student ? 'Ученик' : 'Организатор',
+                    t == AccountType.student
+                        ? context.tr('Candidate', 'Ученик')
+                        : context.tr('Organiser', 'Организатор'),
                   ),
                   selected: _type == t,
                   onSelected: (_) => setState(() => _type = t),
@@ -97,23 +100,29 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
           ),
           const SizedBox(height: 16),
           ZineField(
-            label: 'Потребителско име',
+            label: context.tr('Username', 'Потребителско име'),
             controller: _username,
             validator: validateUsername,
           ),
           ZineField(
-            label: 'Име',
+            label: context.tr('Name', 'Име'),
             controller: _name,
             validator: validateDisplayName,
           ),
           if (student) ...[
             ZineField(
-              label: 'Дата на раждане (ДД.ММ.ГГГГ)',
+              label: context.tr(
+                'Date of birth (DD.MM.YYYY)',
+                'Дата на раждане (ДД.ММ.ГГГГ)',
+              ),
               controller: _birth,
               keyboard: TextInputType.datetime,
               onChanged: (v) => setState(() => _birthDate = parseBgDate(v)),
               validator: (v) => parseBgDate(v) == null
-                  ? 'Въведи дата като 01.05.2008.'
+                  ? context.tr(
+                      'Enter a date like 01.05.2008.',
+                      'Въведи дата като 01.05.2008.',
+                    )
                   : null,
             ),
             if (under14)
@@ -121,15 +130,18 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
                 padding: const EdgeInsets.only(bottom: 14),
                 child: ZineBox(
                   color: p.accent,
-                  child: const Text(
-                    'Профилът ти ще е скрит, докато родител не даде съгласие.',
+                  child: Text(
+                    context.tr(
+                      'Your profile will stay hidden until a parent gives consent.',
+                      'Профилът ти ще е скрит, докато родител не даде съгласие.',
+                    ),
                     style: TextStyle(color: Color(0xFF070707)),
                   ),
                 ),
               ),
           ] else ...[
             ZineField(
-              label: 'Име на организацията',
+              label: context.tr('Organisation name', 'Име на организацията'),
               controller: _org,
               validator: validateOrgName,
             ),
@@ -138,16 +150,25 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
               child: DropdownButtonFormField<OrgType>(
                 isExpanded: true,
                 initialValue: _orgType,
-                decoration: const InputDecoration(labelText: 'Вид организация'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Organisation type', 'Вид организация'),
+                ),
                 items: [
                   for (final t in OrgType.values)
                     DropdownMenuItem(value: t, child: Text(t.label)),
                 ],
                 onChanged: (t) => setState(() => _orgType = t),
-                validator: (t) => t == null ? 'Избери вид.' : null,
+                validator: (t) => t == null
+                    ? context.tr('Pick a type.', 'Избери вид.')
+                    : null,
               ),
             ),
-            const Text('Организаторите публикуват, след като ги проверим.'),
+            Text(
+              context.tr(
+                'Organisers can publish once we verify them.',
+                'Организаторите публикуват, след като ги проверим.',
+              ),
+            ),
             const SizedBox(height: 14),
           ],
           CheckboxListTile(
@@ -155,13 +176,18 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
             controlAffinity: ListTileControlAffinity.leading,
             value: _terms,
             onChanged: (v) => setState(() => _terms = v ?? false),
-            title: const Text(
-              'Приемам Условията за ползване и Политиката за личните данни',
+            title: Text(
+              context.tr(
+                'I accept the Terms of Use and the Privacy Policy',
+                'Приемам Условията за ползване и Политиката за личните данни',
+              ),
             ),
           ),
           const SizedBox(height: 6),
           ZineButton(
-            label: busy ? 'ЧАКАЙ…' : 'СЪЗДАЙ ПРОФИЛ',
+            label: busy
+                ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
+                : context.tr('CREATE PROFILE', 'СЪЗДАЙ ПРОФИЛ'),
             pink: true,
             onPressed: busy || !_terms ? null : _submit,
           ),

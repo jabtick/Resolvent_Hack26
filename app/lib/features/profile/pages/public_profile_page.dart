@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/zine.dart';
@@ -42,12 +43,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Няма такъв профил',
+                    context.tr('NO SUCH PROFILE', 'НЯМА ТАКЪВ ПРОФИЛ'),
                     style: ZineText.display(36, color: p.ink),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'или профилът е скрит.',
+                    context.tr('or it is hidden.', 'или профилът е скрит.'),
                     style: ZineText.hand(24, color: p.ink),
                   ),
                 ],
@@ -65,14 +66,20 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   displayName: pr.displayName,
                   subtitle: '@${pr.username}',
                 ),
-                ProfileSection(title: 'ЗА МЕН', text: pr.bio),
+                ProfileSection(
+                  title: context.tr('ABOUT', 'ЗА МЕН'),
+                  text: pr.bio,
+                ),
                 if ((pr.school ?? '').isNotEmpty)
-                  ProfileSection(title: 'УЧИЛИЩЕ', text: pr.school),
+                  ProfileSection(
+                    title: context.tr('EDUCATION', 'УЧИЛИЩЕ'),
+                    text: pr.school,
+                  ),
                 if (pr.interests.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
-                    child: RansomText('ИНТЕРЕСИ'),
+                    child: RansomText(context.tr('INTERESTS', 'ИНТЕРЕСИ')),
                   ),
                   const SizedBox(height: 12),
                   Wrap(

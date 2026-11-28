@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/language.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/zine.dart';
 import '../profile_models.dart';
@@ -117,7 +118,9 @@ class ProfileSection extends StatelessWidget {
           RansomText(title),
           const SizedBox(height: 12),
           Text(
-            (text ?? '').trim().isEmpty ? 'Още няма нищо тук.' : text!,
+            (text ?? '').trim().isEmpty
+                ? context.tr('Not added yet', 'Още няма нищо тук.')
+                : text!,
             style: TextStyle(
               color: (text ?? '').trim().isEmpty ? p.mutedFg : p.ink,
               height: 1.5,

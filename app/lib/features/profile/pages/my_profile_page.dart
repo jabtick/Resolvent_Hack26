@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/app_error.dart';
+import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/zine.dart';
@@ -65,8 +66,10 @@ class _MyProfilePageState extends State<MyProfilePage> {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 12,
             children: [
-              const Text('Профилът не се зареди.'),
-              ZineButton(label: 'ПАК', onPressed: _reload),
+              Text(
+                context.tr('Could not load profile.', 'Профилът не се зареди.'),
+              ),
+              ZineButton(label: context.tr('RETRY', 'ПАК'), onPressed: _reload),
             ],
           ),
         );
@@ -89,7 +92,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
     final subtitle = [
       '@${me.username}',
-      me.type == AccountType.student ? 'ученик' : 'организатор',
+      me.type == AccountType.student
+          ? context.tr('Candidate', 'Ученик')
+          : context.tr('Organiser', 'Организатор'),
       if (s?.city != null && s!.city!.isNotEmpty) s.city!,
     ].join(' · ');
 
@@ -103,7 +108,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
               displayName: me.displayName,
               subtitle: subtitle,
               action: ZineButton(
-                label: 'РЕДАКТИРАЙ',
+                label: context.tr('EDIT', 'РЕДАКТИРАЙ'),
                 icon: LucideIcons.pencil,
                 onPressed: () => _edit(me),
               ),
@@ -126,19 +131,27 @@ class _MyProfilePageState extends State<MyProfilePage> {
                           const SizedBox(width: 8),
                           Text(
                             s.isPublic
-                                ? 'Профилът ти е публичен'
-                                : 'Профилът ти е скрит',
+                                ? context.tr(
+                                    'Your profile is public',
+                                    'Профилът ти е публичен',
+                                  )
+                                : context.tr(
+                                    'Your profile is hidden',
+                                    'Профилът ти е скрит',
+                                  ),
                           ),
                         ],
                       ),
                     ZineButton(
-                      label: 'КОПИРАЙ ЛИНК',
+                      label: context.tr('COPY LINK', 'КОПИРАЙ ЛИНК'),
                       icon: LucideIcons.share2,
                       onPressed: () async {
                         await Clipboard.setData(
                           ClipboardData(text: publicProfileUrl(me.username)),
                         );
-                        if (mounted) _say('Линкът е копиран.');
+                        if (mounted) {
+                          _say(context.tr('Link copied.', 'Линкът е копиран.'));
+                        }
                       },
                     ),
                   ],
@@ -147,8 +160,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   const SizedBox(height: 16),
                   ZineBox(
                     color: p.accent,
-                    child: const Text(
-                      'Под 14 г.: профилът остава скрит, докато родител не даде съгласие.',
+                    child: Text(
+                      context.tr(
+                        'Under 14: your profile stays hidden until a parent gives consent.',
+                        'Под 14 г.: профилът остава скрит, докато родител не даде съгласие.',
+                      ),
                       style: TextStyle(color: Color(0xFF070707)),
                     ),
                   ),
@@ -156,18 +172,19 @@ class _MyProfilePageState extends State<MyProfilePage> {
               ],
             ),
             if (s != null) ...[
-              ProfileSection(title: 'ЗА МЕН', text: s.bio),
+              ProfileSection(title: context.tr('ABOUT', 'ЗА МЕН'), text: s.bio),
               ProfileSection(
-                title: 'УЧИЛИЩЕ',
+                title: context.tr('EDUCATION', 'УЧИЛИЩЕ'),
                 text: [
                   if (s.school != null) s.school!,
-                  if (s.grade != null) '${s.grade} клас',
+                  if (s.grade != null)
+                    context.tr('Grade ${s.grade}', '${s.grade} клас'),
                 ].join(' · '),
               ),
             ],
             if (o != null) ...[
               ProfileSection(
-                title: 'ОРГАНИЗАЦИЯ',
+                title: context.tr('ORGANISATION', 'ОРГАНИЗАЦИЯ'),
                 text: [
                   o.orgName,
                   o.orgType.label,
@@ -175,11 +192,20 @@ class _MyProfilePageState extends State<MyProfilePage> {
                 ].join(' · '),
               ),
               ProfileSection(
-                title: 'ПРОВЕРКА',
+                title: context.tr('VERIFICATION', 'ПРОВЕРКА'),
                 text: switch (o.verificationStatus) {
-                  'verified' => 'Проверена организация — можеш да публикуваш.',
-                  'rejected' => 'Проверката е отказана. Пиши ни.',
-                  _ => 'Чака проверка. Дотогава обявите ти са чернови.',
+                  'verified' => context.tr(
+                    'Verified organisation — you can publish.',
+                    'Проверена организация — можеш да публикуваш.',
+                  ),
+                  'rejected' => context.tr(
+                    'Verification was rejected. Write to us.',
+                    'Проверката е отказана. Пиши ни.',
+                  ),
+                  _ => context.tr(
+                    'Waiting for verification. Until then your posts are drafts.',
+                    'Чака проверка. Дотогава обявите ти са чернови.',
+                  ),
                 },
               ),
             ],
@@ -293,7 +319,10 @@ class _EditDialogState extends State<_EditDialog> {
     final s = widget.me.student;
     final o = widget.me.organizer;
     return AlertDialog(
-      title: Text('НАПРАВИ ГО СВОЙ', style: ZineText.heavy(32)),
+      title: Text(
+        context.tr('MAKE IT YOURS', 'НАПРАВИ ГО СВОЙ'),
+        style: ZineText.heavy(32),
+      ),
       content: SizedBox(
         width: 520,
         child: Form(
@@ -303,47 +332,51 @@ class _EditDialogState extends State<_EditDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _field(
-                  'Име',
+                  context.tr('Name', 'Име'),
                   _name,
                   validator: (v) => validateDisplayName(v ?? ''),
                 ),
                 if (s != null) ...[
-                  _field('Град', _city),
-                  _field('Училище', _school),
+                  _field(context.tr('City', 'Град'), _city),
+                  _field(context.tr('School', 'Училище'), _school),
                   _field(
-                    'Клас (1–12)',
+                    context.tr('Grade (1–12)', 'Клас (1–12)'),
                     _grade,
                     validator: (v) {
                       final t = (v ?? '').trim();
                       if (t.isEmpty) return null;
                       final n = int.tryParse(t);
                       return n == null || n < 1 || n > 12
-                          ? 'От 1 до 12.'
+                          ? context.tr('From 1 to 12.', 'От 1 до 12.')
                           : null;
                     },
                   ),
                   _field(
-                    'За мен',
+                    context.tr('About', 'За мен'),
                     _bio,
                     lines: 4,
-                    validator: (v) =>
-                        (v ?? '').length > 1000 ? 'До 1000 знака.' : null,
+                    validator: (v) => (v ?? '').length > 1000
+                        ? context.tr('Up to 1000 characters.', 'До 1000 знака.')
+                        : null,
                   ),
                 ],
                 if (o != null) ...[
                   _field(
-                    'Име на организацията',
+                    context.tr('Organisation name', 'Име на организацията'),
                     _org,
                     validator: (v) => validateOrgName(v ?? ''),
                   ),
                   if (o.verificationStatus == 'verified')
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
-                        'Смяна на името пуска организацията на нова проверка.',
+                        context.tr(
+                          'Changing the name sends the organisation back to verification.',
+                          'Смяна на името пуска организацията на нова проверка.',
+                        ),
                       ),
                     ),
-                  _field('Уебсайт', _web),
+                  _field(context.tr('Website', 'Уебсайт'), _web),
                 ],
               ],
             ),
@@ -353,9 +386,12 @@ class _EditDialogState extends State<_EditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('ОТКАЗ'),
+          child: Text(context.tr('CANCEL', 'ОТКАЗ')),
         ),
-        FilledButton(onPressed: _save, child: const Text('ЗАПАЗИ')),
+        FilledButton(
+          onPressed: _save,
+          child: Text(context.tr('SAVE', 'ЗАПАЗИ')),
+        ),
       ],
     );
   }

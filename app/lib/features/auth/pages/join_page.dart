@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/zine.dart';
@@ -52,8 +53,11 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 12,
             children: [
-              Text('НА КОЯ СТРАНА', style: ZineText.heavy(56, color: p.ink)),
-              const RansomText('СИ?', size: 56),
+              Text(
+                context.tr('WHICH SIDE', 'НА КОЯ СТРАНА'),
+                style: ZineText.heavy(56, color: p.ink),
+              ),
+              RansomText(context.tr('ARE YOU ON?', 'СИ?'), size: 56),
             ],
           ),
           const SizedBox(height: 40),
@@ -63,8 +67,11 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
             alignment: WrapAlignment.center,
             children: [
               _SideCard(
-                title: 'УЧЕНИК',
-                sub: 'Намери възможности. Изгради си бъдещето.',
+                title: context.tr('CANDIDATE', 'УЧЕНИК'),
+                sub: context.tr(
+                  'Find opportunities. Build your own future.',
+                  'Намери възможности. Изгради си бъдещето.',
+                ),
                 icon: LucideIcons.rocket,
                 color: p.secondary,
                 textColor: const Color(0xFF070707),
@@ -72,8 +79,11 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
                 onTap: () => setState(() => _side = AccountType.student),
               ),
               _SideCard(
-                title: 'ОРГАНИЗАТОР',
-                sub: 'Публикувай събития. Намери следващия си екип.',
+                title: context.tr('ORGANISER', 'ОРГАНИЗАТОР'),
+                sub: context.tr(
+                  'Publish events. Find your next crew.',
+                  'Публикувай събития. Намери следващия си екип.',
+                ),
                 icon: LucideIcons.megaphone,
                 color: p.primary,
                 textColor: p.onPrimary,
@@ -83,7 +93,10 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
             ],
           ),
           const SizedBox(height: 24),
-          TextLink('Имаш акаунт? Влез', onTap: () => context.go('/login')),
+          TextLink(
+            context.tr('Have an account? Log in', 'Имаш акаунт? Влез'),
+            onTap: () => context.go('/login'),
+          ),
         ],
       );
     }
@@ -91,17 +104,19 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
     return Form(
       key: _form,
       child: AuthCard(
-        title: _side == AccountType.student ? 'УЧЕНИК' : 'ОРГАНИЗАТОР',
+        title: _side == AccountType.student
+            ? context.tr('CANDIDATE', 'УЧЕНИК')
+            : context.tr('ORGANISER', 'ОРГАНИЗАТОР'),
         children: [
           ZineField(
-            label: 'Имейл',
+            label: context.tr('Email', 'Имейл'),
             controller: _email,
             keyboard: TextInputType.emailAddress,
             autofill: const [AutofillHints.email],
             validator: validateEmail,
           ),
           ZineField(
-            label: 'Парола',
+            label: context.tr('Password', 'Парола'),
             controller: _password,
             obscure: true,
             autofill: const [AutofillHints.newPassword],
@@ -109,7 +124,9 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
           ),
           const SizedBox(height: 6),
           ZineButton(
-            label: busy ? 'ЧАКАЙ…' : 'ДАВАЙ',
+            label: busy
+                ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
+                : context.tr('LET’S GO', 'ДАВАЙ'),
             pink: true,
             onPressed: busy ? null : _submit,
           ),
@@ -118,10 +135,13 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
             alignment: WrapAlignment.spaceBetween,
             children: [
               TextLink(
-                'Смени страната',
+                context.tr('Change side', 'Смени страната'),
                 onTap: () => setState(() => _side = null),
               ),
-              TextLink('Имаш акаунт? Влез', onTap: () => context.go('/login')),
+              TextLink(
+                context.tr('Have an account? Log in', 'Имаш акаунт? Влез'),
+                onTap: () => context.go('/login'),
+              ),
             ],
           ),
         ],

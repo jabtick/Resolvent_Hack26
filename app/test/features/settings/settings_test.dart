@@ -32,36 +32,36 @@ Future<Services> pumpSettings(WidgetTester tester) async {
 void main() {
   testWidgets('picking a vibe changes the theme', (tester) async {
     final s = await pumpSettings(tester);
-    await tester.tap(find.text('Киселина'));
+    await tester.tap(find.text('Acid'));
     await tester.pumpAndSettle();
     expect(s.theme.vibe, ZineVibe.acid);
   });
 
   testWidgets('shows the account type', (tester) async {
     await pumpSettings(tester);
-    expect(find.text('Тип акаунт: ученик'), findsOneWidget);
+    expect(find.text('Role: Candidate'), findsOneWidget);
   });
 
   testWidgets('log out signs out', (tester) async {
     final s = await pumpSettings(tester);
-    await tester.tap(find.text('ИЗХОД'));
+    await tester.tap(find.text('LOG OUT'));
     await tester.pumpAndSettle();
     expect(s.auth.status, AuthStatus.signedOut);
   });
 
-  testWidgets('delete needs the word ИЗТРИЙ before it works', (tester) async {
+  testWidgets('delete needs the word DELETE before it works', (tester) async {
     final s = await pumpSettings(tester);
-    await tester.tap(find.text('ИЗТРИЙ АКАУНТА'));
+    await tester.tap(find.text('DELETE ACCOUNT'));
     await tester.pumpAndSettle();
 
-    final confirm = find.widgetWithText(FilledButton, 'ИЗТРИЙ ЗАВИНАГИ');
+    final confirm = find.widgetWithText(FilledButton, 'DELETE FOREVER');
     expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
 
-    await tester.enterText(find.byType(TextField).last, 'изтрий');
+    await tester.enterText(find.byType(TextField).last, 'delete');
     await tester.pump();
     expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
 
-    await tester.enterText(find.byType(TextField).last, 'ИЗТРИЙ');
+    await tester.enterText(find.byType(TextField).last, 'DELETE');
     await tester.pump();
     await tester.tap(confirm);
     await tester.pumpAndSettle();
@@ -72,9 +72,9 @@ void main() {
 
   testWidgets('cancelling delete keeps the account', (tester) async {
     final s = await pumpSettings(tester);
-    await tester.tap(find.text('ИЗТРИЙ АКАУНТА'));
+    await tester.tap(find.text('DELETE ACCOUNT'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ОТКАЗ'));
+    await tester.tap(find.text('CANCEL'));
     await tester.pumpAndSettle();
     expect(s.auth.status, AuthStatus.signedIn);
   });

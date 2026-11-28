@@ -7,6 +7,7 @@ import '../features/auth/supabase_auth_repo.dart';
 import '../features/profile/fake_profile_repo.dart';
 import '../features/profile/profile_repo.dart';
 import '../features/profile/supabase_profile_repo.dart';
+import 'i18n/language.dart';
 import 'theme/theme_controller.dart';
 
 /// What the join page learned before the account exists: which side the
@@ -20,6 +21,7 @@ class Services {
   final AuthRepo auth;
   final ProfileRepo profiles;
   final ThemeController theme;
+  final LanguageController lang = LanguageController();
   final SignupDraft signupDraft = SignupDraft();
 
   Services({required this.auth, required this.profiles, required this.theme});

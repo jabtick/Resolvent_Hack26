@@ -12,7 +12,10 @@ import '../features/settings/pages/settings_page.dart';
 import '../features/achievements/pages/achievements_page.dart';
 import '../features/calendar/pages/calendar_page.dart';
 import '../features/feed/pages/feed_page.dart';
+import '../features/feed/pages/opp_page.dart';
+import '../features/feed/pages/saved_page.dart';
 import 'config.dart';
+import 'i18n/language.dart';
 import 'router.dart';
 import 'services.dart';
 import 'theme/app_theme.dart';
@@ -20,6 +23,8 @@ import 'theme/app_theme.dart';
 /// Every route and the page that fills it. Features replace their entry.
 Map<String, PageBuilder> appPages() => {
   '/': (c, s) => const FeedPage(),
+  '/opp/:id': (c, s) => OppPage(id: s.pathParameters['id']!),
+  '/saved': (c, s) => const SavedPage(),
   '/calendar': (c, s) => const CalendarPage(),
   '/achievements': (c, s) => const AchievementsPage(),
   '/join': (c, s) => const JoinPage(),
@@ -64,13 +69,16 @@ class _NoFutureAppState extends State<NoFutureApp> {
     final theme = widget.services.theme;
     return ServicesScope(
       services: widget.services,
-      child: ListenableBuilder(
-        listenable: theme,
-        builder: (context, _) => MaterialApp.router(
-          title: kBrand,
-          debugShowCheckedModeBanner: false,
-          theme: buildTheme(theme.vibe),
-          routerConfig: _router,
+      child: LanguageScope(
+        controller: widget.services.lang,
+        child: ListenableBuilder(
+          listenable: theme,
+          builder: (context, _) => MaterialApp.router(
+            title: kBrand,
+            debugShowCheckedModeBanner: false,
+            theme: buildTheme(theme.vibe),
+            routerConfig: _router,
+          ),
         ),
       ),
     );
