@@ -83,6 +83,8 @@ TAGS: tuple[Tag, ...] = (
     _t("debate", "Дебати и ораторство", "subject", "дебат", "debate", "ораторск", "public speaking",
        "реторик", "модел оон", "model un", "mun "),
 
+    _t("linguistics", "Лингвистика", "subject", "лингвисти", "linguistic"),
+
     # --- Subjects: languages -------------------------------------------------
     _t("foreign-languages", "Чужди езици", "subject", "чужд език", "чужди езици", "foreign language",
        "езиков"),

@@ -24,7 +24,7 @@ RAW, DB = HERE / "data" / "raw", HERE / "data" / "db"
 
 # The same event pulled from two sources: keep the richer, dedicated page and drop the
 # calendar line. {raw file stem: [substring of the title to drop]}
-DROP = {"infos_calendar": ["Джон Атанасов"]}
+DROP = {"infos_calendar": ["Джон Атанасов", "CODE@BURGAS"]}
 
 TYPES = {"competition", "scholarship", "internship", "open_day", "university_program"}
 AUDIENCES = {"school", "university", "both"}

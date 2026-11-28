@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useAccount } from "@/components/AccountProvider";
 import { Nav } from "@/components/Nav";
 import { OppCard } from "@/components/OppCard";
-import { formatDeadline, OPP_TYPE_LABEL, OPP_TYPES, type Opp, type OppType } from "@/lib/opps";
+import { formatStatus, OPP_TYPE_LABEL, OPP_TYPES, type Opp, type OppType } from "@/lib/opps";
 import { initialsOf } from "@/lib/profiles";
 import { useFeed, useMyProfile, useSavedIds, useToggleSaved } from "@/lib/queries";
 
@@ -273,7 +273,7 @@ function Feed() {
                   >
                     <p className="font-bold leading-tight">{o.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {o.org} · {formatDeadline(o.deadlineAt)}
+                      {o.org} · {formatStatus(o)}
                     </p>
                   </Link>
                 ))

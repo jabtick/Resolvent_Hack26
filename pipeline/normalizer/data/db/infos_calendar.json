@@ -214,28 +214,6 @@
   {
     "type": "competition",
     "organizer_id": null,
-    "title": "Състезание по програмиране CODE@BURGAS",
-    "description": "Състезание по програмиране CODE@BURGAS, 22 май 2027 г., онлайн.",
-    "image_url": null,
-    "external_url": "https://codeburgas.com/",
-    "city": "Бургас",
-    "is_online": true,
-    "audience": "school",
-    "starts_at": "2027-05-22T00:00:00+03:00",
-    "ends_at": null,
-    "deadline_at": null,
-    "status": "published",
-    "source": "scraper",
-    "source_url": "https://infos.infosbg.com/calendar#4c32db217b",
-    "tags": [
-      "programming",
-      "informatics",
-      "stem"
-    ]
-  },
-  {
-    "type": "competition",
-    "organizer_id": null,
     "title": "Международна отборна олимпиада по информатика IIOT",
     "description": "Международна отборна олимпиада по информатика IIOT, 28 май - 1 юни 2027 г., гр. Варна.",
     "image_url": null,

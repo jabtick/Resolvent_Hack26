@@ -33,6 +33,7 @@ export type Opp = {
   online: boolean;
   deadlineAt: string | null; // ISO
   startsAt: string | null; // ISO
+  endsAt?: string | null; // ISO; optional so sample items don't need it
   description: string;
   externalUrl: string | null;
   color: OppColor;
@@ -70,6 +71,35 @@ export function formatDeadline(iso: string | null, now = new Date()): string {
   return `до ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+/**
+ * True while the event is happening: from `starts_at` until `ends_at`
+ * (or the end of the start day when there is no end).
+ */
+export function isOngoing(o: Pick<Opp, "startsAt" | "endsAt">, now = new Date()): boolean {
+  if (!o.startsAt) return false;
+  const start = new Date(o.startsAt);
+  let end: Date;
+  if (o.endsAt) {
+    end = new Date(o.endsAt);
+  } else {
+    end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+  }
+  return start <= now && now <= end;
+}
+
+/**
+ * The label on a card: "тече сега" while the event runs (even if registration
+ * already closed), otherwise the deadline ("до 20 дек", "изтекъл", "без срок").
+ */
+export function formatStatus(
+  o: Pick<Opp, "deadlineAt" | "startsAt" | "endsAt">,
+  now = new Date(),
+): string {
+  if (isOngoing(o, now)) return "тече сега";
+  return formatDeadline(o.deadlineAt, now);
+}
+
 export function placeOf(o: Pick<Opp, "city" | "online">): string {
   if (o.online && o.city) return `${o.city} · онлайн`;
   if (o.online) return "Онлайн";
@@ -95,7 +125,7 @@ async function guard<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const SELECT =
-  "id, title, type, city, is_online, deadline_at, starts_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
+  "id, title, type, city, is_online, deadline_at, starts_at, ends_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
 
 type Row = {
   id: string;
@@ -105,6 +135,7 @@ type Row = {
   is_online: boolean;
   deadline_at: string | null;
   starts_at: string | null;
+  ends_at?: string | null;
   description: string | null;
   external_url: string | null;
   source_url: string | null;
@@ -136,6 +167,7 @@ export function createOppsApi(db: Db) {
       online: r.is_online,
       deadlineAt: r.deadline_at,
       startsAt: r.starts_at,
+      endsAt: r.ends_at ?? null,
       description: r.description ?? "",
       externalUrl: r.external_url ?? r.source_url,
       color: colorFor(r.id),

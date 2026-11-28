@@ -3,7 +3,15 @@ import { describe, expect, it } from "vitest";
 import { SAMPLE_OPPS } from "@/data/sampleOpps";
 import { fakeClient, FakeServer, fakeUid, pgError } from "@/test/fakeSupabase";
 
-import { colorFor, createOppsApi, formatDeadline, hostOf, placeOf } from "./opps";
+import {
+  colorFor,
+  createOppsApi,
+  formatDeadline,
+  formatStatus,
+  hostOf,
+  isOngoing,
+  placeOf,
+} from "./opps";
 
 const ORG = "22222222-2222-2222-2222-222222222222";
 const OPP = "33333333-3333-3333-3333-333333333333";
@@ -124,6 +132,48 @@ it("formatting helpers", () => {
   expect(hostOf("https://www.infos.bg/x")).toBe("infos.bg");
   expect(hostOf(null)).toBe("Изскрейпено");
   expect(colorFor("abc")).toBe(colorFor("abc"));
+});
+
+it("ongoing events say 'тече сега' even after the registration deadline", () => {
+  // LiberHack Edition 2: registration closed 20 Nov, event 27 Nov 16:00 – 29 Nov 18:30 (Sofia time).
+  const hack = {
+    deadlineAt: "2026-11-20T21:59:00Z",
+    startsAt: "2026-11-27T14:00:00Z",
+    endsAt: "2026-11-29T16:30:00Z",
+  };
+  expect(formatStatus(hack, new Date("2026-11-28T10:00:00Z"))).toBe("тече сега");
+  expect(isOngoing(hack, new Date("2026-11-27T13:00:00Z"))).toBe(false); // before the start
+  expect(formatStatus(hack, new Date("2026-11-27T13:00:00Z"))).toBe("изтекъл");
+  expect(formatStatus(hack, new Date("2026-11-30T10:00:00Z"))).toBe("изтекъл"); // over
+  // No end date: ongoing only on the start day.
+  const oneDay = { deadlineAt: null, startsAt: "2026-12-05T08:00:00Z", endsAt: null };
+  expect(formatStatus(oneDay, new Date("2026-12-05T12:00:00Z"))).toBe("тече сега");
+  expect(formatStatus(oneDay, new Date("2026-12-07T12:00:00Z"))).toBe("без срок");
+});
+
+it("the feed reads ends_at", async () => {
+  const { server, api } = setup();
+  server.opportunities = [
+    {
+      id: OPP,
+      title: "LiberHack",
+      type: "competition",
+      city: "Бургас",
+      is_online: false,
+      deadline_at: "2026-11-20T21:59:00Z",
+      starts_at: "2026-11-27T14:00:00Z",
+      ends_at: "2026-11-29T16:30:00Z",
+      description: null,
+      external_url: "https://liberhack.org/",
+      source_url: "https://liberhack.org/",
+      organizer_id: null,
+      opportunity_tags: [],
+    },
+  ];
+  const [o] = await api.listFeed();
+  expect(o).toMatchObject({ endsAt: "2026-11-29T16:30:00Z" });
+  const q = server.readsOf("opportunities")[0]!.url.searchParams;
+  expect(q.get("select")).toContain("ends_at");
 });
 
 describe("organizer posts", () => {

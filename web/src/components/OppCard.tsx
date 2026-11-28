@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Bookmark, MapPin } from "lucide-react";
 
-import { formatDeadline, OPP_TYPE_LABEL, placeOf, type Opp, type OppColor } from "@/lib/opps";
+import { formatStatus, OPP_TYPE_LABEL, placeOf, type Opp, type OppColor } from "@/lib/opps";
 
 export const bg: Record<OppColor, string> = {
   primary: "bg-primary text-primary-foreground",
@@ -57,9 +57,7 @@ export function OppCard({
               ПРИМЕРНА
             </span>
           )}
-          <span className="ml-auto -rotate-6 font-hand text-2xl">
-            {formatDeadline(o.deadlineAt)}
-          </span>
+          <span className="ml-auto -rotate-6 font-hand text-2xl">{formatStatus(o)}</span>
         </div>
       </Link>
       <div className="p-3">
