@@ -11,7 +11,20 @@ import {
   hostOf,
   isOngoing,
   placeOf,
+  titleFontSize,
 } from "./opps";
+
+it("card titles shrink to fit the card; the card size never changes", () => {
+  const cqw = (t: string) => Number(/min\(([\d.]+)cqw/.exec(titleFontSize(t))![1]);
+  expect(titleFontSize("LiberHack")).toBe("min(11cqw, 3rem)"); // short: the old size
+  // a 19-letter word must fit on one line without breaking: 19 × 0.8em ≤ 84cqw
+  const ceoi = cqw("Централноевропейска олимпиада по информатика CEOI");
+  expect(ceoi).toBeLessThanOrEqual(84 / (19 * 0.8));
+  const long =
+    "Пролетни състезания по информатика, съвместно с Международен турнир по информатика за напреднали";
+  expect(cqw(long)).toBeLessThan(cqw("Национална олимпиада по математика"));
+  expect(cqw(long)).toBeGreaterThanOrEqual(3);
+});
 
 const ORG = "22222222-2222-2222-2222-222222222222";
 const OPP = "33333333-3333-3333-3333-333333333333";

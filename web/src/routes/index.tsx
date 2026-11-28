@@ -177,7 +177,7 @@ function Feed() {
                 </div>
                 {allTags.length > 0 && (
                   <div>
-                    <p className="mb-2 font-hand text-2xl">твоята тема</p>
+                    <p className="mb-2 font-hand text-2xl">избери тема</p>
                     <div className="flex flex-wrap gap-2">
                       {allTags.map((t) => (
                         <button

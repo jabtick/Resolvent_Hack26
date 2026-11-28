@@ -108,6 +108,52 @@ export function formatStatus(
   return formatDeadline(o.deadlineAt, now);
 }
 
+/**
+ * Font size for a card title, in `cqw` (percent of the card's width), so the whole title fits
+ * the card's fixed 4:3 box at every screen width. The card itself never changes size.
+ *
+ * It simulates word wrapping in the display font (about 0.8em per letter) and picks the
+ * largest size where the lines fit, without breaking words in the middle. The text area is
+ * taken as 84% of the card width and 40% of it in height (what is left on a phone after the
+ * padding, the tag line and the deadline line).
+ */
+export function titleFontSize(title: string): string {
+  const W = 84; // usable width, % of card width
+  const H = 40; // usable height, % of card width
+  const CHAR = 0.8; // average letter width in em (Rubik Glitch)
+  const SPACE = 0.3;
+  const MAX = 11; // cqw; the old size on a phone
+  const MIN = 3;
+  const words = title.split(/\s+/).filter(Boolean);
+  const longest = Math.max(0, ...words.map((w) => w.length * CHAR));
+
+  const lines = (maxEm: number): number => {
+    let n = 0;
+    let cur = 0;
+    for (const w of words) {
+      const len = w.length * CHAR;
+      if (cur === 0) cur = len;
+      else if (cur + SPACE + len <= maxEm) cur += SPACE + len;
+      else {
+        n++;
+        cur = len;
+      }
+    }
+    return cur > 0 ? n + 1 : n;
+  };
+
+  let size = MIN;
+  for (let f = MAX; f >= MIN; f -= 0.25) {
+    const maxEm = W / f;
+    if (longest <= maxEm && lines(maxEm) * f <= H) {
+      size = f;
+      break;
+    }
+  }
+  // never bigger than the original desktop size (text-5xl = 3rem)
+  return `min(${size}cqw, 3rem)`;
+}
+
 export function placeOf(o: Pick<Opp, "city" | "online">): string {
   if (o.online && o.city) return `${o.city} · онлайн`;
   if (o.online) return "Онлайн";
