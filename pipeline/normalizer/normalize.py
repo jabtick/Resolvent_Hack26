@@ -19,7 +19,7 @@ from pathlib import Path
 
 from extract import (OPPORTUNITY_TYPES, detect_abroad, detect_audience, known_city, detect_city, detect_grades, detect_online,
                      detect_tags, detect_type, normalize_city, parse_hint_datetime, resolve_dates)
-from taxonomy import TAGS_BY_SLUG
+from taxonomy import canonical
 
 DESCRIPTION_MAX = 2000
 AUDIENCES = ("school", "university", "both")
@@ -127,7 +127,7 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
         "status": status,
         "source": "scraper",
         "source_url": source_url,
-        "tags": [t for t in tags if t in TAGS_BY_SLUG],
+        "tags": list(dict.fromkeys(c for c in map(canonical, tags) if c)),
     }
     if debug:
         row["_debug"] = {

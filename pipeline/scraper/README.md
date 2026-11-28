@@ -40,13 +40,15 @@ Each raw record becomes one row of the `opportunities` table from [docs/database
 
 ## Step 2: Add tags
 
-Tags come from the fixed `tags` list (`slug` + Bulgarian `name`), not free text. They go into `opportunity_tags`. Things that already have a column (type, city, online, dates, status) are not repeated as tags.
+Tags come from the one shared list in [../normalizer/taxonomy.py](../normalizer/taxonomy.py) (`slug` + Bulgarian `name`), not free text. The script imports it and stops with an error if a rule uses a slug that isn't there. They go into `opportunity_tags`. Things that already have a column (type, city, online, dates, status) are not repeated as tags.
 
 - Subject: `informatics`, `math`, `physics`, `biology`, ...
-- Format: `olympiad`, `tournament`, `camp`, `team`, `girls-only`
-- Level: `level-municipal`, `level-regional`, `level-national`, `level-international`
+- Format: `olympiad`, `tournament`, `summer-school`, `team`, `girls-only`
+- Reach: `regional`, `national`, `international`
 
-First version: rule-based tagging (keyword matching in Bulgarian and English), e.g. "олимпиада" gives `olympiad`, "Областен кръг" gives `level-regional`, "Международна / Балканска / Европейска" gives `level-international`. AI only for records the rules can't tag, and only later, inside an Edge Function.
+The old slugs from the first version map like this (see `ALIASES` in `taxonomy.py`): `camp` → `summer-school`, `level-municipal` / `level-regional` → `regional`, `level-national` → `national`, `level-international` → `international`.
+
+First version: rule-based tagging (keyword matching in Bulgarian and English), e.g. "олимпиада" gives `olympiad`, "Областен кръг" gives `regional`, "Международна / Балканска / Европейска" gives `international`. AI only for records the rules can't tag, and only later, inside an Edge Function.
 
 ## Output
 
@@ -68,8 +70,8 @@ It takes files or folders of raw JSONs, parses dates and places from `raw_date_t
 ## Open questions
 
 - Raw JSON format: agree with Захари.
-- Tag list: agree with Гошо, since his filters and search use it.
-- Overlap with the normalizer in [../normalizer](../normalizer): agree on one pipeline and one tag list so it isn't built twice.
+- Tag list: done, shared with the normalizer (`../normalizer/taxonomy.py`).
+- Overlap with the normalizer in [../normalizer](../normalizer): the tag list is shared now; still to agree on one pipeline so it isn't built twice.
 
 ## Later
 

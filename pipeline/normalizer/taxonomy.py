@@ -7,6 +7,10 @@ Keywords are lowercase stems matched at the start of a word, so "математ"
 "математика", "математическа", "математици". Bulgarian and English are both listed,
 because many sources (EU programmes, companies) post in English.
 
+This is the ONE tag list for the whole project: the normalizer (extract.py) and the
+scraper (../scraper/process_bucket.py) both import it. Old slugs from the scraper's first
+list (level-national, camp, ...) still work through ALIASES -> canonical().
+
 Run `python taxonomy.py` to print tags_seed.json for the database (Гошо / Ники).
 """
 
@@ -108,6 +112,8 @@ TAGS: tuple[Tag, ...] = (
     _t("olympiad", "Олимпиада", "format", "олимпиад", "olympiad"),
     _t("hackathon", "Хакатон", "format", "хакатон", "hackathon", "hack day", "game jam"),
     _t("contest", "Конкурс", "format", "конкурс", "contest", "challenge"),
+    # not "състезание": almost every item is one; a tournament is a series of games/rounds
+    _t("tournament", "Турнир", "format", "турнир", "tournament", "първенство", "championship"),
     _t("summer-school", "Лагери и летни училища", "format", "лятно училище", "лятна академия", "summer school",
        "summer academy", "лагер", "camp"),
     # not "обучение" / "курс": "редовно обучение", "втори курс" are about studying, not a training event
@@ -122,6 +128,8 @@ TAGS: tuple[Tag, ...] = (
     _t("career", "Кариера и работа", "format", "кариер", "career", "работа", "job", "trainee", "graduate program",
        "панаир на", "job fair"),
     _t("team", "В отбор", "format", "отбор", "team", "екип"),
+    _t("girls-only", "Само за момичета", "format", "само за момичета", "за момичета", "girls only",
+       "girls in", "for girls", "women in"),
 
     # --- Reach and money ------------------------------------------------------
     _t("national", "Национално ниво", "reach", "национал", "national", "републиканск"),
@@ -145,6 +153,34 @@ TAGS: tuple[Tag, ...] = (
 )
 
 TAGS_BY_SLUG: dict[str, Tag] = {t.slug: t for t in TAGS}
+
+# Old or alternative slugs -> the canonical slug above. Anything that reads tag slugs from
+# outside (scraper rules, raw-file hints, old JSON outputs) passes them through canonical().
+ALIASES: dict[str, str] = {
+    # the scraper's first tag list (Ники)
+    "level-international": "international",
+    "level-national": "national",
+    "level-regional": "regional",
+    "level-municipal": "regional",     # "Областно ниво" also covers общински кръг
+    "camp": "summer-school",
+    # common spellings
+    "programing": "programming",
+    "cs": "informatics",
+    "it": "informatics",
+    "ai": "ai-data",
+    "olympiads": "olympiad",
+    "hackathons": "hackathon",
+    "girls": "girls-only",
+    "university": "university-students",
+    "students": "university-students",
+}
+
+
+def canonical(slug: str) -> str | None:
+    """The canonical slug for `slug` (itself, or via ALIASES), or None if it is not a tag."""
+    s = slug.strip().lower()
+    s = ALIASES.get(s, s)
+    return s if s in TAGS_BY_SLUG else None
 
 GRADE_BANDS: tuple[tuple[str, int, int], ...] = (
     ("grades-1-4", 1, 4),
