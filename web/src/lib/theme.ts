@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 export type Theme = "zine" | "dark" | "acid";
 export const THEMES: { id: Theme; label: string }[] = [
-  { id: "zine", label: "Ксерокс" },
-  { id: "dark", label: "Мазе" },
-  { id: "acid", label: "Киселина" },
+  { id: "zine", label: "Светла" },
+  { id: "dark", label: "Тъмна" },
+  { id: "acid", label: "Цветна" },
 ];
 export function applyTheme(t: Theme) {
   const el = document.documentElement;

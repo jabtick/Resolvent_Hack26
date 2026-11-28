@@ -52,7 +52,7 @@ npx supabase gen types typescript --project-id tjkwpebrakwfkhenpayl --schema pub
 
 ## Look
 
-The zine style comes from the Lovable design: utility classes `zine`, `zine-pink`, `ransom`, `tape`, `jitter`, `tilt-l`, `tilt-r` and the colour tokens in `src/styles.css` (three themes: Ксерокс, Мазе, Киселина). Fonts are Cyrillic-capable and self-hosted via `@fontsource` (no requests to Google). Enter animations use `tw-animate-css` (`animate-in fade-in …`) and switch off under `prefers-reduced-motion`.
+The zine style comes from the Lovable design: utility classes `zine`, `zine-pink`, `ransom`, `tape`, `jitter`, `tilt-l`, `tilt-r` and the colour tokens in `src/styles.css` (three themes: Светла, Тъмна, Цветна; ids `zine`, `dark`, `acid`). Fonts are Cyrillic-capable and self-hosted via `@fontsource` (no requests to Google). Enter animations use `tw-animate-css` (`animate-in fade-in …`) and switch off under `prefers-reduced-motion`.
 
 ## Deploy (Netlify)
 
