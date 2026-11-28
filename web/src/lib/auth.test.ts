@@ -73,6 +73,37 @@ describe("creating the profile", () => {
     });
   });
 
+  it("student with interests: they are saved after the profile", async () => {
+    const { server, auth } = setup();
+    await auth.signIn("petya@example.com", "abcdefghi1");
+    await auth.createProfile({
+      type: "student",
+      username: "petya",
+      displayName: "Петя",
+      birthDate: new Date(2008, 4, 1),
+      interests: [3, 7],
+    });
+    expect(server.writesTo("profile_interests").map((r) => r.method)).toEqual(["DELETE", "POST"]);
+    expect(server.writesTo("profile_interests")[1]!.body).toEqual([
+      { profile_id: fakeUid, tag_id: 3 },
+      { profile_id: fakeUid, tag_id: 7 },
+    ]);
+  });
+
+  it("interests failing to save does not undo the profile", async () => {
+    const { server, auth } = setup();
+    server.on("POST /rest/v1/profile_interests", () => pgError("42501", 403));
+    await auth.signIn("petya@example.com", "abcdefghi1");
+    await auth.createProfile({
+      type: "student",
+      username: "petya",
+      displayName: "Петя",
+      birthDate: new Date(2008, 4, 1),
+      interests: [3],
+    });
+    expect(server.writesTo("student_details")).toHaveLength(1);
+  });
+
   it("retry after a half-created profile keeps the type and updates the names", async () => {
     const { server, auth } = setup();
     server.profileRow = organizerRow(null);
