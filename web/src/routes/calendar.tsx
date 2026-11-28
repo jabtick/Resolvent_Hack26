@@ -41,13 +41,19 @@ type Entry = { opp: Opp; deadline: Date | null; start: Date | null; end: Date | 
 type Row = Entry & { at: Date; kind: "deadline" | "run" };
 
 const dayFmt = new Intl.DateTimeFormat("bg-BG", { weekday: "long", day: "numeric", month: "long" });
-const dateOnly = new Intl.DateTimeFormat("bg-BG", { day: "numeric", month: "short" });
-const timeOnly = new Intl.DateTimeFormat("bg-BG", { hour: "2-digit", minute: "2-digit" });
-/** "11 дек." or "11 дек. 18:00" — no time for whole-day dates. */
-const when = (d: Date) =>
-  d.getHours() === 0 && d.getMinutes() === 0
-    ? dateOnly.format(d)
-    : `${dateOnly.format(d)} ${timeOnly.format(d)}`;
+const pad = (n: number) => String(n).padStart(2, "0");
+/**
+ * "20.11 23:59" — the same in every browser. No time for whole-day dates; the year only
+ * when it isn't this year ("20.11.2027").
+ */
+const when = (d: Date) => {
+  const year = d.getFullYear() === new Date().getFullYear() ? "" : `.${d.getFullYear()}`;
+  const time =
+    d.getHours() === 0 && d.getMinutes() === 0
+      ? ""
+      : ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}${year}${time}`;
+};
 
 function CalendarPage() {
   const { status } = useAccount();
@@ -258,10 +264,10 @@ function CalendarPage() {
                         const multiDay = !isSameDay(from, to);
                         const text =
                           kind === "deadline"
-                            ? `${from < new Date() ? "СРОКЪТ ИЗТЕЧЕ" : "КРАЕН СРОК"} ${when(from)}`
+                            ? `Край на записване ${when(from)}`
                             : multiDay
-                              ? `${when(from)} – ${when(to)}`
-                              : `НАЧАЛО ${when(from)}`;
+                              ? `Начало на събитие ${when(from)} – ${when(to)}`
+                              : `Начало на събитие ${when(from)}`;
                         // "ДЕН 2 ОТ 3" when a picked day falls inside a multi-day event.
                         const days = multiDay ? daysOf({ from, to }) : [];
                         const nth = days.findIndex((d) => isSameDay(d, date)) + 1;
@@ -275,7 +281,7 @@ function CalendarPage() {
                             {view === "day" && kind === e.kind && nth > 0 && (
                               <>
                                 {" "}
-                                · ДЕН {nth} ОТ {days.length}
+                                · ден {nth} от {days.length}
                               </>
                             )}
                           </span>
