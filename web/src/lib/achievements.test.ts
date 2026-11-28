@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { fakeClient, FakeServer, pgError } from "@/test/fakeSupabase";
 
-import { badgeStats, createAchievementsApi, formatBadgeDate, SAMPLE_BADGES } from "./achievements";
+import { type Badge, badgeStats, createAchievementsApi, formatBadgeDate } from "./achievements";
 
 async function setup(signedIn = true) {
   const server = new FakeServer();
@@ -21,7 +21,20 @@ describe("dates and stats", () => {
   });
 
   it("counts badges, podium places and organisers", () => {
-    expect(badgeStats(SAMPLE_BADGES)).toEqual({ total: 6, podium: 3, orgs: 6 });
+    const b = (org: string, place: Badge["place"]): Badge => ({
+      id: org + String(place),
+      event: "x",
+      org,
+      date: "Апр 2026",
+      place,
+      isHidden: false,
+    });
+    expect(badgeStats([b("A", 1), b("A", null), b("B", 3)])).toEqual({
+      total: 3,
+      podium: 2,
+      orgs: 2,
+    });
+    expect(badgeStats([])).toEqual({ total: 0, podium: 0, orgs: 0 });
   });
 });
 
@@ -47,7 +60,7 @@ describe("my badges", () => {
       },
     ];
     const list = await api.listMine();
-    expect(list[0]).toMatchObject({ place: 2, isHidden: true, date: "Мар 2026", isSample: false });
+    expect(list[0]).toMatchObject({ place: 2, isHidden: true, date: "Мар 2026" });
     expect(list[1]!.place).toBeNull();
   });
 
@@ -82,5 +95,44 @@ describe("public badges", () => {
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ place: 1, isHidden: false });
     expect(server.readsOf("public_badges")[0]!.url.searchParams.get("username")).toBe("eq.petya");
+  });
+});
+
+describe("one public badge (shared link)", () => {
+  const ID = "55555555-5555-5555-5555-555555555555";
+  const row = {
+    id: ID,
+    username: "petya",
+    event_title: "Купа",
+    org_name: "TS",
+    event_date: "2026-03-10",
+    place: 3,
+  };
+
+  it("reads the public view by id and returns the owner", async () => {
+    const { server, api } = await setup(false);
+    server.publicBadges = [row];
+    expect(await api.getPublic(ID)).toEqual({
+      username: "petya",
+      badge: { id: ID, event: "Купа", org: "TS", date: "Мар 2026", place: 3, isHidden: false },
+    });
+    expect(server.readsOf("public_badges")[0]!.url.searchParams.get("id")).toBe(`eq.${ID}`);
+  });
+
+  it("not public (no row) -> null", async () => {
+    const { api } = await setup(false);
+    expect(await api.getPublic(ID)).toBeNull();
+  });
+
+  it("an id that isn't a uuid -> null without a request", async () => {
+    const { server, api } = await setup(false);
+    expect(await api.getPublic("sample-1")).toBeNull();
+    expect(server.readsOf("public_badges")).toHaveLength(0);
+  });
+
+  it("incomplete rows are skipped in lists", async () => {
+    const { server, api } = await setup(false);
+    server.publicBadges = [row, { ...row, id: null }];
+    expect(await api.listPublic("petya")).toHaveLength(1);
   });
 });

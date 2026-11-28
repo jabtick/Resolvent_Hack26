@@ -2,26 +2,24 @@
 // so Messenger, Facebook, LinkedIn and Viber can read the Open Graph tags and
 // show a name and a description instead of a bare URL.
 //
-// TODO(Bogi, when the badges table exists — see lib/achievements.ts):
-//   1. Load the badge from the database instead of SAMPLE_BADGES.
-//   2. Only serve it when the owner's profile is public. student_details
-//      .is_public defaults to false (GDPR art. 25(2)) and a student under 14
-//      needs consent_granted_at, so an unguarded page here would leak a
-//      minor's data. Everything else on this page is safe; that check is not
-//      optional.
-//   3. Add og:image. It has to be drawn on the server (lib/badge-image.ts is
-//      canvas, so browser-only) — a Netlify function or a Supabase Edge
-//      Function rendering the same layout.
+// Only public badges load: the public_badges view leaves out private profiles,
+// under-14s without parental consent and hidden badges, so a minor's badge never
+// leaks through a link.
+//
+// TODO(Bogi): add og:image. It has to be drawn on the server (lib/badge-image.ts
+// is canvas, so browser-only) - a Netlify function or a Supabase Edge Function
+// rendering the same layout.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, ShieldCheck } from "lucide-react";
 
 import { Nav } from "@/components/Nav";
 import { ShareBadge } from "@/components/ShareBadge";
-import { PLACE_LABEL, SAMPLE_BADGES, type Badge } from "@/lib/achievements";
+import { PLACE_LABEL, type Badge } from "@/lib/achievements";
+import { api } from "@/lib/api";
 import { badgeShareTitle } from "@/lib/share";
 
 export const Route = createFileRoute("/b/$id")({
-  loader: ({ params }) => SAMPLE_BADGES.find((b) => b.id === params.id) ?? null,
+  loader: async ({ params }) => (await api.achievements.getPublic(params.id))?.badge ?? null,
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
