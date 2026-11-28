@@ -2,26 +2,32 @@
 // so Messenger, Facebook, LinkedIn and Viber can read the Open Graph tags and
 // show a name and a description instead of a bare URL.
 //
-// TODO(Bogi, when the badges table exists — see lib/achievements.ts):
-//   1. Load the badge from the database instead of SAMPLE_BADGES.
-//   2. Only serve it when the owner's profile is public. student_details
-//      .is_public defaults to false (GDPR art. 25(2)) and a student under 14
-//      needs consent_granted_at, so an unguarded page here would leak a
-//      minor's data. Everything else on this page is safe; that check is not
-//      optional.
-//   3. Add og:image. It has to be drawn on the server (lib/badge-image.ts is
-//      canvas, so browser-only) — a Netlify function or a Supabase Edge
-//      Function rendering the same layout.
+// Who may be seen here is decided in the database, not here: the page reads
+// the `public_badges` view, which already leaves out hidden badges and private
+// profiles (student_details.is_public defaults to false — GDPR art. 25(2)).
+// Keep it that way; don't read the `badges` table from this page.
+//
+// TODO(Bogi): add og:image. It has to be drawn on the server, and
+// lib/badge-image.ts is canvas, so browser-only — a Netlify function or a
+// Supabase Edge Function rendering the same layout.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, ShieldCheck } from "lucide-react";
 
 import { Nav } from "@/components/Nav";
 import { ShareBadge } from "@/components/ShareBadge";
 import { PLACE_LABEL, SAMPLE_BADGES, type Badge } from "@/lib/achievements";
+import { api } from "@/lib/api";
 import { badgeShareTitle } from "@/lib/share";
 
 export const Route = createFileRoute("/b/$id")({
-  loader: ({ params }) => SAMPLE_BADGES.find((b) => b.id === params.id) ?? null,
+  // The sample badges have no row in the database; they are matched first so a
+  // shared example still opens (that is what the demo shows).
+  loader: async ({ params }) => {
+    const sample = SAMPLE_BADGES.find((b) => b.id === params.id);
+    if (sample) return sample;
+    return await api.achievements.loadPublicById(params.id);
+  },
+  errorComponent: LoadError,
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
@@ -115,5 +121,25 @@ function BadgeHero({ b }: { b: Badge }) {
       </div>
       <ShareBadge b={b} />
     </article>
+  );
+}
+
+/** A failed lookup (network) is not the same as "no such badge". */
+function LoadError({ reset }: { reset: () => void }) {
+  return (
+    <div className="min-h-screen">
+      <Nav />
+      <main className="mx-auto max-w-md px-4 py-10">
+        <div className="zine bg-card p-6" role="alert">
+          <p>Значката не се зареди.</p>
+          <button
+            onClick={reset}
+            className="zine-pink jitter mt-3 bg-ink px-4 py-2 font-heavy text-xl text-paper"
+          >
+            ПАК
+          </button>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -119,6 +119,31 @@ export function createAchievementsApi(db: Db) {
         }));
       }),
 
+    /**
+     * One visible badge, for the link a share points at (`/b/<id>`). Reads the
+     * public view, so a hidden badge or a private profile comes back as null
+     * and the page says the badge isn't there. Used by routes/b.$id.tsx.
+     */
+    loadPublicById: (id: string) =>
+      guard(async (): Promise<Badge | null> => {
+        const { data, error } = await db
+          .from("public_badges")
+          .select("id, event_title, org_name, event_date, place")
+          .eq("id", id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return null;
+        return {
+          id: data.id ?? id,
+          event: data.event_title ?? "",
+          org: data.org_name ?? "",
+          date: formatBadgeDate(data.event_date ?? ""),
+          place: toPlace(data.place),
+          isHidden: false,
+          isSample: false,
+        };
+      }),
+
     /** Hide or show one of my badges on my public profile. */
     setHidden: (id: string, hidden: boolean) =>
       guard(async () => {

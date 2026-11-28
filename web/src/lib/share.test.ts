@@ -21,6 +21,8 @@ const gold: Badge = {
   org: "Министерство на образованието",
   date: "Апр 2026",
   place: 1,
+  isHidden: false,
+  isSample: false,
 };
 
 const took_part: Badge = {
@@ -29,6 +31,8 @@ const took_part: Badge = {
   org: "Фондация Силно платно",
   date: "Фев 2026",
   place: null,
+  isHidden: false,
+  isSample: false,
 };
 
 function file(): File {
