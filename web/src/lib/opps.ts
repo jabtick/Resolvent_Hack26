@@ -19,7 +19,12 @@ export const OPP_TYPE_LABEL: Record<OppType, string> = {
   university_program: "Програма",
 };
 
-export const OPP_TYPES = Object.keys(OPP_TYPE_LABEL) as OppType[];
+/**
+ * Types offered in the UI (feed counts, filters, the organizer form). `open_day` and
+ * `university_program` still exist in the database and keep their labels above, so an
+ * existing item of that type still shows correctly; they are just not offered.
+ */
+export const OPP_TYPES: OppType[] = ["competition", "scholarship", "internship"];
 
 export type OppColor = "primary" | "secondary" | "accent";
 
