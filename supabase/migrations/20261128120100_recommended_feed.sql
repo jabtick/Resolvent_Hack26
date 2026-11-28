@@ -375,7 +375,7 @@ $$;
 comment on function public.recommended_feed(double precision, integer) is
   'Recommended feed for the logged-in student: one rating 0..1 per eligible opportunity '
   '(0.50·interest + 0.25·history + 0.15·location + 0.10·urgency), highest first. '
-  'Algorithm: Niki. See the comments in migration 20261128120000_recommended_feed.sql.';
+  'Algorithm: Niki. See the comments in migration 20261128120100_recommended_feed.sql.';
 
 -- Only signed-in users; for organizers and students without details it just returns nothing.
 revoke all on function public.recommended_feed(double precision, integer) from public, anon;

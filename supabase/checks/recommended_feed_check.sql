@@ -1,4 +1,4 @@
--- Check for public.recommended_feed() (migration 20261128120000_recommended_feed.sql).
+-- Check for public.recommended_feed() (migration 20261128120100_recommended_feed.sql).
 --
 -- Creates a fake student "Maria" and test opportunities, calls the feed AS that student,
 -- compares every rating with values computed by hand, and then ENDS WITH AN ERROR ON PURPOSE:
@@ -7,7 +7,7 @@
 --
 -- How to run (Supabase dashboard -> SQL Editor):
 --   * migration NOT pushed yet: paste `begin;` + the migration + this file. In PowerShell, from the repo root:
---       $m = Get-Content supabase\migrations\20261128120000_recommended_feed.sql -Raw -Encoding UTF8
+--       $m = Get-Content supabase\migrations\20261128120100_recommended_feed.sql -Raw -Encoding UTF8
 --       $c = Get-Content supabase\checks\recommended_feed_check.sql -Raw -Encoding UTF8
 --       "begin;`n$m`n$c" | Set-Clipboard
 --     (the second `begin;` only gives a harmless "already a transaction in progress" warning)
