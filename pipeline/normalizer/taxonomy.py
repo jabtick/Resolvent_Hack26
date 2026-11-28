@@ -62,7 +62,7 @@ TAGS: tuple[Tag, ...] = (
     # --- Subjects: humanities & social ---------------------------------------
     _t("bulgarian-literature", "Български език и литература", "subject", "български език",
        "литератур", "bulgarian language"),
-    _t("creative-writing", "Творческо писане", "subject", "творческо писане", "есе ", "есета", "essay", "разказ",
+    _t("creative-writing", "Творческо писане", "subject", "творческо писане", "есе ", "есета", "essay", "разказ ", "разкази",
        "поезия", "стихотвор", "creative writing"),
     _t("history", "История", "subject", "история", "историч", "history", "цивилизаци"),
     _t("philosophy", "Философия", "subject", "философ", "philosoph", "етика", "ethics"),
@@ -71,7 +71,9 @@ TAGS: tuple[Tag, ...] = (
     # not plain "право": "има право да" (has the right to) is very common
     _t("law", "Право", "subject", "право,", "право и ", "специалност право", "правни", "юрид",
        "law ", "legal", "адвокат"),
-    _t("economics", "Икономика", "subject", "икономи", "econom", "финанс", "financ", "счетовод"),
+    # not "финанс": "финансова помощ", "финансиране" are about money, not the subject
+    _t("economics", "Икономика", "subject", "икономи", "econom", "финансова грамотност", "финанси ",
+       "finance ", "счетовод"),
     _t("entrepreneurship", "Предприемачество", "subject", "предприемач", "entrepreneur", "стартъп",
        "startup", "бизнес идея", "бизнес план", "business"),
     _t("marketing", "Маркетинг", "subject", "маркетинг", "marketing", "реклам", "advertis"),
@@ -106,8 +108,9 @@ TAGS: tuple[Tag, ...] = (
     _t("contest", "Конкурс", "format", "конкурс", "contest", "challenge"),
     _t("summer-school", "Лятно училище", "format", "лятно училище", "лятна академия", "summer school",
        "summer academy", "лагер", "camp"),
-    _t("workshop", "Обучение и уъркшоп", "format", "уъркшоп", "workshop", "обучение", "training",
-       "курс", "course", "семинар", "seminar", "bootcamp"),
+    # not "обучение" / "курс": "редовно обучение", "втори курс" are about studying, not a training event
+    _t("workshop", "Обучение и уъркшоп", "format", "уъркшоп", "workshop", "работилниц", "обучителен модул",
+       "training", "курсове", "курс по", "course", "семинар", "seminar", "bootcamp", "лекции", "lectures"),
     _t("conference", "Конференция", "format", "конференци", "conference", "форум", "forum", "summit"),
     _t("mentorship", "Менторство", "format", "ментор", "mentor"),
     _t("research", "Научна работа", "format", "научн", "research", "изследван", "проект за наука"),

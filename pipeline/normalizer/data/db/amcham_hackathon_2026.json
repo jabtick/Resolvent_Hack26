@@ -1,0 +1,30 @@
+[
+  {
+    "type": "competition",
+    "organizer_id": null,
+    "title": "AmCham Bulgaria Hackathon 2026",
+    "description": "Хакатон на Американската търговска камара в България с ТУ – София, Стопанския факултет на СУ „Св. Климент Охридски“, ХТМУ и Физико-технологичния факултет на Пловдивския университет. Отбори от студенти работят три седмици по реални бизнес казуси на компании (A1, IBM, Sensata, Enery, RingCentral, HPE и др.) с ментори от бизнеса и представят решенията пред жури. Провежда се 13 март – 30 април 2026 г.; записване от 19 февруари до 16 март 2026 г. Критерии: Power BI, AI и машинно обучение, анализ на данни, стратегическо мислене, работа в екип. Награди: BIG Winner, Best Team, Most Innovative Solution.",
+    "image_url": null,
+    "external_url": "https://amcham.bg/amchamevents/amcham-bulgaria-hackathon-2026/",
+    "city": "София",
+    "is_online": false,
+    "audience": "university",
+    "starts_at": "2026-03-13T00:00:00+02:00",
+    "ends_at": "2026-04-30T23:59:00+03:00",
+    "deadline_at": "2026-03-16T23:59:00+02:00",
+    "status": "archived",
+    "source": "scraper",
+    "source_url": "https://amcham.bg/amchamevents/amcham-bulgaria-hackathon-2026/",
+    "tags": [
+      "hackathon",
+      "ai-data",
+      "team",
+      "career",
+      "mentorship",
+      "prizes",
+      "entrepreneurship",
+      "programming",
+      "university-students"
+    ]
+  }
+]

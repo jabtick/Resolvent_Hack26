@@ -17,7 +17,7 @@ import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from extract import (OPPORTUNITY_TYPES, detect_abroad, detect_audience, detect_city, detect_grades, detect_online,
+from extract import (OPPORTUNITY_TYPES, detect_abroad, detect_audience, known_city, detect_city, detect_grades, detect_online,
                      detect_tags, detect_type, normalize_city, parse_hint_datetime, resolve_dates)
 from taxonomy import TAGS_BY_SLUG
 
@@ -65,10 +65,13 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
     detected_type, type_scores = detect_type(t_low, b_low)
     opp_type = hint_type if hint_type in OPPORTUNITY_TYPES else (detected_type or "competition")
 
-    # city / online
-    city = normalize_city(raw.get("city"))
+    # city / online. "location" is a free place string from the source ("гр. Габрово", "Турция");
+    # a foreign place means the event is abroad, so city stays null.
+    location = (raw.get("location") or "").strip()
+    abroad = detect_abroad(t_low) or (detect_abroad(location.lower()) if location else None)
+    city = None if abroad else (normalize_city(raw.get("city")) or known_city(location))
     city_scores: dict = {}
-    if not city:
+    if not city and not abroad:
         city, city_scores = detect_city(t_low, b_low)
     is_online = bool(raw["is_online"]) if isinstance(raw.get("is_online"), bool) else detect_online(full)
 
@@ -78,19 +81,31 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
     audience = hint_aud if hint_aud in AUDIENCES else detect_audience(full, grades, opp_type)
 
     # dates: explicit hints from the source win, the rest is read from the text
+    # A key that is present but null means "the source has no such date" and blocks guessing.
     hints = raw.get("dates") or {}
     dates = resolve_dates(t_low, b_low, opp_type, ref)
-    starts_at = parse_hint_datetime(hints.get("starts_at"), False, ref) or dates.starts_at
-    ends_at = parse_hint_datetime(hints.get("ends_at"), True, ref) or dates.ends_at
-    deadline_at = parse_hint_datetime(hints.get("deadline_at"), True, ref) or dates.deadline_at
+
+    def pick(key: str, end_of_day: bool, guessed):
+        if key in hints:
+            return parse_hint_datetime(hints[key], end_of_day, ref)
+        return guessed
+
+    starts_at = pick("starts_at", False, dates.starts_at)
+    ends_at = pick("ends_at", True, dates.ends_at)
+    deadline_at = pick("deadline_at", True, dates.deadline_at)
+    if starts_at and ends_at and ends_at < starts_at:   # DB check: ends_at >= starts_at
+        ends_at = None
 
     # tags
     tag_hints = list(raw.get("tags") or [])
-    abroad = detect_abroad(t_low)
     if abroad:
         tag_hints += ["international", "study-abroad"]
     no_urls = re.sub(r"https?://\S+|www\.\S+", " ", b_low)   # "jetbrains.media" is not a media topic
     tags, tag_scores = detect_tags(t_low, no_urls, grades, audience, tag_hints)
+    if opp_type == "scholarship":   # "конкурс за стипендии" is a call for applications, not a contest
+        tags = [t for t in tags if t != "contest"]
+    drop = set(raw.get("drop_tags") or [])    # hand fix for a false match, e.g. a venue named "Международен ..."
+    tags = [t for t in tags if t not in drop]
 
     # status: scraped items are published, unless everything is already in the past
     last = max((d for d in (ends_at, starts_at, deadline_at) if d), default=None)
@@ -99,7 +114,7 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
     row = {
         "type": opp_type,
         "organizer_id": None,
-        "title": title[:300],
+        "title": title[:200],   # DB check: char_length(title) between 1 and 200
         "description": body[:DESCRIPTION_MAX] or None,
         "image_url": raw.get("image_url") or None,
         "external_url": raw.get("external_url") or source_url,

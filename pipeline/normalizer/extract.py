@@ -141,6 +141,17 @@ def _city_patterns():
 _CITY_PATTERNS = _city_patterns()
 
 
+def known_city(value: str | None) -> str | None:
+    """Canonical Bulgarian city found in `value`, or None (unlike normalize_city, never echoes free text)."""
+    if not value:
+        return None
+    v = value.lower()
+    for name, full, adj in _CITY_PATTERNS:
+        if count_keywords(v + " ", full) or (adj and count_keywords(v, adj)):
+            return name
+    return None
+
+
 def normalize_city(value: str | None) -> str | None:
     """Map a free city string ('гр. Бургас', 'Burgas', 'София-град') to the canonical name."""
     if not value:
@@ -158,6 +169,7 @@ FOREIGN_PLACES = ("чужбина", "румъния", "букурещ", "кип�
                   "австрия", "унгария", "полша", "чехия", "словакия", "словения", "хърватия", "италия",
                   "испания", "франция", "холандия", "нидерландия", "белгия", "великобритания", "англия",
                   "швейцария", "молдова", "украйна", "грузия", "сащ", "египет", "япония", "китай",
+                  "казахстан", "kazakhstan", "литва", "латвия", "естония", "португалия", "швеция",
                   "romania", "bucharest", "cyprus", "greece", "serbia", "turkey", "germany", "austria",
                   "hungary", "poland", "italy", "spain", "france", "netherlands", "uk", "usa", "abroad")
 

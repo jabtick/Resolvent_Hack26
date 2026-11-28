@@ -1,0 +1,32 @@
+[
+  {
+    "type": "competition",
+    "organizer_id": null,
+    "title": "FIRST LEGO League Challenge – сезон BIOGLOW (Биосвят) 2026–2027",
+    "description": "Състезание по роботика за отбори от ученици на възраст между 9 и 16 години. Екипите строят и програмират LEGO робот (LEGO Education SPIKE Prime), който изпълнява мисии в робо-игра, и разработват иновативен проект по темата на сезона – биоразнообразие и опазване на екосистемите. Отбор е от 4 до 10 ученици. Такса за тематичния комплект: от 519 € с ДДС за 1 отбор; участие в националния Фестивал на роботиката: 100 € с ДДС на отбор. Регистрация на отбори: до 20 октомври 2026 г. Работни сесии: октомври 2026 – април 2027. Регионални и училищни събития: март – май 2027. Фестивал на роботиката FIRST LEGO League в Бургас: 17–18 април 2027 г.",
+    "image_url": null,
+    "external_url": "https://www.fll.bg/teams-registrationbioglow",
+    "city": "Бургас",
+    "is_online": false,
+    "audience": "school",
+    "starts_at": "2027-04-17T00:00:00+03:00",
+    "ends_at": "2027-04-18T23:59:00+03:00",
+    "deadline_at": "2026-10-20T23:59:00+03:00",
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://www.fll.bg/challenge",
+    "tags": [
+      "robotics",
+      "team",
+      "programming",
+      "ecology",
+      "engineering",
+      "international",
+      "contest",
+      "has-fee",
+      "national",
+      "regional",
+      "stem"
+    ]
+  }
+]

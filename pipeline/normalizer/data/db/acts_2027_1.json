@@ -1,0 +1,34 @@
+[
+  {
+    "type": "competition",
+    "organizer_id": null,
+    "title": "Algorithm and Code Training School (ACTS) 2027.1, Пафос, Кипър",
+    "description": "Интензивен 11-дневен лагер по състезателно програмиране за ученици на 16–19 години със силни резултати от национални или международни състезания. Организатори: Constructor University, Neapolis University Pafos и JetBrains Foundation. Провежда се 15–25 март 2027 г. в Пафос, Кипър, на английски език. Подборът е по резултатите от входното състезание Youth Coding Challenge на 29 ноември 2026 г. (Codeforces, с прокторинг) и по досегашните постижения. Срок за регистрация: 28 ноември 2026 г. Решение: 18 декември 2026 г. Такса за лагера: 100 EUR; настаняване, храна и програма са покрити, пътуването не е.",
+    "image_url": null,
+    "external_url": "https://lp.jetbrains.media/academy/acts/2027.1/",
+    "city": null,
+    "is_online": false,
+    "audience": "school",
+    "starts_at": "2027-03-15T00:00:00+02:00",
+    "ends_at": "2027-03-25T23:59:00+02:00",
+    "deadline_at": "2026-11-28T23:59:00+02:00",
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://lp.jetbrains.media/academy/acts/2027.1/",
+    "tags": [
+      "informatics",
+      "programming",
+      "international",
+      "olympiad",
+      "study-abroad",
+      "summer-school",
+      "has-fee",
+      "workshop",
+      "contest",
+      "english",
+      "foreign-languages",
+      "national",
+      "stem"
+    ]
+  }
+]

@@ -24,10 +24,32 @@ python normalize.py examples/infos_raw.json -o examples/infos_opportunities.json
 python taxonomy.py                                      # prints the tag list
 ```
 
+## Data for the database (hackathon: sources pulled by hand)
+
+`data/raw/<source>.json` = what was pulled from each source; `data/db/<source>.json` = the same items as
+`opportunities` rows, one file per source, ready to insert (upsert by `source_url`). Rebuild all with:
+
+```
+python build_db.py            # normalizes every raw file and checks the DB rules (enums, title ≤ 200, ends ≥ starts, tags)
+```
+
+| File | Source | What |
+| --- | --- | --- |
+| `infos_calendar` | https://infos.infosbg.com/calendar (adapter) | all informatics competitions and olympiads 2026/27 |
+| `fulbright` | https://www.fulbright.bg | Opportunity Funds (10.–11. клас), research grants for PhD students |
+| `karoll` | https://www.karollknowledge.bg | PhD scholarship, "Създай въздействие" competition |
+| `evrika` | https://evrika.org | space competition for students, named scholarships |
+| `fll` | https://www.fll.bg/challenge | FIRST LEGO League robotics season |
+| `dzhon_atanasov_2026`, `acts_2027_1`, `amcham_hackathon_2026`, `svishtov_hackathon_2026`, `hack_smart_sofia_2026`, `gate_deepmind_scholarships` | the event's own page | single events |
+
+Raw files written by hand contain only what the page says; anything the page doesn't say stays `null`.
+If one event comes from two sources, `DROP` in `build_db.py` keeps the dedicated page.
+
 ## Adapters (one per site with many items per page)
 
 | Adapter | Site | Notes |
 | --- | --- | --- |
+| [adapters/infos_calendar.py](adapters/infos_calendar.py) | https://infos.infosbg.com/calendar | one item per `<li>`; "до 20 декември" → `ends_at`, "? февруари" → no dates; `source_url` = `calendar#<hash of name>` |
 | [adapters/infos.py](adapters/infos.py) | https://infos.infosbg.com/home | one item per `<article>` card; the site has no page per announcement, so `source_url` = `home#<hash of title>`; `external_url` = the competition's own site; PDFs go to `_source.attachments` |
 
 A raw item may carry a `_source` block with site-specific extras (upload time, attachments); the normalizer ignores it.
