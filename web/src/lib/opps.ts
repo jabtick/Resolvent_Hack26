@@ -114,6 +114,30 @@ export function formatStatus(
 }
 
 /**
+ * The days an event happens, for the calendar: start through end (or just the start day).
+ * Falls back to the deadline day for items with no start (e.g. most scholarships).
+ */
+export function periodOf(
+  o: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">,
+): { from: Date; to: Date } | null {
+  if (o.startsAt) {
+    const from = new Date(o.startsAt);
+    const to = o.endsAt ? new Date(o.endsAt) : from;
+    return { from, to: to < from ? from : to };
+  }
+  if (o.deadlineAt) {
+    const d = new Date(o.deadlineAt);
+    return { from: d, to: d };
+  }
+  return null;
+}
+
+/** One calendar mark per event: its start day, or its deadline day if it has no start. */
+export function markDates(opps: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">[]): Date[] {
+  return opps.map((o) => periodOf(o)?.from).filter((d): d is Date => !!d);
+}
+
+/**
  * Font size for a card title, in `cqw` (percent of the card's width), so the whole title fits
  * the card's fixed 4:3 box at every screen width. The card itself never changes size.
  *

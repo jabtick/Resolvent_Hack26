@@ -10,9 +10,31 @@ import {
   formatStatus,
   hostOf,
   isOngoing,
+  markDates,
+  periodOf,
   placeOf,
   titleFontSize,
 } from "./opps";
+
+it("calendar: one mark per event, the full period on hover", () => {
+  const hack = {
+    deadlineAt: "2026-11-20T21:59:00Z",
+    startsAt: "2026-11-27T14:00:00Z",
+    endsAt: "2026-11-29T16:30:00Z",
+  };
+  const scholarship = { deadlineAt: "2026-12-06T21:59:00Z", startsAt: null, endsAt: null };
+  const noDates = { deadlineAt: null, startsAt: null, endsAt: null };
+  // only the start is marked, not the deadline; a scholarship is marked on its deadline
+  expect(markDates([hack, scholarship, noDates]).map((d) => d.toISOString())).toEqual([
+    "2026-11-27T14:00:00.000Z",
+    "2026-12-06T21:59:00.000Z",
+  ]);
+  expect(periodOf(hack)).toEqual({
+    from: new Date("2026-11-27T14:00:00Z"),
+    to: new Date("2026-11-29T16:30:00Z"),
+  });
+  expect(periodOf(noDates)).toBeNull();
+});
 
 it("card titles shrink to fit the card; the card size never changes", () => {
   const cqw = (t: string) => Number(/min\(([\d.]+)cqw/.exec(titleFontSize(t))![1]);

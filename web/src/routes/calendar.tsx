@@ -1,9 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import { endOfDay, isSameDay, isSameMonth, startOfDay, startOfMonth } from "date-fns";
 import { bg as bgLocale } from "date-fns/locale";
 import { Building2, CalendarDays, MapPin, Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { useAccount } from "@/components/AccountProvider";
@@ -18,7 +18,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
-import { OPP_TYPE_LABEL, OPP_TYPES, placeOf, type Opp, type OppType } from "@/lib/opps";
+import {
+  markDates,
+  OPP_TYPE_LABEL,
+  OPP_TYPES,
+  periodOf,
+  placeOf,
+  type Opp,
+  type OppType,
+} from "@/lib/opps";
 import { useFeed, useMyProfile, useSavedIds } from "@/lib/queries";
 
 export const Route = createFileRoute("/calendar")({
@@ -51,6 +59,31 @@ function CalendarPage() {
   const [view, setView] = useState<"all" | "day" | "saved">("all");
   const [adding, setAdding] = useState(false);
   const isOrganizer = me.data?.type === "organizer";
+  // The month the calendar shows; hovering an event in another month jumps there and back.
+  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const [hovered, setHovered] = useState<Opp | null>(null);
+  const monthBeforeHover = useRef<Date | null>(null);
+
+  function hoverStart(o: Opp) {
+    setHovered(o);
+    const p = periodOf(o);
+    if (p && !isSameMonth(p.from, month)) {
+      monthBeforeHover.current ??= month;
+      setMonth(startOfMonth(p.from));
+    }
+  }
+  function hoverEnd() {
+    setHovered(null);
+    if (monthBeforeHover.current) {
+      setMonth(monthBeforeHover.current);
+      monthBeforeHover.current = null;
+    }
+  }
+
+  // Normally one mark per event (its start, or its deadline if it has no start).
+  // While an event is hovered, only that event's period is underlined.
+  const hoveredPeriod = hovered ? periodOf(hovered) : null;
+  const marked = useMemo(() => markDates(feed.data ?? []), [feed.data]);
 
   const entries = useMemo<Entry[]>(() => {
     const out: Entry[] = [];
@@ -103,9 +136,22 @@ function CalendarPage() {
                   setDate(d);
                   setView("day");
                 }}
+                month={month}
+                onMonthChange={setMonth}
                 className="w-full bg-card [--cell-size:2.5rem]"
-                modifiers={{ marked: entries.map((e) => e.at) }}
-                modifiersClassNames={{ marked: "border-b-[3px] border-primary font-bold" }}
+                // No "today" marking: the calendar opens with today selected, so any today style
+                // looked like a leftover selection after picking another day. Only the picked day
+                // is highlighted; the list shows a "ДНЕС" badge for today's events.
+                classNames={{ today: "" }}
+                modifiers={
+                  hovered
+                    ? { marked: [], period: hoveredPeriod ? [hoveredPeriod] : [] }
+                    : { marked, period: [] }
+                }
+                modifiersClassNames={{
+                  marked: "border-b-[3px] border-primary font-bold",
+                  period: "border-b-[5px] border-primary font-bold",
+                }}
               />
             </div>
             <div className="border-l-[6px] border-primary pl-4">
@@ -165,8 +211,12 @@ function CalendarPage() {
                 {visible.map((e, i) => (
                   <article
                     key={`${e.opp.id}-${e.kind}`}
-                    className="zine animate-in fade-in slide-in-from-bottom-2 fill-mode-both bg-card p-5"
+                    className={`zine animate-in fade-in slide-in-from-bottom-2 fill-mode-both bg-card p-5 transition-colors ${hovered?.id === e.opp.id ? "outline outline-[3px] outline-primary" : ""}`}
                     style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+                    onMouseEnter={() => hoverStart(e.opp)}
+                    onMouseLeave={hoverEnd}
+                    onFocus={() => hoverStart(e.opp)}
+                    onBlur={hoverEnd}
                   >
                     <p className="mb-2 font-heavy text-xl text-primary">
                       {when(e.at)} · {e.kind === "deadline" ? "КРАЕН СРОК" : "НАЧАЛО"} ·{" "}
