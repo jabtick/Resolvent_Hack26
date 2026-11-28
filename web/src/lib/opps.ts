@@ -179,9 +179,24 @@ export function periodOf(
   return null;
 }
 
-/** One calendar mark per event: its start day, or its deadline day if it has no start. */
+/** Every calendar day from `from` to `to` (local midnights), both included. */
+export function daysOf(p: { from: Date; to: Date }): Date[] {
+  const out: Date[] = [];
+  const d = new Date(p.from.getFullYear(), p.from.getMonth(), p.from.getDate());
+  const last = new Date(p.to.getFullYear(), p.to.getMonth(), p.to.getDate());
+  for (; d <= last && out.length < 366; d.setDate(d.getDate() + 1)) out.push(new Date(d));
+  return out;
+}
+
+/**
+ * Calendar marks: every day an event runs (start to end), or its deadline day if it has no
+ * start. A deadline before the start is not marked.
+ */
 export function markDates(opps: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">[]): Date[] {
-  return opps.map((o) => periodOf(o)?.from).filter((d): d is Date => !!d);
+  return opps.flatMap((o) => {
+    const p = periodOf(o);
+    return p ? daysOf(p) : [];
+  });
 }
 
 /**

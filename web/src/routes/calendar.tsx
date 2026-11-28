@@ -11,6 +11,7 @@ import { Nav } from "@/components/Nav";
 import { OppDialog } from "@/components/OppDialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  daysOf,
   markDates,
   OPP_TYPE_LABEL,
   OPP_TYPES,
@@ -31,10 +32,13 @@ export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
 
-/** One card per event, with its deadline and start date together. */
-type Entry = { opp: Opp; deadline: Date | null; start: Date | null };
-/** An entry in the list, sorted by `at`: the date that put it there. */
-type Row = Entry & { at: Date };
+/**
+ * One card per event, with its deadline and the days it runs together. `end` is the end of
+ * the event (its start when it has no end), so a three-day event shows on all three days.
+ */
+type Entry = { opp: Opp; deadline: Date | null; start: Date | null; end: Date | null };
+/** An entry in the list, sorted by `at`; `kind` is which of its dates put it there. */
+type Row = Entry & { at: Date; kind: "deadline" | "run" };
 
 const dayFmt = new Intl.DateTimeFormat("bg-BG", { weekday: "long", day: "numeric", month: "long" });
 const dateOnly = new Intl.DateTimeFormat("bg-BG", { day: "numeric", month: "short" });
@@ -75,7 +79,7 @@ function CalendarPage() {
     }
   }
 
-  // Normally one mark per event (its start, or its deadline if it has no start).
+  // Normally every day an event runs is marked (or its deadline if it has no start).
   // While an event is hovered, only that event's period is underlined.
   const hoveredPeriod = hovered ? periodOf(hovered) : null;
   const marked = useMemo(() => markDates(feed.data ?? []), [feed.data]);
@@ -84,32 +88,46 @@ function CalendarPage() {
     () =>
       (feed.data ?? [])
         .filter((o) => o.deadlineAt || o.startsAt)
-        .map((o) => ({
-          opp: o,
-          deadline: o.deadlineAt ? new Date(o.deadlineAt) : null,
-          start: o.startsAt ? new Date(o.startsAt) : null,
-        })),
+        .map((o) => {
+          const p = o.startsAt ? periodOf(o) : null;
+          return {
+            opp: o,
+            deadline: o.deadlineAt ? new Date(o.deadlineAt) : null,
+            start: p?.from ?? null,
+            end: p?.to ?? null,
+          };
+        }),
     [feed.data],
   );
 
   const today = startOfDay(new Date());
+  /** The dates of `e` that belong in the list from `from` to `to`, as candidate rows. */
+  const hits = (e: Entry, from: Date, to: Date): Row[] => {
+    const out: Row[] = [];
+    if (e.deadline && e.deadline >= from && e.deadline <= to)
+      out.push({ ...e, at: e.deadline, kind: "deadline" });
+    // A running event counts on every day it overlaps; it sorts by its start, or by the
+    // start of the range when it began earlier (an ongoing event goes to the top).
+    if (e.start && e.end && e.start <= to && endOfDay(e.end) >= from)
+      out.push({ ...e, at: e.start < from ? from : e.start, kind: "run" });
+    return out;
+  };
+  const FAR = new Date(8640000000000000);
   const visible: Row[] = entries
     .flatMap((e): Row[] => {
-      const dates = [e.deadline, e.start].filter((d): d is Date => d != null);
-      const upcoming = dates.filter((d) => d >= today);
-      // The earliest date that matches the view decides where the card goes.
-      const pick =
+      const rows =
         view === "day"
-          ? dates.filter((d) => d >= startOfDay(date) && d <= endOfDay(date))
+          ? hits(e, startOfDay(date), endOfDay(date))
           : view === "saved"
             ? saved.data?.has(e.opp.id)
-              ? upcoming.length
-                ? upcoming
-                : dates
+              ? hits(e, today, FAR).length
+                ? hits(e, today, FAR)
+                : hits(e, new Date(0), FAR) // all in the past: still listed
               : []
-            : upcoming;
-      if (!pick.length) return [];
-      return [{ ...e, at: new Date(Math.min(...pick.map((d) => d.getTime()))) }];
+            : hits(e, today, FAR);
+      // The earliest matching date decides where the card goes.
+      const first = rows.sort((a, b) => a.at.getTime() - b.at.getTime())[0];
+      return first ? [first] : [];
     })
     .sort((a, b) => a.at.getTime() - b.at.getTime());
 
@@ -232,29 +250,46 @@ function CalendarPage() {
                     <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-heavy text-xl">
                       {(
                         [
-                          ["КРАЕН СРОК", e.deadline],
-                          ["НАЧАЛО", e.start],
+                          ["deadline", e.deadline, e.deadline],
+                          ["run", e.start, e.end],
                         ] as const
-                      ).map(
-                        ([label, d]) =>
-                          d && (
-                            <span
-                              key={label}
-                              // The date that placed the card here stands out; past dates fade.
-                              className={
-                                d.getTime() === e.at.getTime()
-                                  ? "text-primary"
-                                  : d < today
-                                    ? "text-muted-foreground line-through"
-                                    : "text-muted-foreground"
-                              }
-                            >
-                              {label} {when(d)}
-                            </span>
-                          ),
-                      )}
+                      ).map(([kind, from, to]) => {
+                        if (!from || !to) return null;
+                        const multiDay = !isSameDay(from, to);
+                        const text =
+                          kind === "deadline"
+                            ? `КРАЕН СРОК ${when(from)}`
+                            : multiDay
+                              ? `${when(from)} – ${when(to)}`
+                              : `НАЧАЛО ${when(from)}`;
+                        // "ДЕН 2 ОТ 3" when a picked day falls inside a multi-day event.
+                        const days = multiDay ? daysOf({ from, to }) : [];
+                        const nth = days.findIndex((d) => isSameDay(d, date)) + 1;
+                        return (
+                          <span
+                            key={kind}
+                            // The date that placed the card here stands out; past dates fade.
+                            className={
+                              kind === e.kind
+                                ? "text-primary"
+                                : to < today
+                                  ? "text-muted-foreground line-through"
+                                  : "text-muted-foreground"
+                            }
+                          >
+                            {text}
+                            {view === "day" && kind === e.kind && nth > 0 && (
+                              <>
+                                {" "}
+                                · ДЕН {nth} ОТ {days.length}
+                              </>
+                            )}
+                          </span>
+                        );
+                      })}
                       <span className="text-muted-foreground">· {OPP_TYPE_LABEL[e.opp.type]}</span>
-                      {[e.deadline, e.start].some((d) => d && isSameDay(d, new Date())) && (
+                      {((e.deadline && isSameDay(e.deadline, today)) ||
+                        (e.start && e.end && e.start <= endOfDay(today) && e.end >= today)) && (
                         <span className="ransom">ДНЕС</span>
                       )}
                     </p>

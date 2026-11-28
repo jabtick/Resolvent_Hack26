@@ -10,6 +10,7 @@ import {
   formatStatus,
   hostOf,
   isOngoing,
+  daysOf,
   markDates,
   periodOf,
   placeOf,
@@ -18,22 +19,33 @@ import {
   toLocalInput,
 } from "./opps";
 
-it("calendar: one mark per event, the full period on hover", () => {
+it("calendar: every day an event runs is marked, the full period on hover", () => {
+  // local times, so the test doesn't depend on the machine's time zone
   const hack = {
-    deadlineAt: "2026-11-20T21:59:00Z",
-    startsAt: "2026-11-27T14:00:00Z",
-    endsAt: "2026-11-29T16:30:00Z",
+    deadlineAt: new Date(2026, 10, 20, 23, 59).toISOString(),
+    startsAt: new Date(2026, 10, 27, 14, 0).toISOString(),
+    endsAt: new Date(2026, 10, 29, 16, 30).toISOString(),
   };
-  const scholarship = { deadlineAt: "2026-12-06T21:59:00Z", startsAt: null, endsAt: null };
+  const scholarship = {
+    deadlineAt: new Date(2026, 11, 6, 23, 59).toISOString(),
+    startsAt: null,
+    endsAt: null,
+  };
   const noDates = { deadlineAt: null, startsAt: null, endsAt: null };
-  // only the start is marked, not the deadline; a scholarship is marked on its deadline
-  expect(markDates([hack, scholarship, noDates]).map((d) => d.toISOString())).toEqual([
-    "2026-11-27T14:00:00.000Z",
-    "2026-12-06T21:59:00.000Z",
+  // all three days of the hackathon, not its deadline; a scholarship is marked on its deadline
+  expect(markDates([hack, scholarship, noDates])).toEqual([
+    new Date(2026, 10, 27),
+    new Date(2026, 10, 28),
+    new Date(2026, 10, 29),
+    new Date(2026, 11, 6),
+  ]);
+  expect(daysOf({ from: new Date(2026, 11, 31, 18), to: new Date(2027, 0, 1, 2) })).toEqual([
+    new Date(2026, 11, 31),
+    new Date(2027, 0, 1),
   ]);
   expect(periodOf(hack)).toEqual({
-    from: new Date("2026-11-27T14:00:00Z"),
-    to: new Date("2026-11-29T16:30:00Z"),
+    from: new Date(2026, 10, 27, 14, 0),
+    to: new Date(2026, 10, 29, 16, 30),
   });
   expect(periodOf(noDates)).toBeNull();
 });
