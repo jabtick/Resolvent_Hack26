@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 
 import { useAccount } from "@/components/AccountProvider";
 import { AuthPage, Field, inputClass, SubmitButton, useBusy } from "@/components/forms";
+import { InterestPicker } from "@/components/InterestPicker";
 import { ORG_TYPE_LABEL, type AccountType, type OrgType } from "@/lib/auth";
 import {
   isUnder14,
@@ -29,6 +30,7 @@ function CreateProfile() {
   const [type, setType] = useState<AccountType>(side ?? "student");
   const [birth, setBirth] = useState("");
   const [terms, setTerms] = useState(false);
+  const [interests, setInterests] = useState<number[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const birthDate = parseBgDate(birth);
   const under14 = birthDate != null && isUnder14(birthDate, new Date());
@@ -37,12 +39,13 @@ function CreateProfile() {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     const username = String(d.get("username") ?? "").trim();
-    const displayName = String(d.get("displayName") ?? "");
     const orgName = String(d.get("orgName") ?? "");
+    // Organizations have no person's name: their display name is the org name.
+    const displayName = type === "organizer" ? orgName : String(d.get("displayName") ?? "");
     const orgType = (String(d.get("orgType") ?? "") || null) as OrgType | null;
     const next: Errors = {
       username: validateUsername(username),
-      displayName: validateDisplayName(displayName),
+      displayName: type === "student" ? validateDisplayName(displayName) : null,
       birth: type === "student" && !birthDate ? "Въведи дата като 01.05.2008." : null,
       orgName: type === "organizer" ? validateOrgName(orgName) : null,
       orgType: type === "organizer" && !orgType ? "Избери вид." : null,
@@ -55,6 +58,7 @@ function CreateProfile() {
         username,
         displayName,
         birthDate: type === "student" ? birthDate! : undefined,
+        interests: type === "student" ? interests : undefined,
         orgName: type === "organizer" ? orgName : undefined,
         orgType: type === "organizer" ? orgType! : undefined,
       }),
@@ -85,9 +89,9 @@ function CreateProfile() {
           placeholder="напр. ivan_99"
           error={errors.username}
         />
-        <Field label="Име" name="displayName" autoComplete="name" error={errors.displayName} />
         {type === "student" ? (
           <>
+            <Field label="Име" name="displayName" autoComplete="name" error={errors.displayName} />
             <Field
               label="Дата на раждане (ДД.ММ.ГГГГ)"
               name="birth"
@@ -102,10 +106,16 @@ function CreateProfile() {
                 Профилът ти ще е скрит, докато родител не даде съгласие.
               </p>
             )}
+            <InterestPicker value={interests} onChange={setInterests} />
           </>
         ) : (
           <>
-            <Field label="Име на организацията" name="orgName" error={errors.orgName} />
+            <Field
+              label="Име на организацията"
+              name="orgName"
+              autoComplete="organization"
+              error={errors.orgName}
+            />
             <label className="block text-sm font-bold">
               Вид организация
               <select name="orgType" defaultValue="" className={inputClass}>

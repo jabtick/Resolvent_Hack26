@@ -45,7 +45,12 @@ export function useToggleSaved() {
       cache.setQueryData(key, ctx?.before);
       toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
     },
-    onSuccess: (_d, { saved }) => toast.success(saved ? "Запазено" : "Махнато от запазени"),
+    onSuccess: (_d, { saved }) => {
+      toast.success(saved ? "Запазено" : "Махнато от запазени");
+      // A save changes the ratings. Refresh "For you" next time it's opened, not now,
+      // so the card doesn't vanish under the person's finger.
+      void cache.invalidateQueries({ queryKey: ["recommended"], refetchType: "none" });
+    },
   });
 }
 
@@ -55,6 +60,35 @@ export function useMyStats(enabled: boolean) {
     queryKey: ["myStats"],
     queryFn: api.opps.myStats,
     enabled,
+  });
+}
+
+/** "For you" feed; only asked for when signed in. */
+export function useRecommended() {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["recommended", status],
+    queryFn: api.opps.recommended,
+    enabled: status === "signedIn",
+  });
+}
+
+/** Topics to pick interests from (changes only with a migration). */
+export function useInterestTags() {
+  return useQuery({
+    queryKey: ["interestTags"],
+    queryFn: api.profiles.interestTags,
+    staleTime: Infinity,
+  });
+}
+
+/** The tag ids the signed-in student picked. */
+export function useMyInterestIds(enabled: boolean) {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["interests", status],
+    queryFn: api.profiles.myInterestIds,
+    enabled: enabled && status === "signedIn",
   });
 }
 
@@ -74,4 +108,21 @@ export function useMyBadges() {
     queryFn: api.achievements.listMine,
     enabled: status === "signedIn",
   });
+}
+
+/** The fixed tag list (changes only with a migration). */
+export function useTags() {
+  return useQuery({ queryKey: ["tags"], queryFn: api.opps.listTags, staleTime: Infinity });
+}
+
+/** After an organizer creates, edits or deletes an item. */
+export function useRefreshOpps() {
+  const cache = useQueryClient();
+  return () =>
+    Promise.all([
+      cache.invalidateQueries({ queryKey: ["feed"] }),
+      cache.invalidateQueries({ queryKey: ["myStats"] }),
+      cache.invalidateQueries({ queryKey: ["opp"] }),
+      cache.invalidateQueries({ queryKey: ["oppEdit"] }),
+    ]);
 }

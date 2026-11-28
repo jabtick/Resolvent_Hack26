@@ -18,8 +18,10 @@ import { Route as ForgotRouteImport } from './routes/forgot'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as BIdRouteImport } from './routes/b.$id'
 import { Route as OppIdRouteImport } from './routes/opp.$id'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
@@ -69,6 +71,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SavedRoute = SavedRouteImport.update({
   id: '/saved',
   path: '/saved',
@@ -77,6 +84,11 @@ const SavedRoute = SavedRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BIdRoute = BIdRouteImport.update({
@@ -105,8 +117,10 @@ export interface FileRoutesByFullPath {
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
   '/u/$username': typeof UUsernameRoute
@@ -121,8 +135,10 @@ export interface FileRoutesByTo {
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
   '/u/$username': typeof UUsernameRoute
@@ -138,8 +154,10 @@ export interface FileRoutesById {
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/$id': typeof BIdRoute
   '/opp/$id': typeof OppIdRoute
   '/u/$username': typeof UUsernameRoute
@@ -156,8 +174,10 @@ export interface FileRouteTypes {
     | '/join'
     | '/login'
     | '/profile'
+    | '/robots.txt'
     | '/saved'
     | '/settings'
+    | '/sitemap.xml'
     | '/b/$id'
     | '/opp/$id'
     | '/u/$username'
@@ -172,8 +192,10 @@ export interface FileRouteTypes {
     | '/join'
     | '/login'
     | '/profile'
+    | '/robots.txt'
     | '/saved'
     | '/settings'
+    | '/sitemap.xml'
     | '/b/$id'
     | '/opp/$id'
     | '/u/$username'
@@ -188,8 +210,10 @@ export interface FileRouteTypes {
     | '/join'
     | '/login'
     | '/profile'
+    | '/robots.txt'
     | '/saved'
     | '/settings'
+    | '/sitemap.xml'
     | '/b/$id'
     | '/opp/$id'
     | '/u/$username'
@@ -205,8 +229,10 @@ export interface RootRouteChildren {
   JoinRoute: typeof JoinRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SavedRoute: typeof SavedRoute
   SettingsRoute: typeof SettingsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   BIdRoute: typeof BIdRoute
   OppIdRoute: typeof OppIdRoute
   UUsernameRoute: typeof UUsernameRoute
@@ -277,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/saved': {
       id: '/saved'
       path: '/saved'
@@ -289,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/b/$id': {
@@ -325,8 +365,10 @@ const rootRouteChildren: RootRouteChildren = {
   JoinRoute: JoinRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SavedRoute: SavedRoute,
   SettingsRoute: SettingsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   BIdRoute: BIdRoute,
   OppIdRoute: OppIdRoute,
   UUsernameRoute: UUsernameRoute,

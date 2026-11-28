@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Pencil, Share2 } from "lucide-react";
+import { Pencil, Share2, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { inputClass, useBusy } from "@/components/forms";
+import { InterestPicker } from "@/components/InterestPicker";
 import { Nav } from "@/components/Nav";
+import { OppDialog } from "@/components/OppDialog";
 import { ProfileHeader, Section } from "@/components/ProfileHeader";
 import {
   Dialog,
@@ -18,7 +20,14 @@ import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { ACCOUNT_TYPE_LABEL, ORG_TYPE_LABEL } from "@/lib/auth";
 import { publicProfileUrl, type MyProfile, type ProfilePatch } from "@/lib/profiles";
-import { useMyProfile, useMyStats } from "@/lib/queries";
+import type { OppStat } from "@/lib/opps";
+import {
+  useInterestTags,
+  useMyInterestIds,
+  useMyProfile,
+  useMyStats,
+  useRefreshOpps,
+} from "@/lib/queries";
 import { isUnder14, validateDisplayName, validateOrgName } from "@/lib/validators";
 
 export const Route = createFileRoute("/profile")({
@@ -43,6 +52,11 @@ function Profile() {
     try {
       await api.profiles.updateMine(p);
       await cache.invalidateQueries({ queryKey: ["me"] });
+      if (p.interests) {
+        await cache.invalidateQueries({ queryKey: ["interests"] });
+        // Different interests mean a different "For you" feed.
+        await cache.invalidateQueries({ queryKey: ["recommended"] });
+      }
       if (okMsg) toast.success(okMsg);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
@@ -127,7 +141,7 @@ function Body({
   return (
     <>
       <ProfileHeader
-        displayName={me.displayName}
+        displayName={me.organizer?.orgName ?? me.displayName}
         subtitle={subtitle}
         avatarUrl={me.avatarUrl}
         avatarBusy={avatarBusy}
@@ -174,6 +188,7 @@ function Body({
             title="УЧИЛИЩЕ"
             text={[s.school, s.grade ? `${s.grade} клас` : null].filter(Boolean).join(" · ")}
           />
+          <MyInterests />
         </>
       )}
       {o && (
@@ -183,7 +198,7 @@ function Body({
             text={[o.orgName, ORG_TYPE_LABEL[o.orgType], o.website].filter(Boolean).join(" · ")}
           />
           <Section title="ПРОВЕРКА" text={VERIFICATION[o.verificationStatus]} />
-          <Dashboard />
+          <Dashboard verified={o.verificationStatus === "verified"} />
         </>
       )}
     </>
@@ -193,8 +208,10 @@ function Body({
 const STATUS_LABEL = { published: "публикувана", draft: "чернова", archived: "архив" } as const;
 
 /** Organizer dashboard: own items and how many people saved each. */
-function Dashboard() {
+function Dashboard({ verified }: { verified: boolean }) {
   const stats = useMyStats(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<OppStat | null>(null);
   const rows = stats.data ?? [];
   const published = rows.filter((r) => r.status === "published").length;
   const drafts = rows.filter((r) => r.status === "draft").length;
@@ -237,6 +254,22 @@ function Dashboard() {
                     {STATUS_LABEL[r.status]}
                   </span>
                   <span className="w-24 text-right font-heavy">{r.saves} запазв.</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(r.id)}
+                    className="jitter border-2 border-ink p-1"
+                    aria-label={`Промени „${r.title}“`}
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleting(r)}
+                    className="jitter border-2 border-ink p-1 text-destructive"
+                    aria-label={`Изтрий „${r.title}“`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -250,6 +283,88 @@ function Dashboard() {
             </p>
           )}
         </>
+      )}
+      {editing && (
+        <OppDialog verified={verified} editId={editing} onClose={() => setEditing(null)} />
+      )}
+      {deleting && <DeleteDialog opp={deleting} onClose={() => setDeleting(null)} />}
+    </section>
+  );
+}
+
+function DeleteDialog({ opp, onClose }: { opp: OppStat; onClose: () => void }) {
+  const refresh = useRefreshOpps();
+  const { busy, run } = useBusy();
+  async function remove() {
+    await run(async () => {
+      await api.opps.remove(opp.id);
+      await refresh();
+      toast.success("Обявата е изтрита");
+      onClose();
+    });
+  }
+  return (
+    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
+      <DialogContent className="border-[3px] border-ink bg-card">
+        <DialogHeader>
+          <DialogTitle className="font-heavy text-3xl">ИЗТРИЙ ОБЯВАТА?</DialogTitle>
+          <DialogDescription>
+            „{opp.title}“ изчезва от фийда завинаги
+            {opp.saves > 0 ? `, и от запазените на ${opp.saves} души` : ""}. Това не може да се
+            върне.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="border-[3px] border-ink px-4 py-2 font-heavy text-lg"
+          >
+            ОТКАЗ
+          </button>
+          <button
+            type="button"
+            onClick={() => void remove()}
+            disabled={busy}
+            className="bg-destructive px-4 py-2 font-heavy text-lg text-destructive-foreground"
+          >
+            {busy ? "ТРИЯ…" : "ИЗТРИЙ"}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The topics the student picked, or a nudge to pick some. */
+function MyInterests() {
+  const ids = useMyInterestIds(true);
+  const tags = useInterestTags();
+  const names = (tags.data ?? []).filter((t) => ids.data?.includes(t.id)).map((t) => t.name);
+  return (
+    <section>
+      <h2 className="mb-4 font-heavy text-3xl">
+        <span className="ransom">ИНТЕРЕСИ</span>
+      </h2>
+      {names.length ? (
+        <div className="flex flex-wrap gap-2">
+          {names.map((n, i) => (
+            <span
+              key={n}
+              className={`border-[3px] border-ink px-3 py-1 font-heavy text-xl text-secondary-foreground ${i % 2 ? "bg-secondary" : "bg-accent"}`}
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+      ) : (
+        !ids.isPending && (
+          <p className="zine bg-card p-4 font-hand text-2xl">
+            Още не си избрал интереси. Натисни „Редактирай“ и ги избери — по тях ти подреждаме
+            обявите.
+          </p>
+        )
       )}
     </section>
   );
@@ -268,13 +383,18 @@ function EditDialog({
   const [error, setError] = useState<string | null>(null);
   const s = me.student;
   const o = me.organizer;
+  const saved = useMyInterestIds(s != null);
+  // null = the person hasn't touched the picker: keep what's saved.
+  const [picked, setPicked] = useState<number[] | null>(null);
+  const interests = picked ?? saved.data ?? [];
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     const get = (k: string) => String(d.get(k) ?? "").trim();
-    const name = get("displayName");
-    const err = validateDisplayName(name) ?? (o ? validateOrgName(get("orgName")) : null);
+    // Organizations have no person's name: their display name follows the org name.
+    const name = o ? get("orgName") : get("displayName");
+    const err = o ? validateOrgName(name) : validateDisplayName(name);
     const gradeText = get("grade");
     const grade = gradeText ? Number(gradeText) : null;
     if (err) return setError(err);
@@ -289,6 +409,7 @@ function EditDialog({
       if (get("school") !== (s.school ?? "")) p.school = get("school");
       if (grade !== s.grade) p.grade = grade; // null clears it
       if (get("bio") !== (s.bio ?? "")) p.bio = get("bio");
+      if (picked) p.interests = picked;
     }
     if (o) {
       if (get("orgName") !== o.orgName) p.orgName = get("orgName");
@@ -317,9 +438,9 @@ function EditDialog({
           <DialogDescription>Промени каквото искаш. Празно поле маха стойността.</DialogDescription>
         </DialogHeader>
         <form noValidate className="space-y-4" onSubmit={(e) => void submit(e)}>
-          {field("displayName", "Име", me.displayName)}
           {s && (
             <>
+              {field("displayName", "Име", me.displayName)}
               {field("city", "Град", s.city)}
               {field("school", "Училище", s.school)}
               {field("grade", "Клас (1–12)", s.grade, { inputMode: "numeric" })}
@@ -327,6 +448,7 @@ function EditDialog({
                 За мен
                 <textarea name="bio" rows={4} defaultValue={s.bio ?? ""} className={inputClass} />
               </label>
+              <InterestPicker value={interests} onChange={setPicked} />
             </>
           )}
           {o && (

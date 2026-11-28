@@ -55,10 +55,16 @@ export class FakeServer {
   publicProfiles: Record<string, unknown>[] = [];
   publicOrganizers: Record<string, unknown>[] = [];
   badges: Record<string, unknown>[] = [];
+  tags: Record<string, unknown>[] = [];
+  profileInterests: Record<string, unknown>[] = [];
   publicBadges: Record<string, unknown>[] = [];
+  /** What the `recommended_feed` function returns. */
+  recommended: Record<string, unknown>[] = [];
   /** What the `my_opportunity_stats` function returns. */
   stats: Record<string, unknown>[] = [];
   opportunities: Record<string, unknown>[] = [];
+  /** Id the database gives a newly created opportunity. */
+  newOppId = "99999999-9999-9999-9999-999999999999";
   organizers: Record<string, unknown>[] = [];
   saved: Record<string, unknown>[] = [];
   readonly requests: Seen[] = [];
@@ -106,12 +112,20 @@ export class FakeServer {
         return rows(this.publicProfiles);
       case "GET /rest/v1/public_organizers":
         return rows(this.publicOrganizers);
+      case "POST /rest/v1/rpc/recommended_feed":
+        return json(this.recommended);
       case "POST /rest/v1/rpc/my_opportunity_stats":
         return json(this.stats);
       case "GET /rest/v1/opportunities":
         return rows(this.opportunities);
+      case "POST /rest/v1/opportunities":
+        return wantsObject ? json({ id: this.newOppId }, 201) : new Response(null, { status: 201 });
+      case "GET /rest/v1/tags":
+        return rows(this.tags);
       case "GET /rest/v1/organizer_details":
         return rows(this.organizers);
+      case "GET /rest/v1/profile_interests":
+        return rows(this.profileInterests);
       case "GET /rest/v1/badges":
         return rows(this.badges);
       case "GET /rest/v1/public_badges":

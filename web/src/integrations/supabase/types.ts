@@ -448,16 +448,22 @@ export type Database = {
       tags: {
         Row: {
           id: number;
+          is_parent: boolean;
+          kind: Database["public"]["Enums"]["tag_kind"];
           name: string;
           slug: string;
         };
         Insert: {
           id?: never;
+          is_parent?: boolean;
+          kind?: Database["public"]["Enums"]["tag_kind"];
           name: string;
           slug: string;
         };
         Update: {
           id?: never;
+          is_parent?: boolean;
+          kind?: Database["public"]["Enums"]["tag_kind"];
           name?: string;
           slug?: string;
         };
@@ -476,7 +482,15 @@ export type Database = {
           place: number | null;
           username: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "badges_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       public_organizers: {
         Row: {
@@ -517,6 +531,17 @@ export type Database = {
           title: string;
         }[];
       };
+      recommended_feed: {
+        Args: { p_limit?: number; p_min_rating?: number };
+        Returns: {
+          history: number;
+          interest: number;
+          location: number;
+          opportunity_id: string;
+          rating: number;
+          urgency: number;
+        }[];
+      };
     };
     Enums: {
       account_type: "student" | "organizer";
@@ -527,6 +552,7 @@ export type Database = {
       opportunity_type:
         "competition" | "scholarship" | "internship" | "open_day" | "university_program";
       org_type: "school" | "university" | "ngo" | "company" | "public_body";
+      tag_kind: "topic" | "format" | "level" | "cost" | "grade";
       verification_status: "pending" | "verified" | "rejected";
     };
     CompositeTypes: {
@@ -662,6 +688,7 @@ export const Constants = {
         "university_program",
       ],
       org_type: ["school", "university", "ngo", "company", "public_body"],
+      tag_kind: ["topic", "format", "level", "cost", "grade"],
       verification_status: ["pending", "verified", "rejected"],
     },
   },

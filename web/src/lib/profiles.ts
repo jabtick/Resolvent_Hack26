@@ -56,6 +56,35 @@ export type PublicOrganizer = {
   verified: boolean;
 };
 
+/** A topic a student can pick as an interest (the `tags` table, kind "topic"). */
+export type InterestTag = { id: number; name: string };
+
+/** How many interests a student can pick. Few picks make better recommendations. */
+export const MAX_INTERESTS = 12;
+
+/**
+ * Makes the student's interests exactly `ids` (profile_interests, owner only under RLS):
+ * removes the ones no longer wanted, adds the new ones. Extra ids beyond the limit and
+ * anything that isn't a whole number are ignored.
+ */
+export async function replaceInterests(db: Db, uid: string, ids: number[]): Promise<void> {
+  const want = [...new Set(ids.filter((n) => Number.isInteger(n) && n > 0))].slice(
+    0,
+    MAX_INTERESTS,
+  );
+  let del = db.from("profile_interests").delete().eq("profile_id", uid);
+  if (want.length) del = del.not("tag_id", "in", `(${want.join(",")})`);
+  const { error } = await del;
+  if (error) throw error;
+  if (want.length) {
+    const { error: e2 } = await db.from("profile_interests").upsert(
+      want.map((tag_id) => ({ profile_id: uid, tag_id })),
+      { onConflict: "profile_id,tag_id", ignoreDuplicates: true },
+    );
+    if (e2) throw e2;
+  }
+}
+
 /** Only the fields that change; `grade: null` clears the grade. */
 export type ProfilePatch = {
   displayName?: string;
@@ -66,6 +95,8 @@ export type ProfilePatch = {
   isPublic?: boolean;
   orgName?: string;
   website?: string;
+  /** The whole new set of interest tag ids (students). */
+  interests?: number[];
 };
 
 /** "Петя Иванова" → "ПИ"; empty → "?". */
@@ -203,6 +234,29 @@ export function createProfilesApi(db: Db) {
         };
       }),
 
+    /** The topics a student can choose from, A to Z. */
+    interestTags: () =>
+      guard(async (): Promise<InterestTag[]> => {
+        const { data, error } = await db
+          .from("tags")
+          .select("id, name")
+          .eq("kind", "topic")
+          .order("name");
+        if (error) throw error;
+        return data ?? [];
+      }),
+
+    /** Tag ids the signed-in student picked. */
+    myInterestIds: () =>
+      guard(async (): Promise<number[]> => {
+        const { data, error } = await db
+          .from("profile_interests")
+          .select("tag_id")
+          .eq("profile_id", await uid());
+        if (error) throw error;
+        return (data ?? []).map((r) => r.tag_id);
+      }),
+
     updateMine: (p: ProfilePatch) =>
       guard(async () => {
         const id = await uid();
@@ -223,6 +277,7 @@ export function createProfilesApi(db: Db) {
           const { error } = await db.from("student_details").update(student).eq("profile_id", id);
           if (error) throw error;
         }
+        if (p.interests !== undefined) await replaceInterests(db, id, p.interests);
         const org: Database["public"]["Tables"]["organizer_details"]["Update"] = {};
         if (p.orgName !== undefined) org.org_name = p.orgName;
         if (p.website !== undefined) org.website = p.website;

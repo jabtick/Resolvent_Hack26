@@ -7,18 +7,11 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { useAccount } from "@/components/AccountProvider";
-import { inputClass, useBusy } from "@/components/forms";
 import { Nav } from "@/components/Nav";
+import { OppDialog } from "@/components/OppDialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { api } from "@/lib/api";
-import {
+  daysOf,
   markDates,
   OPP_TYPE_LABEL,
   OPP_TYPES,
@@ -39,7 +32,13 @@ export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
 
-type Entry = { opp: Opp; kind: "deadline" | "start"; at: Date };
+/**
+ * One card per event, with its deadline and the days it runs together. `end` is the end of
+ * the event (its start when it has no end), so a three-day event shows on all three days.
+ */
+type Entry = { opp: Opp; deadline: Date | null; start: Date | null; end: Date | null };
+/** An entry in the list, sorted by `at`; `kind` is which of its dates put it there. */
+type Row = Entry & { at: Date; kind: "deadline" | "run" };
 
 const dayFmt = new Intl.DateTimeFormat("bg-BG", { weekday: "long", day: "numeric", month: "long" });
 const dateOnly = new Intl.DateTimeFormat("bg-BG", { day: "numeric", month: "short" });
@@ -80,27 +79,57 @@ function CalendarPage() {
     }
   }
 
-  // Normally one mark per event (its start, or its deadline if it has no start).
+  // Normally every day an event runs is marked (or its deadline if it has no start).
   // While an event is hovered, only that event's period is underlined.
   const hoveredPeriod = hovered ? periodOf(hovered) : null;
   const marked = useMemo(() => markDates(feed.data ?? []), [feed.data]);
 
-  const entries = useMemo<Entry[]>(() => {
-    const out: Entry[] = [];
-    for (const o of feed.data ?? []) {
-      if (o.deadlineAt) out.push({ opp: o, kind: "deadline", at: new Date(o.deadlineAt) });
-      if (o.startsAt) out.push({ opp: o, kind: "start", at: new Date(o.startsAt) });
-    }
-    return out.sort((a, b) => a.at.getTime() - b.at.getTime());
-  }, [feed.data]);
-
-  const visible = entries.filter((e) =>
-    view === "day"
-      ? e.at >= startOfDay(date) && e.at <= endOfDay(date)
-      : view === "saved"
-        ? saved.data?.has(e.opp.id)
-        : e.at >= startOfDay(new Date()),
+  const entries = useMemo<Entry[]>(
+    () =>
+      (feed.data ?? [])
+        .filter((o) => o.deadlineAt || o.startsAt)
+        .map((o) => {
+          const p = o.startsAt ? periodOf(o) : null;
+          return {
+            opp: o,
+            deadline: o.deadlineAt ? new Date(o.deadlineAt) : null,
+            start: p?.from ?? null,
+            end: p?.to ?? null,
+          };
+        }),
+    [feed.data],
   );
+
+  const today = startOfDay(new Date());
+  /** The dates of `e` that belong in the list from `from` to `to`, as candidate rows. */
+  const hits = (e: Entry, from: Date, to: Date): Row[] => {
+    const out: Row[] = [];
+    if (e.deadline && e.deadline >= from && e.deadline <= to)
+      out.push({ ...e, at: e.deadline, kind: "deadline" });
+    // A running event counts on every day it overlaps; it sorts by its start, or by the
+    // start of the range when it began earlier (an ongoing event goes to the top).
+    if (e.start && e.end && e.start <= to && endOfDay(e.end) >= from)
+      out.push({ ...e, at: e.start < from ? from : e.start, kind: "run" });
+    return out;
+  };
+  const FAR = new Date(8640000000000000);
+  const visible: Row[] = entries
+    .flatMap((e): Row[] => {
+      const rows =
+        view === "day"
+          ? hits(e, startOfDay(date), endOfDay(date))
+          : view === "saved"
+            ? saved.data?.has(e.opp.id)
+              ? hits(e, today, FAR).length
+                ? hits(e, today, FAR)
+                : hits(e, new Date(0), FAR) // all in the past: still listed
+              : []
+            : hits(e, today, FAR);
+      // The earliest matching date decides where the card goes.
+      const first = rows.sort((a, b) => a.at.getTime() - b.at.getTime())[0];
+      return first ? [first] : [];
+    })
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
 
   return (
     <div className="min-h-screen">
@@ -156,10 +185,10 @@ function CalendarPage() {
             </div>
             <div className="border-l-[6px] border-primary pl-4">
               <p className="font-heavy text-3xl">
-                {entries.filter((e) => e.kind === "deadline").length} СРОКА
+                {entries.filter((e) => e.deadline).length} СРОКА
               </p>
               <p className="text-sm text-muted-foreground">
-                {entries.filter((e) => e.kind === "start").length} събития с начална дата
+                {entries.filter((e) => e.start).length} събития с начална дата
               </p>
             </div>
           </aside>
@@ -210,7 +239,7 @@ function CalendarPage() {
               <div className="space-y-5">
                 {visible.map((e, i) => (
                   <article
-                    key={`${e.opp.id}-${e.kind}`}
+                    key={e.opp.id}
                     className={`zine animate-in fade-in slide-in-from-bottom-2 fill-mode-both bg-card p-5 transition-colors ${hovered?.id === e.opp.id ? "outline outline-[3px] outline-primary" : ""}`}
                     style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
                     onMouseEnter={() => hoverStart(e.opp)}
@@ -218,10 +247,45 @@ function CalendarPage() {
                     onFocus={() => hoverStart(e.opp)}
                     onBlur={hoverEnd}
                   >
-                    <p className="mb-2 font-heavy text-xl text-primary">
-                      {when(e.at)} · {e.kind === "deadline" ? "КРАЕН СРОК" : "НАЧАЛО"} ·{" "}
-                      {OPP_TYPE_LABEL[e.opp.type]}
-                      {isSameDay(e.at, new Date()) && <span className="ransom ml-2">ДНЕС</span>}
+                    <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-heavy text-xl">
+                      {(
+                        [
+                          ["deadline", e.deadline, e.deadline],
+                          ["run", e.start, e.end],
+                        ] as const
+                      ).map(([kind, from, to]) => {
+                        if (!from || !to) return null;
+                        const multiDay = !isSameDay(from, to);
+                        const text =
+                          kind === "deadline"
+                            ? `${from < new Date() ? "СРОКЪТ ИЗТЕЧЕ" : "КРАЕН СРОК"} ${when(from)}`
+                            : multiDay
+                              ? `${when(from)} – ${when(to)}`
+                              : `НАЧАЛО ${when(from)}`;
+                        // "ДЕН 2 ОТ 3" when a picked day falls inside a multi-day event.
+                        const days = multiDay ? daysOf({ from, to }) : [];
+                        const nth = days.findIndex((d) => isSameDay(d, date)) + 1;
+                        return (
+                          <span
+                            key={kind}
+                            // The date that placed the card here stands out; past dates fade.
+                            className={kind === e.kind ? "text-primary" : "text-muted-foreground"}
+                          >
+                            {text}
+                            {view === "day" && kind === e.kind && nth > 0 && (
+                              <>
+                                {" "}
+                                · ДЕН {nth} ОТ {days.length}
+                              </>
+                            )}
+                          </span>
+                        );
+                      })}
+                      <span className="text-muted-foreground">· {OPP_TYPE_LABEL[e.opp.type]}</span>
+                      {((e.deadline && isSameDay(e.deadline, today)) ||
+                        (e.start && e.end && e.start <= endOfDay(today) && e.end >= today)) && (
+                        <span className="ransom">ДНЕС</span>
+                      )}
                     </p>
                     <Link
                       to="/opp/$id"
@@ -247,125 +311,12 @@ function CalendarPage() {
           </section>
         </div>
         {adding && (
-          <NewOppDialog
+          <OppDialog
             verified={me.data?.organizer?.verificationStatus === "verified"}
             onClose={() => setAdding(false)}
           />
         )}
       </main>
     </div>
-  );
-}
-
-function NewOppDialog({ verified, onClose }: { verified: boolean; onClose: () => void }) {
-  const cache = useQueryClient();
-  const { busy, run } = useBusy();
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const d = new FormData(e.currentTarget);
-    const get = (k: string) => String(d.get(k) ?? "").trim();
-    const iso = (k: string) => (get(k) ? new Date(get(k)).toISOString() : null);
-    if (!get("title")) return setError("Въведи заглавие.");
-    if (get("title").length > 200) return setError("Заглавието е до 200 знака.");
-    setError(null);
-    await run(async () => {
-      await api.opps.create({
-        title: get("title"),
-        type: get("type") as OppType,
-        city: get("city") || null,
-        online: d.get("online") === "on",
-        startsAt: iso("startsAt"),
-        deadlineAt: iso("deadlineAt"),
-        description: get("description"),
-        externalUrl: get("externalUrl") || null,
-        publish: d.get("publish") === "on",
-      });
-      await cache.invalidateQueries({ queryKey: ["feed"] });
-      toast.success(d.get("publish") === "on" ? "Публикувано" : "Запазено като чернова");
-      onClose();
-    });
-  }
-
-  return (
-    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto border-[3px] border-ink bg-card sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle className="font-heavy text-4xl">НОВА ОБЯВА</DialogTitle>
-          <DialogDescription>
-            {verified
-              ? "Организацията ти е проверена — можеш да публикуваш."
-              : "Докато организацията не е проверена, обявите остават чернови."}
-          </DialogDescription>
-        </DialogHeader>
-        <form noValidate className="space-y-4" onSubmit={(e) => void submit(e)}>
-          <label className="block text-sm font-bold">
-            Заглавие
-            <input name="title" className={inputClass} />
-          </label>
-          <label className="block text-sm font-bold">
-            Вид
-            <select name="type" defaultValue="competition" className={inputClass}>
-              {OPP_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {OPP_TYPE_LABEL[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-bold">
-              Начало
-              <input name="startsAt" type="datetime-local" className={inputClass} />
-            </label>
-            <label className="block text-sm font-bold">
-              Краен срок
-              <input name="deadlineAt" type="datetime-local" className={inputClass} />
-            </label>
-          </div>
-          <label className="block text-sm font-bold">
-            Град
-            <input name="city" className={inputClass} />
-          </label>
-          <label className="flex items-center gap-2 text-sm font-bold">
-            <input name="online" type="checkbox" className="h-5 w-5 accent-[var(--primary)]" />
-            Онлайн
-          </label>
-          <label className="block text-sm font-bold">
-            Линк за кандидатстване
-            <input name="externalUrl" type="url" placeholder="https://" className={inputClass} />
-          </label>
-          <label className="block text-sm font-bold">
-            Описание
-            <textarea name="description" rows={4} className={inputClass} />
-          </label>
-          {verified && (
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input name="publish" type="checkbox" className="h-5 w-5 accent-[var(--primary)]" />
-              Публикувай веднага
-            </label>
-          )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="border-[3px] border-ink px-4 py-2 font-heavy text-lg"
-            >
-              ОТКАЗ
-            </button>
-            <button
-              type="submit"
-              disabled={busy}
-              className="zine-pink jitter bg-ink px-4 py-2 font-heavy text-lg text-paper"
-            >
-              {busy ? "ЗАПАЗВАМ…" : "ЗАПАЗИ"}
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
