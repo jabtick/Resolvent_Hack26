@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { fakeClient, FakeServer, pgError } from "@/test/fakeSupabase";
+import { fakeClient, FakeServer, fakeUid, json, pgError } from "@/test/fakeSupabase";
 
-import { createProfilesApi, initialsOf, publicProfileUrl } from "./profiles";
+import { createProfilesApi, initialsOf, publicProfileUrl, validateAvatar } from "./profiles";
 
 async function signedIn() {
   const server = new FakeServer();
@@ -26,6 +26,72 @@ async function signedIn() {
   await db.auth.signInWithPassword({ email: "petya@example.com", password: "abcdefghi1" });
   return { server, api: createProfilesApi(db) };
 }
+
+describe("profile picture", () => {
+  const png = () => new File([new Uint8Array([137, 80, 78, 71])], "me.png", { type: "image/png" });
+
+  it("only small images are accepted", () => {
+    expect(validateAvatar({ type: "image/png", size: 1000 })).toBeNull();
+    expect(validateAvatar({ type: "application/pdf", size: 1000 })).toMatch(/JPG, PNG/);
+    expect(validateAvatar({ type: "image/jpeg", size: 3 * 1024 * 1024 })).toMatch(/2 MB/);
+  });
+
+  it("uploads into the user's own folder, saves the path, deletes the old file", async () => {
+    const { server, api } = await signedIn();
+    server.profileRow!["avatar_url"] = `${fakeUid}/old.jpg`;
+    await api.uploadAvatar(png());
+
+    const upload = server.requests.find(
+      (r) => r.method === "POST" && r.url.pathname.startsWith("/storage/v1/object/avatars/"),
+    )!;
+    const path = upload.url.pathname.slice("/storage/v1/object/avatars/".length);
+    expect(path).toMatch(new RegExp(`^${fakeUid}/\\d+\\.png$`));
+    expect(server.writesTo("profiles")[0]!.body).toEqual({ avatar_url: path });
+    const removed = server.requests.find(
+      (r) => r.method === "DELETE" && r.url.pathname === "/storage/v1/object/avatars",
+    )!;
+    expect(removed.body).toEqual({ prefixes: [`${fakeUid}/old.jpg`] });
+  });
+
+  it("a wrong file never reaches the server", async () => {
+    const { server, api } = await signedIn();
+    const pdf = new File(["x"], "cv.pdf", { type: "application/pdf" });
+    await expect(api.uploadAvatar(pdf)).rejects.toThrow(/JPG, PNG/);
+    expect(server.requests.some((r) => r.url.pathname.startsWith("/storage/"))).toBe(false);
+  });
+
+  it("missing bucket (migration not applied) gives a clear message", async () => {
+    const { server, api } = await signedIn();
+    const now = vi.spyOn(Date, "now").mockReturnValue(123);
+    server.on(`POST /storage/v1/object/avatars/${fakeUid}/123.png`, () =>
+      json({ statusCode: "404", error: "Bucket not found", message: "Bucket not found" }, 400),
+    );
+    await expect(api.uploadAvatar(png())).rejects.toThrow("Качването на снимки още не е включено.");
+    expect(server.writesTo("profiles")).toHaveLength(0); // nothing saved when the upload fails
+    now.mockRestore();
+  });
+
+  it("remove clears the column and deletes the file", async () => {
+    const { server, api } = await signedIn();
+    server.profileRow!["avatar_url"] = `${fakeUid}/pic.webp`;
+    await api.removeAvatar();
+    expect(server.writesTo("profiles")[0]!.body).toEqual({ avatar_url: null });
+    expect(
+      server.requests.some(
+        (r) => r.method === "DELETE" && r.url.pathname === "/storage/v1/object/avatars",
+      ),
+    ).toBe(true);
+  });
+
+  it("the stored path becomes a public URL", async () => {
+    const { server, api } = await signedIn();
+    server.profileRow!["avatar_url"] = `${fakeUid}/pic.webp`;
+    const me = await api.loadMine();
+    expect(me.avatarUrl).toBe(
+      `https://test.supabase.co/storage/v1/object/public/avatars/${fakeUid}/pic.webp`,
+    );
+  });
+});
 
 describe("my profile", () => {
   it("is read with only the columns the site shows", async () => {

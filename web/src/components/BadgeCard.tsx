@@ -1,5 +1,6 @@
 import { Award, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
+import { ShareBadge } from "@/components/ShareBadge";
 import { type Badge, PLACE_LABEL } from "@/lib/achievements";
 
 const TILT = ["tilt-l", "tilt-r", "", "tilt-r", "tilt-l", ""];
@@ -61,6 +62,9 @@ export function BadgeCard({
           )}
         </div>
       </div>
+      {/* Sharing (components/ShareBadge.tsx, Bogi). A hidden badge is left out:
+          its public page refuses to serve it, so the link would lead nowhere. */}
+      {!b.isHidden && <ShareBadge b={b} />}
     </article>
   );
 }

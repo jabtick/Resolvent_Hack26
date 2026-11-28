@@ -131,6 +131,12 @@ export class FakeServer {
     if (url.pathname.startsWith("/rest/v1/")) {
       return new Response(null, { status: req.method === "POST" ? 201 : 204 });
     }
+    // Storage: uploads (POST /storage/v1/object/<bucket>/<path>) and removes
+    // (DELETE /storage/v1/object/<bucket>) succeed.
+    if (url.pathname.startsWith("/storage/v1/object/")) {
+      const key = url.pathname.slice("/storage/v1/object/".length);
+      return req.method === "DELETE" ? json([]) : json({ Key: key, Id: "file-id" });
+    }
     return json({ message: `not found: ${url.pathname}` }, 404);
   };
 

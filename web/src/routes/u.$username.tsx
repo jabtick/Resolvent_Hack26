@@ -83,7 +83,11 @@ function PublicProfile() {
           </div>
         ) : (
           <>
-            <ProfileHeader displayName={p.displayName} subtitle={`@${p.username}`} />
+            <ProfileHeader
+              displayName={p.displayName}
+              subtitle={`@${p.username}`}
+              avatarUrl={p.avatarUrl}
+            />
             <Section title="ЗА МЕН" text={p.bio} />
             {p.school && <Section title="УЧИЛИЩЕ" text={p.school} />}
             {badges.length > 0 && (

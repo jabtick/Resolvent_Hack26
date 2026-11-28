@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, Flame, Search, SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAccount } from "@/components/AccountProvider";
 import { Nav } from "@/components/Nav";
@@ -52,6 +52,24 @@ function Feed() {
   const [tags, setTags] = useState<string[]>([]);
   const [online, setOnline] = useState(false);
 
+  // Close the filter panel on a click/tap outside the search bar + panel, or on Escape.
+  const filterBox = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!filterBox.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const all = feed.data ?? [];
   const allTags = useMemo(
     () => [...new Set(all.flatMap((o) => o.tags))].sort((a, b) => a.localeCompare(b, "bg")),
@@ -87,8 +105,16 @@ function Feed() {
           <div className="sticky top-24 space-y-4">
             {status === "signedIn" && me.data ? (
               <div className="zine bg-card p-4 text-center">
-                <div className="mx-auto mb-2 grid h-16 w-16 place-items-center rounded-full border-[3px] border-ink bg-secondary font-heavy text-2xl text-secondary-foreground">
-                  {initialsOf(me.data.displayName)}
+                <div className="mx-auto mb-2 grid h-16 w-16 place-items-center overflow-hidden rounded-full border-[3px] border-ink bg-secondary font-heavy text-2xl text-secondary-foreground">
+                  {me.data.avatarUrl ? (
+                    <img
+                      src={me.data.avatarUrl}
+                      alt={me.data.displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initialsOf(me.data.displayName)
+                  )}
                 </div>
                 <p className="font-heavy text-2xl">{me.data.displayName}</p>
                 <p className="text-xs text-muted-foreground">@{me.data.username}</p>
@@ -130,7 +156,10 @@ function Feed() {
             ПРЕДИ <span className="font-hand text-primary">всички други</span>
           </h1>
 
-          <div className="sticky top-[70px] z-20 space-y-3 bg-background/95 py-3 backdrop-blur-sm">
+          <div
+            ref={filterBox}
+            className="sticky top-[70px] z-20 space-y-3 bg-background/95 py-3 backdrop-blur-sm"
+          >
             <div className="flex gap-2">
               <label className="zine flex flex-1 items-center gap-2 bg-card px-3 transition-shadow focus-within:shadow-brutal-pink">
                 <Search className="h-5 w-5" />
@@ -160,51 +189,56 @@ function Feed() {
               </button>
             </div>
             {open && (
-              <div className="zine tape animate-in fade-in slide-in-from-top-2 space-y-4 bg-card p-4 duration-300">
-                <div>
-                  <p className="mb-2 font-hand text-2xl">какво търсиш?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {OPP_TYPES.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => flip(types, setTypes, t)}
-                        className={chip(types.includes(t))}
-                      >
-                        {OPP_TYPE_LABEL[t]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {allTags.length > 0 && (
+              <div className="zine tape animate-in fade-in slide-in-from-top-2 bg-card duration-300">
+                {/* Scrolls on its own (the panel can be taller than the screen); overscroll-contain
+                    keeps the wheel from scrolling the page behind it. Inner div so the tape
+                    decoration on the outer box isn't clipped. */}
+                <div className="max-h-[calc(100dvh-12rem)] space-y-4 overflow-y-auto overscroll-contain p-4">
                   <div>
-                    <p className="mb-2 font-hand text-2xl">избери тема</p>
+                    <p className="mb-2 font-hand text-2xl">какво търсиш?</p>
                     <div className="flex flex-wrap gap-2">
-                      {allTags.map((t) => (
+                      {OPP_TYPES.map((t) => (
                         <button
                           key={t}
-                          onClick={() => flip(tags, setTags, t)}
-                          className={chip(tags.includes(t))}
+                          onClick={() => flip(types, setTypes, t)}
+                          className={chip(types.includes(t))}
                         >
-                          {t}
+                          {OPP_TYPE_LABEL[t]}
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <button onClick={() => setOnline(!online)} className={chip(online)}>
-                    САМО ОНЛАЙН
-                  </button>
-                  <button
-                    onClick={() => {
-                      setTypes([]);
-                      setTags([]);
-                      setOnline(false);
-                    }}
-                    className="font-bold underline"
-                  >
-                    изчисти всичко
-                  </button>
+                  {allTags.length > 0 && (
+                    <div>
+                      <p className="mb-2 font-hand text-2xl">избери тема</p>
+                      <div className="flex flex-wrap gap-2">
+                        {allTags.map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => flip(tags, setTags, t)}
+                            className={chip(tags.includes(t))}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => setOnline(!online)} className={chip(online)}>
+                      САМО ОНЛАЙН
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTypes([]);
+                        setTags([]);
+                        setOnline(false);
+                      }}
+                      className="font-bold underline"
+                    >
+                      изчисти всичко
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

@@ -4,7 +4,7 @@
 //
 // Only public badges load: the public_badges view leaves out private profiles,
 // under-14s without parental consent and hidden badges, so a minor's badge never
-// leaks through a link.
+// leaks through a link. Keep it that way — never read the `badges` table here.
 //
 // TODO(Bogi): add og:image. It has to be drawn on the server (lib/badge-image.ts
 // is canvas, so browser-only) - a Netlify function or a Supabase Edge Function
@@ -20,6 +20,7 @@ import { badgeShareTitle } from "@/lib/share";
 
 export const Route = createFileRoute("/b/$id")({
   loader: async ({ params }) => (await api.achievements.getPublic(params.id))?.badge ?? null,
+  errorComponent: LoadError,
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
@@ -113,5 +114,25 @@ function BadgeHero({ b }: { b: Badge }) {
       </div>
       <ShareBadge b={b} />
     </article>
+  );
+}
+
+/** A failed lookup (network) is not the same as "no such badge". */
+function LoadError({ reset }: { reset: () => void }) {
+  return (
+    <div className="min-h-screen">
+      <Nav />
+      <main className="mx-auto max-w-md px-4 py-10">
+        <div className="zine bg-card p-6" role="alert">
+          <p>Значката не се зареди.</p>
+          <button
+            onClick={reset}
+            className="zine-pink jitter mt-3 bg-ink px-4 py-2 font-heavy text-xl text-paper"
+          >
+            ПАК
+          </button>
+        </div>
+      </main>
+    </div>
   );
 }

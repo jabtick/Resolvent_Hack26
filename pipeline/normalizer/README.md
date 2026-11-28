@@ -43,6 +43,12 @@ python build_db.py            # normalizes every raw file and checks the DB rule
 | `mon_calendar_2026_2027` | [МОН/СМБ calendar plan 2026/27 (PDF)](https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf), transcribed by hand | math, IT and linguistics olympiads (one row per round), national and regional competitions, international olympiads; only events open to 8.–12. клас and not already in `infos_calendar` |
 | `dzhon_atanasov_2026`, `acts_2027_1`, `amcham_hackathon_2026`, `svishtov_hackathon_2026`, `hack_smart_sofia_2026`, `gate_deepmind_scholarships`, `liberhack`, `code_burgas_2027`, `petya_dubarova_2026` | the event's own page | single events |
 
+Scholarships from smaller organisations (one file each): `insait_explorer` (INSAIT EXPLORER, for 12th graders),
+`electrohold` (school competition with scholarships + M.O.V.E. for students), `aubg_scholarships_2027` (AUBG,
+fall 2027 intake), `dbu_cee_fellowship` (DBU, Germany), `kozloduy_npp_scholarships` (АЕЦ „Козлодуй“),
+`arete_ravens_shans` (Фондация „Арете“, 2025/26, archived). Raw-file extras: `"status": "archived"` for a
+past programme with no dates, `"city": null` for a source that covers several places (no guessing).
+
 Dates: a multi-day event has `starts_at` and `ends_at`; a time from the source ("9:00 ч.", "16:00") is kept, otherwise
 start = 00:00 and end = 23:59 (Sofia time). "до 12.12.2026" (a round held by that date) sets only `ends_at`.
 

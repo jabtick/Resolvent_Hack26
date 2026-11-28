@@ -96,6 +96,22 @@ function Body({
 }) {
   const s = me.student;
   const o = me.organizer;
+  const cache = useQueryClient();
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  async function avatar(action: () => Promise<void>, okMsg: string) {
+    setAvatarBusy(true);
+    try {
+      await action();
+      await cache.invalidateQueries({ queryKey: ["me"] });
+      toast.success(okMsg);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
   const hiddenForAge = s != null && isUnder14(s.birthDate, new Date()) && !s.consentGranted;
   const subtitle = [`@${me.username}`, ACCOUNT_TYPE_LABEL[me.type], s?.city]
     .filter(Boolean)
@@ -115,6 +131,10 @@ function Body({
       <ProfileHeader
         displayName={me.displayName}
         subtitle={subtitle}
+        avatarUrl={me.avatarUrl}
+        avatarBusy={avatarBusy}
+        onPickAvatar={(f) => void avatar(() => api.profiles.uploadAvatar(f), "Снимката е сменена.")}
+        onRemoveAvatar={() => void avatar(() => api.profiles.removeAvatar(), "Снимката е махната.")}
         action={
           <button
             onClick={onEdit}
