@@ -129,7 +129,7 @@ function Body({
   return (
     <>
       <ProfileHeader
-        displayName={me.displayName}
+        displayName={me.organizer?.orgName ?? me.displayName}
         subtitle={subtitle}
         avatarUrl={me.avatarUrl}
         avatarBusy={avatarBusy}
@@ -342,8 +342,9 @@ function EditDialog({
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     const get = (k: string) => String(d.get(k) ?? "").trim();
-    const name = get("displayName");
-    const err = validateDisplayName(name) ?? (o ? validateOrgName(get("orgName")) : null);
+    // Organizations have no person's name: their display name follows the org name.
+    const name = o ? get("orgName") : get("displayName");
+    const err = o ? validateOrgName(name) : validateDisplayName(name);
     const gradeText = get("grade");
     const grade = gradeText ? Number(gradeText) : null;
     if (err) return setError(err);
@@ -386,9 +387,9 @@ function EditDialog({
           <DialogDescription>Промени каквото искаш. Празно поле маха стойността.</DialogDescription>
         </DialogHeader>
         <form noValidate className="space-y-4" onSubmit={(e) => void submit(e)}>
-          {field("displayName", "Име", me.displayName)}
           {s && (
             <>
+              {field("displayName", "Име", me.displayName)}
               {field("city", "Град", s.city)}
               {field("school", "Училище", s.school)}
               {field("grade", "Клас (1–12)", s.grade, { inputMode: "numeric" })}

@@ -116,7 +116,9 @@ function Feed() {
                     initialsOf(me.data.displayName)
                   )}
                 </div>
-                <p className="font-heavy text-2xl">{me.data.displayName}</p>
+                <p className="font-heavy text-2xl">
+                  {me.data.organizer?.orgName ?? me.data.displayName}
+                </p>
                 <p className="text-xs text-muted-foreground">@{me.data.username}</p>
                 <Link
                   to="/profile"
