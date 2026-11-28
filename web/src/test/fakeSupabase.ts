@@ -56,6 +56,8 @@ export class FakeServer {
   publicOrganizers: Record<string, unknown>[] = [];
   badges: Record<string, unknown>[] = [];
   publicBadges: Record<string, unknown>[] = [];
+  /** What the `recommended_feed` function returns. */
+  recommended: Record<string, unknown>[] = [];
   /** What the `my_opportunity_stats` function returns. */
   stats: Record<string, unknown>[] = [];
   opportunities: Record<string, unknown>[] = [];
@@ -109,6 +111,8 @@ export class FakeServer {
         return rows(this.publicProfiles);
       case "GET /rest/v1/public_organizers":
         return rows(this.publicOrganizers);
+      case "POST /rest/v1/rpc/recommended_feed":
+        return json(this.recommended);
       case "POST /rest/v1/rpc/my_opportunity_stats":
         return json(this.stats);
       case "GET /rest/v1/opportunities":
