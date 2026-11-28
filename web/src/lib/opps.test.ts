@@ -14,6 +14,7 @@ import {
   periodOf,
   placeOf,
   titleFontSize,
+  whyText,
 } from "./opps";
 
 it("calendar: one mark per event, the full period on hover", () => {
@@ -282,5 +283,54 @@ describe("organizer pages and dashboard", () => {
     const { server, api } = setup();
     server.stats = [{ opportunity_id: OPP, title: "Купа", status: "draft", saves: "3" }];
     expect(await api.myStats()).toEqual([{ id: OPP, title: "Купа", status: "draft", saves: 3 }]);
+  });
+});
+
+describe("recommended (for you)", () => {
+  const OPP2 = "44444444-4444-4444-4444-444444444444";
+  const row = (id: string, title: string) => ({
+    id,
+    title,
+    type: "competition",
+    is_online: true,
+    organizer_id: null,
+    source_url: "https://example.org/x",
+  });
+
+  it("keeps the database order (best first) and attaches the rating and reasons", async () => {
+    const { server, api } = setup();
+    // The database says OPP2 is better, but the opportunities query returns OPP first.
+    server.recommended = [
+      { opportunity_id: OPP2, rating: "0.9", interest: 0.9, history: 0, location: 1, urgency: 0.1 },
+      { opportunity_id: OPP, rating: 0.6, interest: 0.2, history: 0, location: 0, urgency: 0.7 },
+    ];
+    server.opportunities = [row(OPP, "Първа"), row(OPP2, "Втора")];
+    const list = await api.recommended();
+    expect(list.map((r) => r.opp.title)).toEqual(["Втора", "Първа"]);
+    expect(list[0]).toMatchObject({
+      rating: 0.9,
+      why: ["съвпада с интересите ти", "в твоя град или онлайн"],
+    });
+    expect(list[1]!.why).toEqual(["срокът наближава"]);
+  });
+
+  it("nothing rated → empty, and no second request", async () => {
+    const { server, api } = setup();
+    expect(await api.recommended()).toEqual([]);
+    expect(server.readsOf("opportunities")).toHaveLength(0);
+  });
+
+  it("an item that vanished between the two requests is dropped", async () => {
+    const { server, api } = setup();
+    server.recommended = [
+      { opportunity_id: OPP, rating: 0.8, interest: 1, history: 0, location: 0, urgency: 0 },
+    ];
+    server.opportunities = [];
+    expect(await api.recommended()).toEqual([]);
+  });
+
+  it("whyText gives at most two reasons, none for a weak match", () => {
+    expect(whyText({ interest: 0.1, history: 0.1, location: 0.5, urgency: 0.1 })).toEqual([]);
+    expect(whyText({ interest: 1, history: 1, location: 1, urgency: 1 })).toHaveLength(2);
   });
 });

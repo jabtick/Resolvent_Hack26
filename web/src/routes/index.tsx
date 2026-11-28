@@ -7,7 +7,7 @@ import { Nav } from "@/components/Nav";
 import { OppCard } from "@/components/OppCard";
 import { formatStatus, OPP_TYPE_LABEL, OPP_TYPES, type Opp, type OppType } from "@/lib/opps";
 import { initialsOf } from "@/lib/profiles";
-import { useFeed, useMyProfile, useSavedIds, useToggleSaved } from "@/lib/queries";
+import { useFeed, useMyProfile, useRecommended, useSavedIds, useToggleSaved } from "@/lib/queries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,6 +45,11 @@ function Feed() {
   const saved = useSavedIds();
   const toggle = useToggleSaved();
   const me = useMyProfile();
+  const rec = useRecommended();
+  // Students see "For you" first; everyone can switch to the whole feed.
+  const canRecommend = status === "signedIn" && me.data?.type === "student";
+  const [view, setView] = useState<"foryou" | "all">("foryou");
+  const forYou = canRecommend && view === "foryou";
 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -70,14 +75,16 @@ function Feed() {
     };
   }, [open]);
 
+  const recs = rec.data ?? [];
+  const whyById = useMemo(() => new Map(recs.map((r) => [r.opp.id, r.why])), [recs]);
   const all = feed.data ?? [];
   const allTags = useMemo(
     () => [...new Set(all.flatMap((o) => o.tags))].sort((a, b) => a.localeCompare(b, "bg")),
     [all],
   );
   const list = useMemo(
-    () => all.filter((o) => matches(o, q, types, tags, online)),
-    [all, q, types, tags, online],
+    () => (forYou ? recs.map((r) => r.opp) : all).filter((o) => matches(o, q, types, tags, online)),
+    [forYou, recs, all, q, types, tags, online],
   );
   const soon = useMemo(
     () => all.filter((o) => o.deadlineAt && new Date(o.deadlineAt) > new Date()).slice(0, 4),
@@ -244,18 +251,39 @@ function Feed() {
             )}
           </div>
 
-          {feed.isPending ? (
+          {canRecommend && (
+            <div className="mt-2 flex gap-2" role="tablist" aria-label="Какво да показвам">
+              {(
+                [
+                  ["foryou", "ЗА ТЕБ"],
+                  ["all", "ВСИЧКИ"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  role="tab"
+                  aria-selected={view === v}
+                  onClick={() => setView(v)}
+                  className={chip(view === v)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {(forYou ? rec.isPending : feed.isPending) ? (
             <div className="mt-6 space-y-10" aria-busy="true">
               {[0, 1].map((i) => (
                 <div key={i} className="zine aspect-[4/3] animate-pulse bg-muted" />
               ))}
             </div>
-          ) : feed.isError ? (
+          ) : (forYou ? rec.isError : feed.isError) ? (
             <div className="zine mt-6 bg-card p-6" role="alert">
               <p className="font-heavy text-3xl">ФИЙДЪТ НЕ СЕ ЗАРЕДИ</p>
-              <p className="mt-1 text-sm">{feed.error.message}</p>
+              <p className="mt-1 text-sm">{(forYou ? rec.error : feed.error)?.message}</p>
               <button
-                onClick={() => void feed.refetch()}
+                onClick={() => void (forYou ? rec : feed).refetch()}
                 className="zine-pink jitter mt-4 bg-ink px-4 py-2 font-heavy text-xl text-paper"
               >
                 ПАК
@@ -265,21 +293,38 @@ function Feed() {
             <>
               <p className="my-4 font-hand text-2xl">
                 {list.length} {list.length === 1 ? "обява" : "обяви"}.{" "}
-                {all[0]?.isSample && (
+                {!forYou && all[0]?.isSample && (
                   <span className="text-primary">засега примерни — базата още е празна.</span>
                 )}
               </p>
               <div className="space-y-10">
                 {list.map((o, i) => (
-                  <OppCard
-                    key={o.id}
-                    o={o}
-                    i={i}
-                    saved={saved.data?.has(o.id) ?? false}
-                    onToggleSave={(n) => onToggleSave(o, n)}
-                  />
+                  <div key={o.id}>
+                    {forYou && whyById.get(o.id)?.length ? (
+                      <p className="mb-2 font-hand text-2xl text-primary">
+                        ★ {whyById.get(o.id)!.join(" · ")}
+                      </p>
+                    ) : null}
+                    <OppCard
+                      o={o}
+                      i={i}
+                      saved={saved.data?.has(o.id) ?? false}
+                      onToggleSave={(n) => onToggleSave(o, n)}
+                    />
+                  </div>
                 ))}
-                {!list.length && (
+                {!list.length && forYou && !q && !active ? (
+                  <div className="zine bg-card p-8 text-center">
+                    <p className="font-display text-4xl">ОЩЕ НЯМА ЗА ТЕБ</p>
+                    <p className="font-hand text-2xl">
+                      избери интереси в профила си или запази няколко обяви
+                    </p>
+                    <button onClick={() => setView("all")} className="mt-3 font-bold underline">
+                      виж всички обяви
+                    </button>
+                  </div>
+                ) : null}
+                {!list.length && !(forYou && !q && !active) && (
                   <div className="zine bg-card p-8 text-center">
                     <p className="font-display text-4xl">НИЩО ТУК</p>
                     <p className="font-hand text-2xl">разхлаби малко филтрите</p>

@@ -45,7 +45,12 @@ export function useToggleSaved() {
       cache.setQueryData(key, ctx?.before);
       toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
     },
-    onSuccess: (_d, { saved }) => toast.success(saved ? "Запазено" : "Махнато от запазени"),
+    onSuccess: (_d, { saved }) => {
+      toast.success(saved ? "Запазено" : "Махнато от запазени");
+      // A save changes the ratings. Refresh "For you" next time it's opened, not now,
+      // so the card doesn't vanish under the person's finger.
+      void cache.invalidateQueries({ queryKey: ["recommended"], refetchType: "none" });
+    },
   });
 }
 
@@ -55,6 +60,16 @@ export function useMyStats(enabled: boolean) {
     queryKey: ["myStats"],
     queryFn: api.opps.myStats,
     enabled,
+  });
+}
+
+/** "For you" feed; only asked for when signed in. */
+export function useRecommended() {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["recommended", status],
+    queryFn: api.opps.recommended,
+    enabled: status === "signedIn",
   });
 }
 

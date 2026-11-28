@@ -45,6 +45,22 @@ export type Opp = {
   isSample: boolean;
 };
 
+/** One recommended item: how well it fits this student, and why (short Bulgarian phrases). */
+export type Recommendation = { opp: Opp; rating: number; why: string[] };
+
+/** The four parts of the rating, each 0..1, as the database returns them. */
+export type RatingParts = { interest: number; history: number; location: number; urgency: number };
+
+/** Turns the rating parts into at most two reasons a person can read. */
+export function whyText(p: RatingParts): string[] {
+  const out: string[] = [];
+  if (p.interest >= 0.5) out.push("съвпада с интересите ти");
+  if (p.history >= 0.3) out.push("прилича на обява, която запази");
+  if (p.urgency >= 0.6) out.push("срокът наближава");
+  if (p.location >= 1) out.push("в твоя град или онлайн");
+  return out.slice(0, 2);
+}
+
 /** One line of the organizer dashboard. */
 export type OppStat = {
   id: string;
@@ -319,6 +335,37 @@ export function createOppsApi(db: Db) {
           status: r.status,
           saves: Number(r.saves),
         }));
+      }),
+
+    /**
+     * "For you": the database rates every eligible item for the signed-in student
+     * (`recommended_feed`, Niki's algorithm) and we load the best ones. Empty for
+     * organizers, signed-out visitors and students with nothing that fits.
+     */
+    recommended: () =>
+      guard(async (): Promise<Recommendation[]> => {
+        const { data: rated, error } = await db.rpc("recommended_feed", {
+          p_min_rating: 0.5,
+          p_limit: 30,
+        });
+        if (error) throw error;
+        if (!rated?.length) return [];
+        const { data, error: e2 } = await db
+          .from("opportunities")
+          .select(SELECT)
+          .in(
+            "id",
+            rated.map((r) => r.opportunity_id),
+          );
+        if (e2) throw e2;
+        const byId = new Map(
+          (await toOpps((data ?? []) as unknown as Row[])).map((o) => [o.id, o]),
+        );
+        // Keep the database's order (best first); drop anything that vanished in between.
+        return rated.flatMap((r) => {
+          const opp = byId.get(r.opportunity_id);
+          return opp ? [{ opp, rating: Number(r.rating), why: whyText(r) }] : [];
+        });
       }),
 
     /** Ids the signed-in person saved (empty when signed out). */
