@@ -6,7 +6,7 @@ Run it against the project with the Supabase CLI (the CLI's own login, no passwo
     python seed_sql.py
     npx supabase db query --linked -f data/seed.sql
 
-Re-running updates the rows in place; nothing is duplicated.
+Re-running updates the rows in place and removes scraped rows that are no longer in the files.
 """
 
 from __future__ import annotations
@@ -45,6 +45,11 @@ def main() -> None:
     sql.append("insert into public.tags (slug, name) values")
     sql.append(",\n".join(f"  ({lit(t['slug'])}, {lit(t['name'])})" for t in tags))
     sql.append("on conflict (slug) do update set name = excluded.name;\n")
+
+    # Mirror the files: scraped rows that are no longer in them are removed
+    # (organizer posts are never touched; their tag links go with them by cascade).
+    keep = ", ".join(lit(r["source_url"]) for r in rows)
+    sql.append(f"delete from public.opportunities where source = 'scraper' and source_url not in ({keep});\n")
 
     updates = ", ".join(f"{c} = excluded.{c}" for c in COLS if c != "source_url")
     for r in rows:
