@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 
 import { Nav } from "@/components/Nav";
+import { BadgeCard } from "@/components/BadgeCard";
 import { OppCard } from "@/components/OppCard";
 import { ProfileHeader, Section } from "@/components/ProfileHeader";
 import { api } from "@/lib/api";
@@ -14,7 +15,12 @@ export const Route = createFileRoute("/u/$username")({
   // Runs on the server: shared links show the name in Messenger, LinkedIn etc.
   loader: async ({ params }) => {
     const student = await api.profiles.loadPublic(params.username);
-    if (student) return { kind: "student" as const, p: student };
+    if (student)
+      return {
+        kind: "student" as const,
+        p: student,
+        badges: await api.achievements.listPublic(student.username),
+      };
     const o = await api.profiles.loadPublicOrganizer(params.username);
     if (!o) return null;
     return { kind: "organizer" as const, o, opps: await api.opps.listByOrganizer(o.profileId) };
@@ -57,6 +63,7 @@ export const Route = createFileRoute("/u/$username")({
 function PublicProfile() {
   const data = Route.useLoaderData();
   const p = data?.kind === "student" ? data.p : null;
+  const badges = data?.kind === "student" ? data.badges : [];
   return (
     <div className="min-h-screen">
       <Nav />
@@ -79,6 +86,18 @@ function PublicProfile() {
             <ProfileHeader displayName={p.displayName} subtitle={`@${p.username}`} />
             <Section title="ЗА МЕН" text={p.bio} />
             {p.school && <Section title="УЧИЛИЩЕ" text={p.school} />}
+            {badges.length > 0 && (
+              <section>
+                <h2 className="mb-4 font-heavy text-3xl">
+                  <span className="ransom">ЗНАЧКИ</span>
+                </h2>
+                <div className="grid gap-10 sm:grid-cols-2">
+                  {badges.map((b, i) => (
+                    <BadgeCard key={b.id} b={b} i={i} />
+                  ))}
+                </div>
+              </section>
+            )}
             {p.interests.length > 0 && (
               <section>
                 <h2 className="mb-4 font-heavy text-3xl">

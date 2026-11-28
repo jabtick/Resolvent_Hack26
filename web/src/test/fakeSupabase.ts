@@ -54,6 +54,8 @@ export class FakeServer {
   profileRow: Record<string, unknown> | null = null;
   publicProfiles: Record<string, unknown>[] = [];
   publicOrganizers: Record<string, unknown>[] = [];
+  badges: Record<string, unknown>[] = [];
+  publicBadges: Record<string, unknown>[] = [];
   /** What the `my_opportunity_stats` function returns. */
   stats: Record<string, unknown>[] = [];
   opportunities: Record<string, unknown>[] = [];
@@ -110,6 +112,10 @@ export class FakeServer {
         return rows(this.opportunities);
       case "GET /rest/v1/organizer_details":
         return rows(this.organizers);
+      case "GET /rest/v1/badges":
+        return rows(this.badges);
+      case "GET /rest/v1/public_badges":
+        return rows(this.publicBadges);
       case "GET /rest/v1/saved_opportunities":
         return rows(this.saved);
       case "POST /functions/v1/delete-account":

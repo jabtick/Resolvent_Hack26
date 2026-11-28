@@ -1,8 +1,13 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Award, Hourglass, ShieldCheck } from "lucide-react";
+import { Hourglass } from "lucide-react";
+import { toast } from "sonner";
 
+import { BadgeCard } from "@/components/BadgeCard";
 import { Nav } from "@/components/Nav";
-import { type Badge, PLACE_LABEL, SAMPLE_BADGES, badgeStats } from "@/lib/achievements";
+import { api } from "@/lib/api";
+import { badgeStats, SAMPLE_BADGES } from "@/lib/achievements";
+import { useMyBadges } from "@/lib/queries";
 
 export const Route = createFileRoute("/achievements")({
   head: () => ({
@@ -11,18 +16,25 @@ export const Route = createFileRoute("/achievements")({
   component: Achievements,
 });
 
-const TILT = ["tilt-l", "tilt-r", "", "tilt-r", "tilt-l", ""];
-
-const PLACE_BG: Record<number, string> = {
-  1: "bg-accent",
-  2: "bg-secondary",
-  3: "bg-primary text-primary-foreground",
-};
-
 function Achievements() {
-  // Sample data until the badges table exists (see lib/achievements.ts).
-  const badges = SAMPLE_BADGES;
+  const mine = useMyBadges();
+  const cache = useQueryClient();
+  // No badges yet: show examples, clearly marked, so the page isn't empty.
+  const real = mine.data ?? [];
+  const sample = !mine.isPending && !mine.isError && real.length === 0;
+  const badges = sample ? SAMPLE_BADGES : real;
   const stats = badgeStats(badges);
+
+  async function setHidden(id: string, hidden: boolean) {
+    try {
+      await api.achievements.setHidden(id, hidden);
+      await cache.invalidateQueries({ queryKey: ["badges"] });
+      toast.success(hidden ? "Значката е скрита от публичния ти профил." : "Значката се вижда.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Нещо се обърка.");
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Nav />
@@ -31,23 +43,46 @@ function Achievements() {
         <h1 className="mb-6 font-heavy text-6xl">
           ТВОИТЕ <span className="ransom">ЗНАЧКИ</span>
         </h1>
-        <p className="mb-6 inline-block bg-accent px-2 font-mono text-sm font-bold">
-          ПРИМЕРНИ ДАННИ — истинските значки идват от резултатите на организаторите
-        </p>
-        <div className="mb-10 flex flex-wrap gap-4">
-          <Stat n={stats.total} label="значки" className="bg-accent" />
-          <Stat
-            n={stats.podium}
-            label="места на подиума"
-            className="bg-primary text-primary-foreground"
-          />
-          <Stat n={stats.orgs} label="организатори" className="bg-secondary" />
-        </div>
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          {badges.map((b, i) => (
-            <BadgeCard key={b.id} b={b} i={i} />
-          ))}
-        </div>
+        {sample && (
+          <p className="mb-6 inline-block bg-accent px-2 font-mono text-sm font-bold">
+            ПРИМЕРНИ ДАННИ — още нямаш значки. Истинските идват от резултатите на организаторите.
+          </p>
+        )}
+        {mine.isError ? (
+          <div className="zine bg-card p-6" role="alert">
+            <p>Значките не се заредиха.</p>
+            <button
+              onClick={() => void mine.refetch()}
+              className="zine-pink jitter mt-3 bg-ink px-4 py-2 font-heavy text-xl text-paper"
+            >
+              ПАК
+            </button>
+          </div>
+        ) : mine.isPending ? (
+          <div className="zine h-48 animate-pulse bg-muted" aria-busy="true" />
+        ) : (
+          <>
+            <div className="mb-10 flex flex-wrap gap-4">
+              <Stat n={stats.total} label="значки" className="bg-accent" />
+              <Stat
+                n={stats.podium}
+                label="места на подиума"
+                className="bg-primary text-primary-foreground"
+              />
+              <Stat n={stats.orgs} label="организатори" className="bg-secondary" />
+            </div>
+            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+              {badges.map((b, i) => (
+                <BadgeCard
+                  key={b.id}
+                  b={b}
+                  i={i}
+                  onToggleHidden={sample ? undefined : (h) => void setHidden(b.id, h)}
+                />
+              ))}
+            </div>
+          </>
+        )}
         <div className="zine tape mt-14 flex items-center gap-4 bg-card p-6">
           <Hourglass className="size-8 shrink-0 text-primary" />
           <div>
@@ -68,38 +103,5 @@ function Stat({ n, label, className }: { n: number; label: string; className: st
       <span className="font-heavy text-4xl leading-none">{n}</span>
       <span className="font-hand text-2xl leading-none">{label}</span>
     </div>
-  );
-}
-
-function BadgeCard({ b, i }: { b: Badge; i: number }) {
-  const tone = b.place ? PLACE_BG[b.place] : "bg-card";
-  return (
-    <article
-      className={`${b.place === 1 ? "zine-pink" : "zine"} ${TILT[i % TILT.length]} animate-in fade-in slide-in-from-bottom-4 fill-mode-both bg-card transition-transform duration-200 hover:-translate-y-1`}
-      style={{ animationDelay: `${i * 60}ms` }}
-    >
-      <div className={`${tone} flex flex-col items-center gap-3 p-6`}>
-        <div className="flex size-22 items-center justify-center rounded-full border-4 border-ink bg-card text-ink">
-          {b.place ? (
-            <span className="font-display text-5xl">{b.place}</span>
-          ) : (
-            <Award className="size-11" />
-          )}
-        </div>
-        <p className="-rotate-3 font-heavy text-2xl">
-          {b.place ? PLACE_LABEL[b.place] : "УЧАСТНИК"}
-        </p>
-      </div>
-      <div className="border-t-[3px] border-ink p-4">
-        <h2 className="font-heavy text-2xl leading-tight">{b.event}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {b.org} · {b.date}
-        </p>
-        <p className="mt-3 flex items-center gap-2 border-t border-dashed border-ink pt-3 text-sm font-bold">
-          <ShieldCheck className="size-4 text-primary" />
-          Потвърдено от организатора
-        </p>
-      </div>
-    </article>
   );
 }
