@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from normalize import normalize_item
-from taxonomy import TAGS_BY_SLUG
+from taxonomy import INTEREST_SLUGS, TAGS_BY_SLUG
 
 HERE = Path(__file__).resolve().parent
 RAW, DB = HERE / "data" / "raw", HERE / "data" / "db"
@@ -48,6 +48,9 @@ def check(row: dict) -> list[str]:
     bad_tags = [t for t in row["tags"] if t not in TAGS_BY_SLUG]
     if bad_tags:
         errs.append(f"unknown tags {bad_tags}")
+    not_interest = [t for t in row["tags"] if t not in INTEREST_SLUGS]
+    if not_interest:
+        errs.append(f"non-interest tags {not_interest}")
     return errs
 
 
@@ -69,6 +72,8 @@ def main() -> None:
             if args.today:
                 raw = {**raw, "fetched_at": f"{args.today}T12:00:00+00:00"}
             row = normalize_item(raw)
+            # Only the interest tags (what students can pick on their profile) go to the database.
+            row["tags"] = [t for t in row["tags"] if t in INTEREST_SLUGS]
             errs = check(row)
             if row["source_url"] in seen:
                 errs.append(f"source_url also in {seen[row['source_url']]}")
