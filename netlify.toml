@@ -1,0 +1,10 @@
+# Netlify reads this file from the repo root. The site lives in web/.
+# @netlify/vite-plugin-tanstack-start writes the client to dist/client and the
+# server-rendering function to .netlify/v1/functions during `npm run build`.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "22"
