@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { SAMPLE_OPPS } from "@/data/sampleOpps";
-import { fakeClient, FakeServer, fakeUid, pgError } from "@/test/fakeSupabase";
+import { fakeClient, FakeServer, fakeUid, json, pgError } from "@/test/fakeSupabase";
 
 import {
   colorFor,
@@ -14,6 +14,7 @@ import {
   periodOf,
   placeOf,
   titleFontSize,
+  toLocalInput,
 } from "./opps";
 
 it("calendar: one mark per event, the full period on hover", () => {
@@ -283,4 +284,142 @@ describe("organizer pages and dashboard", () => {
     server.stats = [{ opportunity_id: OPP, title: "Купа", status: "draft", saves: "3" }];
     expect(await api.myStats()).toEqual([{ id: OPP, title: "Купа", status: "draft", saves: 3 }]);
   });
+});
+
+describe("organizer: edit, delete, tags", () => {
+  const draft = {
+    title: "Хакатон",
+    type: "competition" as const,
+    city: "Бургас",
+    online: false,
+    startsAt: null,
+    deadlineAt: null,
+    description: "",
+    externalUrl: null,
+    publish: false,
+  };
+
+  async function signedIn() {
+    const server = new FakeServer();
+    const db = fakeClient(server);
+    await db.auth.signInWithPassword({ email: "petya@example.com", password: "abcdefghi1" });
+    return { server, api: createOppsApi(db) };
+  }
+
+  it("create returns the new id and attaches the chosen tags", async () => {
+    const { server, api } = await signedIn();
+    const id = await api.create({ ...draft, tagIds: [3, 7, 3] });
+    expect(id).toBe(server.newOppId);
+    const w = server.writesTo("opportunity_tags");
+    expect(w[0]!.method).toBe("DELETE");
+    expect(w[1]!.body).toEqual([
+      { opportunity_id: id, tag_id: 3 },
+      { opportunity_id: id, tag_id: 7 },
+    ]);
+  });
+
+  it("create without tags does not touch opportunity_tags", async () => {
+    const { server, api } = await signedIn();
+    await api.create(draft);
+    expect(server.writesTo("opportunity_tags")).toHaveLength(0);
+  });
+
+  it("update writes the granted columns on my own item, then replaces tags", async () => {
+    const { server, api } = await signedIn();
+    server.on("PATCH /rest/v1/opportunities", () => json([{ id: OPP }]));
+    await api.update(OPP, { ...draft, publish: true, tagIds: [] });
+    const [w] = server.writesTo("opportunities");
+    expect(w!.method).toBe("PATCH");
+    expect(w!.body).toMatchObject({ title: "Хакатон", status: "published" });
+    expect(w!.body).not.toHaveProperty("organizer_id");
+    expect(w!.url.searchParams.get("id")).toBe(`eq.${OPP}`);
+    expect(w!.url.searchParams.get("organizer_id")).toBe(`eq.${fakeUid}`);
+    const tags = server.writesTo("opportunity_tags");
+    expect(tags.map((t) => t.method)).toEqual(["DELETE"]); // cleared, nothing to add
+  });
+
+  it("update of someone else's item (no row changed) says so", async () => {
+    const { server, api } = await signedIn();
+    server.on("PATCH /rest/v1/opportunities", () => json([]));
+    await expect(api.update(OPP, draft)).rejects.toThrow("Обявата я няма или не е твоя.");
+  });
+
+  it("unverified organizer publishing on update is told why", async () => {
+    const { server, api } = await signedIn();
+    server.on("PATCH /rest/v1/opportunities", () => pgError("42501", 403));
+    await expect(api.update(OPP, { ...draft, publish: true })).rejects.toThrow(
+      "Публикуването е само за проверени организатори.",
+    );
+  });
+
+  it("remove deletes only my own item", async () => {
+    const { server, api } = await signedIn();
+    server.on("DELETE /rest/v1/opportunities", () => json([{ id: OPP }]));
+    await api.remove(OPP);
+    const [w] = server.writesTo("opportunities");
+    expect(w!.method).toBe("DELETE");
+    expect(w!.url.searchParams.get("organizer_id")).toBe(`eq.${fakeUid}`);
+  });
+
+  it("remove of an item that isn't mine fails", async () => {
+    const { server, api } = await signedIn();
+    server.on("DELETE /rest/v1/opportunities", () => json([]));
+    await expect(api.remove(OPP)).rejects.toThrow("Обявата я няма или не е твоя.");
+  });
+
+  it("signed out: edit and delete ask to sign in", async () => {
+    const api = createOppsApi(fakeClient(new FakeServer()));
+    await expect(api.update(OPP, draft)).rejects.toThrow("Влез");
+    await expect(api.remove(OPP)).rejects.toThrow("Влез");
+    expect(await api.getForEdit(OPP)).toBeNull();
+  });
+
+  it("getForEdit maps my item, including tag ids and status", async () => {
+    const { server, api } = await signedIn();
+    server.opportunities = [
+      {
+        id: OPP,
+        title: "Купа",
+        type: "internship",
+        city: null,
+        is_online: true,
+        starts_at: "2026-12-10T09:00:00Z",
+        deadline_at: null,
+        description: null,
+        external_url: "https://x.bg",
+        status: "draft",
+        opportunity_tags: [{ tag_id: 4 }, { tag_id: 9 }],
+      },
+    ];
+    expect(await api.getForEdit(OPP)).toEqual({
+      id: OPP,
+      title: "Купа",
+      type: "internship",
+      city: null,
+      online: true,
+      startsAt: "2026-12-10T09:00:00Z",
+      deadlineAt: null,
+      description: "",
+      externalUrl: "https://x.bg",
+      publish: false,
+      status: "draft",
+      tagIds: [4, 9],
+    });
+    const q = server.readsOf("opportunities")[0]!.url.searchParams;
+    expect(q.get("organizer_id")).toBe(`eq.${fakeUid}`);
+  });
+
+  it("listTags reads the tag list A to Z", async () => {
+    const { server, api } = await signedIn();
+    server.tags = [{ id: 1, name: "Математика" }];
+    expect(await api.listTags()).toEqual([{ id: 1, name: "Математика" }]);
+    expect(server.readsOf("tags")[0]!.url.searchParams.get("order")).toBe("name.asc");
+  });
+});
+
+it("toLocalInput gives a datetime-local value in local time", () => {
+  const d = new Date(2026, 11, 10, 9, 5); // 10 Dec 2026 09:05 local
+  expect(toLocalInput(d.toISOString())).toBe("2026-12-10T09:05");
+  expect(toLocalInput(null)).toBe("");
+  expect(toLocalInput("nonsense")).toBe("");
 });

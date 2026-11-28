@@ -59,6 +59,9 @@ export class FakeServer {
   /** What the `my_opportunity_stats` function returns. */
   stats: Record<string, unknown>[] = [];
   opportunities: Record<string, unknown>[] = [];
+  tags: Record<string, unknown>[] = [];
+  /** Id the database gives a newly created opportunity. */
+  newOppId = "99999999-9999-9999-9999-999999999999";
   organizers: Record<string, unknown>[] = [];
   saved: Record<string, unknown>[] = [];
   readonly requests: Seen[] = [];
@@ -110,6 +113,10 @@ export class FakeServer {
         return json(this.stats);
       case "GET /rest/v1/opportunities":
         return rows(this.opportunities);
+      case "POST /rest/v1/opportunities":
+        return wantsObject ? json({ id: this.newOppId }, 201) : new Response(null, { status: 201 });
+      case "GET /rest/v1/tags":
+        return rows(this.tags);
       case "GET /rest/v1/organizer_details":
         return rows(this.organizers);
       case "GET /rest/v1/badges":

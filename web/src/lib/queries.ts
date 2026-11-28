@@ -75,3 +75,20 @@ export function useMyBadges() {
     enabled: status === "signedIn",
   });
 }
+
+/** The fixed tag list (changes only with a migration). */
+export function useTags() {
+  return useQuery({ queryKey: ["tags"], queryFn: api.opps.listTags, staleTime: Infinity });
+}
+
+/** After an organizer creates, edits or deletes an item. */
+export function useRefreshOpps() {
+  const cache = useQueryClient();
+  return () =>
+    Promise.all([
+      cache.invalidateQueries({ queryKey: ["feed"] }),
+      cache.invalidateQueries({ queryKey: ["myStats"] }),
+      cache.invalidateQueries({ queryKey: ["opp"] }),
+      cache.invalidateQueries({ queryKey: ["oppEdit"] }),
+    ]);
+}

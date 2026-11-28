@@ -1,11 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Pencil, Share2 } from "lucide-react";
+import { Pencil, Share2, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { inputClass, useBusy } from "@/components/forms";
 import { Nav } from "@/components/Nav";
+import { OppDialog } from "@/components/OppDialog";
 import { ProfileHeader, Section } from "@/components/ProfileHeader";
 import {
   Dialog,
@@ -18,7 +19,8 @@ import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { ACCOUNT_TYPE_LABEL, ORG_TYPE_LABEL } from "@/lib/auth";
 import { publicProfileUrl, type MyProfile, type ProfilePatch } from "@/lib/profiles";
-import { useMyProfile, useMyStats } from "@/lib/queries";
+import type { OppStat } from "@/lib/opps";
+import { useMyProfile, useMyStats, useRefreshOpps } from "@/lib/queries";
 import { isUnder14, validateDisplayName, validateOrgName } from "@/lib/validators";
 
 export const Route = createFileRoute("/profile")({
@@ -163,7 +165,7 @@ function Body({
             text={[o.orgName, ORG_TYPE_LABEL[o.orgType], o.website].filter(Boolean).join(" · ")}
           />
           <Section title="ПРОВЕРКА" text={VERIFICATION[o.verificationStatus]} />
-          <Dashboard />
+          <Dashboard verified={o.verificationStatus === "verified"} />
         </>
       )}
     </>
@@ -173,8 +175,10 @@ function Body({
 const STATUS_LABEL = { published: "публикувана", draft: "чернова", archived: "архив" } as const;
 
 /** Organizer dashboard: own items and how many people saved each. */
-function Dashboard() {
+function Dashboard({ verified }: { verified: boolean }) {
   const stats = useMyStats(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<OppStat | null>(null);
   const rows = stats.data ?? [];
   const published = rows.filter((r) => r.status === "published").length;
   const drafts = rows.filter((r) => r.status === "draft").length;
@@ -217,6 +221,22 @@ function Dashboard() {
                     {STATUS_LABEL[r.status]}
                   </span>
                   <span className="w-24 text-right font-heavy">{r.saves} запазв.</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(r.id)}
+                    className="jitter border-2 border-ink p-1"
+                    aria-label={`Промени „${r.title}“`}
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleting(r)}
+                    className="jitter border-2 border-ink p-1 text-destructive"
+                    aria-label={`Изтрий „${r.title}“`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -231,7 +251,56 @@ function Dashboard() {
           )}
         </>
       )}
+      {editing && (
+        <OppDialog verified={verified} editId={editing} onClose={() => setEditing(null)} />
+      )}
+      {deleting && <DeleteDialog opp={deleting} onClose={() => setDeleting(null)} />}
     </section>
+  );
+}
+
+function DeleteDialog({ opp, onClose }: { opp: OppStat; onClose: () => void }) {
+  const refresh = useRefreshOpps();
+  const { busy, run } = useBusy();
+  async function remove() {
+    await run(async () => {
+      await api.opps.remove(opp.id);
+      await refresh();
+      toast.success("Обявата е изтрита");
+      onClose();
+    });
+  }
+  return (
+    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
+      <DialogContent className="border-[3px] border-ink bg-card">
+        <DialogHeader>
+          <DialogTitle className="font-heavy text-3xl">ИЗТРИЙ ОБЯВАТА?</DialogTitle>
+          <DialogDescription>
+            „{opp.title}“ изчезва от фийда завинаги
+            {opp.saves > 0 ? `, и от запазените на ${opp.saves} души` : ""}. Това не може да се
+            върне.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="border-[3px] border-ink px-4 py-2 font-heavy text-lg"
+          >
+            ОТКАЗ
+          </button>
+          <button
+            type="button"
+            onClick={() => void remove()}
+            disabled={busy}
+            className="bg-destructive px-4 py-2 font-heavy text-lg text-destructive-foreground"
+          >
+            {busy ? "ТРИЯ…" : "ИЗТРИЙ"}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
