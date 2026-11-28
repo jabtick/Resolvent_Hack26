@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Award, Hourglass, ShieldCheck } from "lucide-react";
 
 import { Nav } from "@/components/Nav";
+import { ShareBadge } from "@/components/ShareBadge";
 import { type Badge, PLACE_LABEL, SAMPLE_BADGES, badgeStats } from "@/lib/achievements";
 
 export const Route = createFileRoute("/achievements")({
@@ -100,6 +101,8 @@ function BadgeCard({ b, i }: { b: Badge; i: number }) {
           Потвърдено от организатора
         </p>
       </div>
+      {/* Sharing lives in components/ShareBadge.tsx (Bogi). */}
+      <ShareBadge b={b} />
     </article>
   );
 }
