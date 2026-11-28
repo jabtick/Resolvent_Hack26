@@ -160,6 +160,13 @@ TAGS_BY_SLUG: dict[str, Tag] = {t.slug: t for t in TAGS}
 # stay available to the normalizer but are not written to the database files.
 INTEREST_SLUGS: frozenset[str] = frozenset(t.slug for t in TAGS if t.group == "subject")
 
+# Grade groups the site filters by ("за кого?" → 8.–10. клас, 11.–12. клас). University is the
+# `audience` column, not a tag. 1.–4. and 5.–7. клас are not offered, so they are not written.
+LEVEL_SLUGS: frozenset[str] = frozenset({"grades-8-10", "grades-11-12"})
+
+# Everything a database row may carry.
+DB_TAG_SLUGS: frozenset[str] = INTEREST_SLUGS | LEVEL_SLUGS
+
 # Old or alternative slugs -> the canonical slug above. Anything that reads tag slugs from
 # outside (scraper rules, raw-file hints, old JSON outputs) passes them through canonical().
 ALIASES: dict[str, str] = {

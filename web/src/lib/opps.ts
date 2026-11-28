@@ -39,11 +39,55 @@ export type Opp = {
   deadlineAt: string | null; // ISO
   startsAt: string | null; // ISO
   endsAt?: string | null; // ISO; optional so sample items don't need it
+  /** Who it is for; optional so sample items don't need it (treated as "both"). */
+  audience?: Audience;
   description: string;
   externalUrl: string | null;
   color: OppColor;
   isSample: boolean;
 };
+
+export type Audience = Database["public"]["Enums"]["audience"];
+
+// ---- "за кого?" filter: two school grade groups + university ----
+
+export type Level = "grades-8-10" | "grades-11-12" | "university";
+
+export const LEVELS: { id: Level; label: string; from?: number; to?: number }[] = [
+  { id: "grades-8-10", label: "8.–10. клас", from: 8, to: 10 },
+  { id: "grades-11-12", label: "11.–12. клас", from: 11, to: 12 },
+  { id: "university", label: "Студенти" },
+];
+
+/** "8.–10. клас", "8–10 клас", "11.–12. клас" → [from, to]; any other tag → null. */
+export function gradeRangeOf(tag: string): [number, number] | null {
+  const m = /^(\d{1,2})\.?\s*[–-]\s*(\d{1,2})\.?\s*клас$/.exec(tag.trim());
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+/** Tags that say who an item is for (grade groups, "За студенти"); shown under "за кого?", not as themes. */
+export function isLevelTag(tag: string): boolean {
+  return gradeRangeOf(tag) != null || /^(за )?студенти$/i.test(tag.trim());
+}
+
+/**
+ * True if the item fits at least one picked level (or none is picked).
+ * University: audience "university" or "both".
+ * A grade group: the item has a grade tag overlapping it, or it is for school and names no
+ * grades at all (most olympiads don't list grades, they shouldn't disappear).
+ */
+export function matchesLevels(o: Pick<Opp, "tags" | "audience">, levels: Level[]): boolean {
+  if (!levels.length) return true;
+  const audience = o.audience ?? "both";
+  const ranges = o.tags.map(gradeRangeOf).filter((r): r is [number, number] => r != null);
+  return levels.some((id) => {
+    if (id === "university") return audience !== "school";
+    if (audience === "university") return false;
+    const lv = LEVELS.find((l) => l.id === id)!;
+    if (!ranges.length) return true;
+    return ranges.some(([a, b]) => a <= lv.to! && b >= lv.from!);
+  });
+}
 
 /** One recommended item: how well it fits this student, and why (short Bulgarian phrases). */
 export type Recommendation = { opp: Opp; rating: number; why: string[] };
@@ -279,7 +323,7 @@ async function guard<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const SELECT =
-  "id, title, type, city, is_online, deadline_at, starts_at, ends_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
+  "id, title, type, city, is_online, audience, deadline_at, starts_at, ends_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
 
 type Row = {
   id: string;
@@ -287,6 +331,7 @@ type Row = {
   type: OppType;
   city: string | null;
   is_online: boolean;
+  audience?: Audience;
   deadline_at: string | null;
   starts_at: string | null;
   ends_at?: string | null;
@@ -319,6 +364,7 @@ export function createOppsApi(db: Db) {
       tags: (r.opportunity_tags ?? []).map((t) => t.tags?.name).filter((x): x is string => !!x),
       city: r.city,
       online: r.is_online,
+      audience: r.audience ?? "both",
       deadlineAt: r.deadline_at,
       startsAt: r.starts_at,
       endsAt: r.ends_at ?? null,

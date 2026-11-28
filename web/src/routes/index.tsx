@@ -5,7 +5,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "@/components/AccountProvider";
 import { Nav } from "@/components/Nav";
 import { OppCard } from "@/components/OppCard";
-import { formatStatus, OPP_TYPE_LABEL, OPP_TYPES, type Opp, type OppType } from "@/lib/opps";
+import {
+  formatStatus,
+  isLevelTag,
+  LEVELS,
+  matchesLevels,
+  OPP_TYPE_LABEL,
+  OPP_TYPES,
+  type Level,
+  type Opp,
+  type OppType,
+} from "@/lib/opps";
 import { initialsOf } from "@/lib/profiles";
 import { useFeed, useMyProfile, useRecommended, useSavedIds, useToggleSaved } from "@/lib/queries";
 
@@ -27,13 +37,21 @@ export const Route = createFileRoute("/")({
   component: Feed,
 });
 
-function matches(o: Opp, q: string, types: OppType[], tags: string[], online: boolean) {
+function matches(
+  o: Opp,
+  q: string,
+  types: OppType[],
+  tags: string[],
+  levels: Level[],
+  online: boolean,
+) {
   const text =
     `${o.title} ${o.org} ${o.description} ${o.city ?? ""} ${o.tags.join(" ")}`.toLowerCase();
   return (
     (!q || text.includes(q.toLowerCase())) &&
     (!types.length || types.includes(o.type)) &&
     (!tags.length || o.tags.some((t) => tags.includes(t))) &&
+    matchesLevels(o, levels) &&
     (!online || o.online)
   );
 }
@@ -55,6 +73,7 @@ function Feed() {
   const [open, setOpen] = useState(false);
   const [types, setTypes] = useState<OppType[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [online, setOnline] = useState(false);
 
   // Close the filter panel on a click/tap outside the search bar + panel, or on Escape.
@@ -78,19 +97,26 @@ function Feed() {
   const recs = rec.data ?? [];
   const whyById = useMemo(() => new Map(recs.map((r) => [r.opp.id, r.why])), [recs]);
   const all = feed.data ?? [];
+  // Themes only: grade groups and "За студенти" are under "за кого?" instead.
   const allTags = useMemo(
-    () => [...new Set(all.flatMap((o) => o.tags))].sort((a, b) => a.localeCompare(b, "bg")),
+    () =>
+      [...new Set(all.flatMap((o) => o.tags))]
+        .filter((t) => !isLevelTag(t))
+        .sort((a, b) => a.localeCompare(b, "bg")),
     [all],
   );
   const list = useMemo(
-    () => (forYou ? recs.map((r) => r.opp) : all).filter((o) => matches(o, q, types, tags, online)),
-    [forYou, recs, all, q, types, tags, online],
+    () =>
+      (forYou ? recs.map((r) => r.opp) : all).filter((o) =>
+        matches(o, q, types, tags, levels, online),
+      ),
+    [forYou, recs, all, q, types, tags, levels, online],
   );
   const soon = useMemo(
     () => all.filter((o) => o.deadlineAt && new Date(o.deadlineAt) > new Date()).slice(0, 4),
     [all],
   );
-  const active = types.length + tags.length + (online ? 1 : 0);
+  const active = types.length + tags.length + levels.length + (online ? 1 : 0);
   const flip = <T,>(arr: T[], set: (v: T[]) => void, v: T) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   const chip = (on: boolean) =>
@@ -217,6 +243,20 @@ function Feed() {
                       ))}
                     </div>
                   </div>
+                  <div>
+                    <p className="mb-2 font-hand text-2xl">за кого?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {LEVELS.map((l) => (
+                        <button
+                          key={l.id}
+                          onClick={() => flip(levels, setLevels, l.id)}
+                          className={chip(levels.includes(l.id))}
+                        >
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {allTags.length > 0 && (
                     <div>
                       <p className="mb-2 font-hand text-2xl">избери тема</p>
@@ -241,6 +281,7 @@ function Feed() {
                       onClick={() => {
                         setTypes([]);
                         setTags([]);
+                        setLevels([]);
                         setOnline(false);
                       }}
                       className="font-bold underline"

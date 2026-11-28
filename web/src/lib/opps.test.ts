@@ -17,7 +17,39 @@ import {
   titleFontSize,
   whyText,
   toLocalInput,
+  gradeRangeOf,
+  isLevelTag,
+  matchesLevels,
 } from "./opps";
+
+it("'за кого?' filter: grade groups and university", () => {
+  const olympiad = {
+    tags: ["Математика", "8.–10. клас", "11.–12. клас"],
+    audience: "school" as const,
+  };
+  const only11 = { tags: ["Информатика", "11.–12. клас"], audience: "school" as const };
+  const noGrades = { tags: ["Информатика"], audience: "school" as const }; // most olympiads
+  const uni = { tags: ["Инженерни науки"], audience: "university" as const };
+  const both = { tags: ["Екология"], audience: "both" as const };
+
+  expect(matchesLevels(olympiad, [])).toBe(true);
+  expect(matchesLevels(only11, ["grades-8-10"])).toBe(false);
+  expect(matchesLevels(only11, ["grades-11-12"])).toBe(true);
+  expect(matchesLevels(noGrades, ["grades-8-10"])).toBe(true); // school item without grades stays
+  expect(matchesLevels(uni, ["grades-8-10"])).toBe(false);
+  expect(matchesLevels(uni, ["university"])).toBe(true);
+  expect(matchesLevels(both, ["university"])).toBe(true);
+  expect(matchesLevels(noGrades, ["university"])).toBe(false);
+  expect(matchesLevels(only11, ["grades-8-10", "university"])).toBe(false);
+  // old tag names (without dots) still count
+  expect(matchesLevels({ tags: ["8–10 клас"], audience: "school" }, ["grades-8-10"])).toBe(true);
+
+  expect(isLevelTag("1.–4. клас")).toBe(true);
+  expect(isLevelTag("5–7 клас")).toBe(true);
+  expect(isLevelTag("За студенти")).toBe(true);
+  expect(isLevelTag("Математика")).toBe(false);
+  expect(gradeRangeOf("11.–12. клас")).toEqual([11, 12]);
+});
 
 it("calendar: every day an event runs is marked, the full period on hover", () => {
   // local times, so the test doesn't depend on the machine's time zone
