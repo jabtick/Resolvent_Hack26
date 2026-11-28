@@ -66,3 +66,12 @@ export function useMyProfile() {
     enabled: status === "signedIn",
   });
 }
+
+export function useMyBadges() {
+  const { status } = useAccount();
+  return useQuery({
+    queryKey: ["badges", status],
+    queryFn: api.achievements.listMine,
+    enabled: status === "signedIn",
+  });
+}
