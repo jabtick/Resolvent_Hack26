@@ -89,6 +89,38 @@ describe("public profiles", () => {
   });
 });
 
+describe("public organizers", () => {
+  it("maps the view; verified only when the status says so", async () => {
+    const { server, api } = await signedIn();
+    server.publicOrganizers = [
+      {
+        profile_id: "p1",
+        username: "tech_school",
+        display_name: "TS",
+        org_name: "TechSchool Варна",
+        org_type: "school",
+        website: "https://example.org",
+        verification_status: "verified",
+      },
+    ];
+    const o = await api.loadPublicOrganizer("tech_school");
+    expect(o).toMatchObject({ orgName: "TechSchool Варна", verified: true, profileId: "p1" });
+    // "_" must not act as a wildcard
+    expect(server.readsOf("public_organizers")[0]!.url.searchParams.get("username")).toBe(
+      "ilike.tech\\_school",
+    );
+    server.publicOrganizers[0]!["verification_status"] = "pending";
+    expect((await api.loadPublicOrganizer("tech_school"))!.verified).toBe(false);
+  });
+
+  it("bad names are never looked up; missing → null", async () => {
+    const { server, api } = await signedIn();
+    expect(await api.loadPublicOrganizer("a*")).toBeNull();
+    expect(server.readsOf("public_organizers")).toHaveLength(0);
+    expect(await api.loadPublicOrganizer("nobody")).toBeNull();
+  });
+});
+
 it("initials and link", () => {
   expect(initialsOf("Петя Иванова")).toBe("ПИ");
   expect(initialsOf("ivan")).toBe("I");

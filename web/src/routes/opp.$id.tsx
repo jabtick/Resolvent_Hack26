@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe,
   MapPin,
+  Radio,
   ShieldCheck,
 } from "lucide-react";
 
@@ -14,7 +15,7 @@ import { useAccount } from "@/components/AccountProvider";
 import { Nav } from "@/components/Nav";
 import { bg } from "@/components/OppCard";
 import { api } from "@/lib/api";
-import { formatDeadline, OPP_TYPE_LABEL, placeOf } from "@/lib/opps";
+import { formatDeadline, isOngoing, OPP_TYPE_LABEL, placeOf } from "@/lib/opps";
 import { useSavedIds, useToggleSaved } from "@/lib/queries";
 
 export const Route = createFileRoute("/opp/$id")({
@@ -52,6 +53,7 @@ function Detail() {
   const isSaved = saved.data?.has(o.id) ?? false;
 
   const facts = [
+    ...(isOngoing(o) ? [{ i: <Radio />, l: "Статус", v: "Тече сега" }] : []),
     { i: <Clock />, l: "Срок", v: formatDeadline(o.deadlineAt) },
     {
       i: <CalendarDays />,

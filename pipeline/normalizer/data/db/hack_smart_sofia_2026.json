@@ -1,0 +1,29 @@
+[
+  {
+    "type": "competition",
+    "organizer_id": null,
+    "title": "Hack Smart Sofia 2026",
+    "description": "Присъствен хакатон в Нов български университет за около 40 студенти (бакалаври, магистри и докторанти) от университетите в алианса ERUA, в международни и интердисциплинарни отбори, които решават реални градски предизвикателства (Smart City). Подготвителен етап: 15–16 юни – посещение в София Тех Парк. Хакатон в НБУ: 17–19 юни 2026 г. – проучване на проблема, прототип и MVP с дигитални, AI и no-code инструменти, тестване и представяне пред жури. Завършилите получават 3 ECTS кредита и/или сертификат.",
+    "image_url": null,
+    "external_url": "https://citiesconf.nbu.bg/hack-smart-sofia/",
+    "city": "София",
+    "is_online": false,
+    "audience": "university",
+    "starts_at": "2026-06-15T00:00:00+03:00",
+    "ends_at": "2026-06-19T23:59:00+03:00",
+    "deadline_at": null,
+    "status": "archived",
+    "source": "scraper",
+    "source_url": "https://citiesconf.nbu.bg/hack-smart-sofia/",
+    "tags": [
+      "hackathon",
+      "ai-data",
+      "international",
+      "team",
+      "entrepreneurship",
+      "mentorship",
+      "university-students",
+      "programming"
+    ]
+  }
+]

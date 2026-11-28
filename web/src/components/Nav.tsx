@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  Award,
   Bookmark,
   CalendarDays,
   Home,
@@ -70,6 +71,10 @@ export function Nav() {
                       <User />
                       Профил
                     </Link>
+                    <Link to="/achievements" className={item}>
+                      <Award />
+                      Значки
+                    </Link>
                     <Link to="/saved" className={item}>
                       <Bookmark />
                       Запазени
@@ -98,7 +103,7 @@ export function Nav() {
               <div className="mt-8">
                 <p className="mb-2 flex items-center gap-2 font-hand text-2xl">
                   <Palette className="h-5 w-5" />
-                  избери визия
+                  промени темата
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {THEMES.map((t) => (

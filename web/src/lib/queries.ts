@@ -49,6 +49,15 @@ export function useToggleSaved() {
   });
 }
 
+/** Dashboard numbers; only for a signed-in organizer. */
+export function useMyStats(enabled: boolean) {
+  return useQuery({
+    queryKey: ["myStats"],
+    queryFn: api.opps.myStats,
+    enabled,
+  });
+}
+
 export function useMyProfile() {
   const { status } = useAccount();
   return useQuery({

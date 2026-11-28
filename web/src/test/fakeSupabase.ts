@@ -53,6 +53,9 @@ export class FakeServer {
   /** What `profiles` returns for the user (null = no row). */
   profileRow: Record<string, unknown> | null = null;
   publicProfiles: Record<string, unknown>[] = [];
+  publicOrganizers: Record<string, unknown>[] = [];
+  /** What the `my_opportunity_stats` function returns. */
+  stats: Record<string, unknown>[] = [];
   opportunities: Record<string, unknown>[] = [];
   organizers: Record<string, unknown>[] = [];
   saved: Record<string, unknown>[] = [];
@@ -99,6 +102,10 @@ export class FakeServer {
         return rows(this.profileRow ? [this.profileRow] : []);
       case "GET /rest/v1/public_profiles":
         return rows(this.publicProfiles);
+      case "GET /rest/v1/public_organizers":
+        return rows(this.publicOrganizers);
+      case "POST /rest/v1/rpc/my_opportunity_stats":
+        return json(this.stats);
       case "GET /rest/v1/opportunities":
         return rows(this.opportunities);
       case "GET /rest/v1/organizer_details":

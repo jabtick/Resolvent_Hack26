@@ -3,7 +3,50 @@ import { describe, expect, it } from "vitest";
 import { SAMPLE_OPPS } from "@/data/sampleOpps";
 import { fakeClient, FakeServer, fakeUid, pgError } from "@/test/fakeSupabase";
 
-import { colorFor, createOppsApi, formatDeadline, hostOf, placeOf } from "./opps";
+import {
+  colorFor,
+  createOppsApi,
+  formatDeadline,
+  formatStatus,
+  hostOf,
+  isOngoing,
+  markDates,
+  periodOf,
+  placeOf,
+  titleFontSize,
+} from "./opps";
+
+it("calendar: one mark per event, the full period on hover", () => {
+  const hack = {
+    deadlineAt: "2026-11-20T21:59:00Z",
+    startsAt: "2026-11-27T14:00:00Z",
+    endsAt: "2026-11-29T16:30:00Z",
+  };
+  const scholarship = { deadlineAt: "2026-12-06T21:59:00Z", startsAt: null, endsAt: null };
+  const noDates = { deadlineAt: null, startsAt: null, endsAt: null };
+  // only the start is marked, not the deadline; a scholarship is marked on its deadline
+  expect(markDates([hack, scholarship, noDates]).map((d) => d.toISOString())).toEqual([
+    "2026-11-27T14:00:00.000Z",
+    "2026-12-06T21:59:00.000Z",
+  ]);
+  expect(periodOf(hack)).toEqual({
+    from: new Date("2026-11-27T14:00:00Z"),
+    to: new Date("2026-11-29T16:30:00Z"),
+  });
+  expect(periodOf(noDates)).toBeNull();
+});
+
+it("card titles shrink to fit the card; the card size never changes", () => {
+  const cqw = (t: string) => Number(/min\(([\d.]+)cqw/.exec(titleFontSize(t))![1]);
+  expect(titleFontSize("LiberHack")).toBe("min(11cqw, 3rem)"); // short: the old size
+  // a 19-letter word must fit on one line without breaking: 19 × 0.8em ≤ 84cqw
+  const ceoi = cqw("Централноевропейска олимпиада по информатика CEOI");
+  expect(ceoi).toBeLessThanOrEqual(84 / (19 * 0.8));
+  const long =
+    "Пролетни състезания по информатика, съвместно с Международен турнир по информатика за напреднали";
+  expect(cqw(long)).toBeLessThan(cqw("Национална олимпиада по математика"));
+  expect(cqw(long)).toBeGreaterThanOrEqual(3);
+});
 
 const ORG = "22222222-2222-2222-2222-222222222222";
 const OPP = "33333333-3333-3333-3333-333333333333";
@@ -126,6 +169,48 @@ it("formatting helpers", () => {
   expect(colorFor("abc")).toBe(colorFor("abc"));
 });
 
+it("ongoing events say 'тече сега' even after the registration deadline", () => {
+  // LiberHack Edition 2: registration closed 20 Nov, event 27 Nov 16:00 – 29 Nov 18:30 (Sofia time).
+  const hack = {
+    deadlineAt: "2026-11-20T21:59:00Z",
+    startsAt: "2026-11-27T14:00:00Z",
+    endsAt: "2026-11-29T16:30:00Z",
+  };
+  expect(formatStatus(hack, new Date("2026-11-28T10:00:00Z"))).toBe("тече сега");
+  expect(isOngoing(hack, new Date("2026-11-27T13:00:00Z"))).toBe(false); // before the start
+  expect(formatStatus(hack, new Date("2026-11-27T13:00:00Z"))).toBe("изтекъл");
+  expect(formatStatus(hack, new Date("2026-11-30T10:00:00Z"))).toBe("изтекъл"); // over
+  // No end date: ongoing only on the start day.
+  const oneDay = { deadlineAt: null, startsAt: "2026-12-05T08:00:00Z", endsAt: null };
+  expect(formatStatus(oneDay, new Date("2026-12-05T12:00:00Z"))).toBe("тече сега");
+  expect(formatStatus(oneDay, new Date("2026-12-07T12:00:00Z"))).toBe("без срок");
+});
+
+it("the feed reads ends_at", async () => {
+  const { server, api } = setup();
+  server.opportunities = [
+    {
+      id: OPP,
+      title: "LiberHack",
+      type: "competition",
+      city: "Бургас",
+      is_online: false,
+      deadline_at: "2026-11-20T21:59:00Z",
+      starts_at: "2026-11-27T14:00:00Z",
+      ends_at: "2026-11-29T16:30:00Z",
+      description: null,
+      external_url: "https://liberhack.org/",
+      source_url: "https://liberhack.org/",
+      organizer_id: null,
+      opportunity_tags: [],
+    },
+  ];
+  const [o] = await api.listFeed();
+  expect(o).toMatchObject({ endsAt: "2026-11-29T16:30:00Z" });
+  const q = server.readsOf("opportunities")[0]!.url.searchParams;
+  expect(q.get("select")).toContain("ends_at");
+});
+
 describe("organizer posts", () => {
   it("creates an opportunity with only the granted columns", async () => {
     const server = new FakeServer();
@@ -176,5 +261,26 @@ describe("organizer posts", () => {
         publish: true,
       }),
     ).rejects.toThrow("Публикуването е само за проверени организатори. Запази като чернова.");
+  });
+});
+
+describe("organizer pages and dashboard", () => {
+  it("lists only that organizer's published items", async () => {
+    const { server, api } = setup();
+    server.opportunities = [
+      { id: OPP, title: "Купа", type: "competition", is_online: false, organizer_id: ORG },
+    ];
+    server.organizers = [{ profile_id: ORG, org_name: "TechSchool" }];
+    const list = await api.listByOrganizer(ORG);
+    expect(list.map((o) => o.org)).toEqual(["TechSchool"]);
+    const q = server.readsOf("opportunities")[0]!.url.searchParams;
+    expect(q.get("organizer_id")).toBe(`eq.${ORG}`);
+    expect(q.get("status")).toBe("eq.published");
+  });
+
+  it("dashboard stats: numbers come back as numbers", async () => {
+    const { server, api } = setup();
+    server.stats = [{ opportunity_id: OPP, title: "Купа", status: "draft", saves: "3" }];
+    expect(await api.myStats()).toEqual([{ id: OPP, title: "Купа", status: "draft", saves: 3 }]);
   });
 });

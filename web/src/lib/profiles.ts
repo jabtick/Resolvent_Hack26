@@ -46,6 +46,16 @@ export type PublicProfile = {
   interests: string[];
 };
 
+export type PublicOrganizer = {
+  profileId: string;
+  username: string;
+  displayName: string;
+  orgName: string;
+  orgType: OrgType;
+  website: string | null;
+  verified: boolean;
+};
+
 /** Only the fields that change; `grade: null` clears the grade. */
 export type ProfilePatch = {
   displayName?: string;
@@ -199,6 +209,29 @@ export function createProfilesApi(db: Db) {
           bio: data.bio,
           school: data.school,
           interests: (data.interests as string[] | null) ?? [],
+        };
+      }),
+
+    /** An organizer's public page, or null. Same name rules as `loadPublic`. */
+    loadPublicOrganizer: (username: string) =>
+      guard(async (): Promise<PublicOrganizer | null> => {
+        if (validateUsername(username) != null) return null;
+        const pattern = username.replace(/[\\%_]/g, (c) => `\\${c}`);
+        const { data, error } = await db
+          .from("public_organizers")
+          .select("*")
+          .ilike("username", pattern)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data?.profile_id || !data.username) return null;
+        return {
+          profileId: data.profile_id,
+          username: data.username,
+          displayName: data.display_name ?? data.username,
+          orgName: data.org_name ?? data.display_name ?? data.username,
+          orgType: data.org_type as OrgType,
+          website: data.website,
+          verified: data.verification_status === "verified",
         };
       }),
   };

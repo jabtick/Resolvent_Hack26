@@ -5,7 +5,7 @@
   },
   {
     "slug": "stem",
-    "name": "STEM / природни науки"
+    "name": "Природни науки и технологии"
   },
   {
     "slug": "informatics",
@@ -21,7 +21,7 @@
   },
   {
     "slug": "ai-data",
-    "name": "Изкуствен интелект и данни"
+    "name": "Изкуствен интелект"
   },
   {
     "slug": "cybersecurity",
@@ -33,11 +33,11 @@
   },
   {
     "slug": "game-dev",
-    "name": "Разработка на игри"
+    "name": "Създаване на игри"
   },
   {
     "slug": "engineering",
-    "name": "Инженерство"
+    "name": "Инженерни науки"
   },
   {
     "slug": "physics",
@@ -57,11 +57,11 @@
   },
   {
     "slug": "medicine",
-    "name": "Медицина и здраве"
+    "name": "Медицина"
   },
   {
     "slug": "ecology",
-    "name": "Екология и околна среда"
+    "name": "Екология"
   },
   {
     "slug": "geography",
@@ -85,7 +85,7 @@
   },
   {
     "slug": "civics",
-    "name": "Гражданско образование"
+    "name": "Гражданска активност"
   },
   {
     "slug": "law",
@@ -113,7 +113,11 @@
   },
   {
     "slug": "debate",
-    "name": "Дебати и ораторство"
+    "name": "Дебати и реторика"
+  },
+  {
+    "slug": "linguistics",
+    "name": "Лингвистика"
   },
   {
     "slug": "foreign-languages",
@@ -176,12 +180,16 @@
     "name": "Конкурс"
   },
   {
+    "slug": "tournament",
+    "name": "Турнир"
+  },
+  {
     "slug": "summer-school",
-    "name": "Лятно училище"
+    "name": "Лагери и летни училища"
   },
   {
     "slug": "workshop",
-    "name": "Обучение и уъркшоп"
+    "name": "Обучения и курсове"
   },
   {
     "slug": "conference",
@@ -193,7 +201,7 @@
   },
   {
     "slug": "research",
-    "name": "Научна работа"
+    "name": "Научни проекти"
   },
   {
     "slug": "volunteering",
@@ -201,62 +209,66 @@
   },
   {
     "slug": "study-abroad",
-    "name": "Обучение в чужбина"
+    "name": "В чужбина"
   },
   {
     "slug": "career",
-    "name": "Кариера"
+    "name": "Кариера и работа"
   },
   {
     "slug": "team",
-    "name": "Отборно участие"
+    "name": "В отбор"
+  },
+  {
+    "slug": "girls-only",
+    "name": "Само за момичета"
   },
   {
     "slug": "national",
-    "name": "Национално"
+    "name": "Национално ниво"
   },
   {
     "slug": "international",
-    "name": "Международно"
+    "name": "Международно ниво"
   },
   {
     "slug": "regional",
-    "name": "Областно / регионално"
+    "name": "Областно ниво"
   },
   {
     "slug": "free",
-    "name": "Безплатно"
+    "name": "Безплатно участие"
   },
   {
     "slug": "prizes",
-    "name": "Награди"
+    "name": "С награди"
   },
   {
     "slug": "paid",
-    "name": "Платено"
+    "name": "Платен стаж"
   },
   {
     "slug": "has-fee",
-    "name": "С такса"
+    "name": "С такса за участие"
   },
   {
     "slug": "grades-1-4",
-    "name": "1–4 клас"
+    "name": "1.–4. клас"
   },
   {
     "slug": "grades-5-7",
-    "name": "5–7 клас"
+    "name": "5.–7. клас"
   },
   {
     "slug": "grades-8-10",
-    "name": "8–10 клас"
+    "name": "8.–10. клас"
   },
   {
     "slug": "grades-11-12",
-    "name": "11–12 клас"
+    "name": "11.–12. клас"
   },
   {
     "slug": "university-students",
-    "name": "Студенти"
+    "name": "За студенти"
   }
 ]

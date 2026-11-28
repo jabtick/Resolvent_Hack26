@@ -19,7 +19,12 @@ export const OPP_TYPE_LABEL: Record<OppType, string> = {
   university_program: "Програма",
 };
 
-export const OPP_TYPES = Object.keys(OPP_TYPE_LABEL) as OppType[];
+/**
+ * Types offered in the UI (feed counts, filters, the organizer form). `open_day` and
+ * `university_program` still exist in the database and keep their labels above, so an
+ * existing item of that type still shows correctly; they are just not offered.
+ */
+export const OPP_TYPES: OppType[] = ["competition", "scholarship", "internship"];
 
 export type OppColor = "primary" | "secondary" | "accent";
 
@@ -33,10 +38,19 @@ export type Opp = {
   online: boolean;
   deadlineAt: string | null; // ISO
   startsAt: string | null; // ISO
+  endsAt?: string | null; // ISO; optional so sample items don't need it
   description: string;
   externalUrl: string | null;
   color: OppColor;
   isSample: boolean;
+};
+
+/** One line of the organizer dashboard. */
+export type OppStat = {
+  id: string;
+  title: string;
+  status: "draft" | "published" | "archived";
+  saves: number;
 };
 
 export type NewOpp = {
@@ -70,6 +84,105 @@ export function formatDeadline(iso: string | null, now = new Date()): string {
   return `до ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+/**
+ * True while the event is happening: from `starts_at` until `ends_at`
+ * (or the end of the start day when there is no end).
+ */
+export function isOngoing(o: Pick<Opp, "startsAt" | "endsAt">, now = new Date()): boolean {
+  if (!o.startsAt) return false;
+  const start = new Date(o.startsAt);
+  let end: Date;
+  if (o.endsAt) {
+    end = new Date(o.endsAt);
+  } else {
+    end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+  }
+  return start <= now && now <= end;
+}
+
+/**
+ * The label on a card: "тече сега" while the event runs (even if registration
+ * already closed), otherwise the deadline ("до 20 дек", "изтекъл", "без срок").
+ */
+export function formatStatus(
+  o: Pick<Opp, "deadlineAt" | "startsAt" | "endsAt">,
+  now = new Date(),
+): string {
+  if (isOngoing(o, now)) return "тече сега";
+  return formatDeadline(o.deadlineAt, now);
+}
+
+/**
+ * The days an event happens, for the calendar: start through end (or just the start day).
+ * Falls back to the deadline day for items with no start (e.g. most scholarships).
+ */
+export function periodOf(
+  o: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">,
+): { from: Date; to: Date } | null {
+  if (o.startsAt) {
+    const from = new Date(o.startsAt);
+    const to = o.endsAt ? new Date(o.endsAt) : from;
+    return { from, to: to < from ? from : to };
+  }
+  if (o.deadlineAt) {
+    const d = new Date(o.deadlineAt);
+    return { from: d, to: d };
+  }
+  return null;
+}
+
+/** One calendar mark per event: its start day, or its deadline day if it has no start. */
+export function markDates(opps: Pick<Opp, "startsAt" | "endsAt" | "deadlineAt">[]): Date[] {
+  return opps.map((o) => periodOf(o)?.from).filter((d): d is Date => !!d);
+}
+
+/**
+ * Font size for a card title, in `cqw` (percent of the card's width), so the whole title fits
+ * the card's fixed 4:3 box at every screen width. The card itself never changes size.
+ *
+ * It simulates word wrapping in the display font (about 0.8em per letter) and picks the
+ * largest size where the lines fit, without breaking words in the middle. The text area is
+ * taken as 84% of the card width and 40% of it in height (what is left on a phone after the
+ * padding, the tag line and the deadline line).
+ */
+export function titleFontSize(title: string): string {
+  const W = 84; // usable width, % of card width
+  const H = 40; // usable height, % of card width
+  const CHAR = 0.8; // average letter width in em (Rubik Glitch)
+  const SPACE = 0.3;
+  const MAX = 11; // cqw; the old size on a phone
+  const MIN = 3;
+  const words = title.split(/\s+/).filter(Boolean);
+  const longest = Math.max(0, ...words.map((w) => w.length * CHAR));
+
+  const lines = (maxEm: number): number => {
+    let n = 0;
+    let cur = 0;
+    for (const w of words) {
+      const len = w.length * CHAR;
+      if (cur === 0) cur = len;
+      else if (cur + SPACE + len <= maxEm) cur += SPACE + len;
+      else {
+        n++;
+        cur = len;
+      }
+    }
+    return cur > 0 ? n + 1 : n;
+  };
+
+  let size = MIN;
+  for (let f = MAX; f >= MIN; f -= 0.25) {
+    const maxEm = W / f;
+    if (longest <= maxEm && lines(maxEm) * f <= H) {
+      size = f;
+      break;
+    }
+  }
+  // never bigger than the original desktop size (text-5xl = 3rem)
+  return `min(${size}cqw, 3rem)`;
+}
+
 export function placeOf(o: Pick<Opp, "city" | "online">): string {
   if (o.online && o.city) return `${o.city} · онлайн`;
   if (o.online) return "Онлайн";
@@ -95,7 +208,7 @@ async function guard<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const SELECT =
-  "id, title, type, city, is_online, deadline_at, starts_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
+  "id, title, type, city, is_online, deadline_at, starts_at, ends_at, description, external_url, source_url, organizer_id, opportunity_tags(tags(name))";
 
 type Row = {
   id: string;
@@ -105,6 +218,7 @@ type Row = {
   is_online: boolean;
   deadline_at: string | null;
   starts_at: string | null;
+  ends_at?: string | null;
   description: string | null;
   external_url: string | null;
   source_url: string | null;
@@ -136,6 +250,7 @@ export function createOppsApi(db: Db) {
       online: r.is_online,
       deadlineAt: r.deadline_at,
       startsAt: r.starts_at,
+      endsAt: r.ends_at ?? null,
       description: r.description ?? "",
       externalUrl: r.external_url ?? r.source_url,
       color: colorFor(r.id),
@@ -177,6 +292,33 @@ export function createOppsApi(db: Db) {
         if (error) throw error;
         if (!data) return null;
         return (await toOpps([data as unknown as Row]))[0]!;
+      }),
+
+    /** An organizer's published items, soonest deadline first. */
+    listByOrganizer: (profileId: string) =>
+      guard(async (): Promise<Opp[]> => {
+        const { data, error } = await db
+          .from("opportunities")
+          .select(SELECT)
+          .eq("organizer_id", profileId)
+          .eq("status", "published")
+          .order("deadline_at", { ascending: true, nullsFirst: false })
+          .limit(100);
+        if (error) throw error;
+        return toOpps((data ?? []) as unknown as Row[]);
+      }),
+
+    /** Dashboard numbers for the signed-in organizer: saves per own item. */
+    myStats: () =>
+      guard(async (): Promise<OppStat[]> => {
+        const { data, error } = await db.rpc("my_opportunity_stats");
+        if (error) throw error;
+        return (data ?? []).map((r) => ({
+          id: r.opportunity_id,
+          title: r.title,
+          status: r.status,
+          saves: Number(r.saves),
+        }));
       }),
 
     /** Ids the signed-in person saved (empty when signed out). */

@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 
-from taxonomy import GRADE_BANDS, IMPLIED, TAGS
+from taxonomy import GRADE_BANDS, IMPLIED, TAGS, canonical
 
 # ---------------------------------------------------------------------------
 # Keyword helpers
@@ -141,6 +141,17 @@ def _city_patterns():
 _CITY_PATTERNS = _city_patterns()
 
 
+def known_city(value: str | None) -> str | None:
+    """Canonical Bulgarian city found in `value`, or None (unlike normalize_city, never echoes free text)."""
+    if not value:
+        return None
+    v = value.lower()
+    for name, full, adj in _CITY_PATTERNS:
+        if count_keywords(v + " ", full) or (adj and count_keywords(v, adj)):
+            return name
+    return None
+
+
 def normalize_city(value: str | None) -> str | None:
     """Map a free city string ('гр. Бургас', 'Burgas', 'София-град') to the canonical name."""
     if not value:
@@ -158,6 +169,8 @@ FOREIGN_PLACES = ("чужбина", "румъния", "букурещ", "кип�
                   "австрия", "унгария", "полша", "чехия", "словакия", "словения", "хърватия", "италия",
                   "испания", "франция", "холандия", "нидерландия", "белгия", "великобритания", "англия",
                   "швейцария", "молдова", "украйна", "грузия", "сащ", "египет", "япония", "китай",
+                  "казахстан", "kazakhstan", "литва", "латвия", "естония", "португалия", "швеция",
+                  "сингапур", "тайланд", "банкок", "будапеща", "варшава", "познан", "потсдам",
                   "romania", "bucharest", "cyprus", "greece", "serbia", "turkey", "germany", "austria",
                   "hungary", "poland", "italy", "spain", "france", "netherlands", "uk", "usa", "abroad")
 
@@ -220,7 +233,7 @@ def detect_audience(text: str, grades: set[int], opp_type: str | None) -> str:
 
 _ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10,
           "xi": 11, "xii": 12}
-_ORD = r"(?:\s*-?\s*(?:ти|ви|ри|ми|и))?"           # 8-ми, 11-ти, 12-и
+_ORD = r"(?:\.|\s*-?\s*(?:ти|ви|ри|ми|и))?"        # 8-ми, 11-ти, 12-и, "8." (от 8. до 12. клас)
 _NUM = r"(\d{1,2}|[ivx]{1,4})"
 _GRADE_RANGE = re.compile(rf"(?<!\w)(?:от\s+)?{_NUM}{_ORD}\s*(?:клас\s*)?(?:[-–—]|до)\s*{_NUM}{_ORD}\s*клас")
 _GRADE_SINGLE = re.compile(rf"(?<!\w){_NUM}{_ORD}\s*(?:и\s+{_NUM}{_ORD}\s*)?клас")
@@ -270,14 +283,13 @@ def detect_tags(title: str, body: str, grades: set[int], audience: str,
     get a fixed score so they always appear, but after the strong topic tags.
     """
     hint_text = " ".join(extra_hints or []).lower()
+    hint_slugs = {canonical(h) for h in extra_hints or []} - {None}   # old slugs work too
     scores: dict[str, float] = {}
     for tag in TAGS:
-        if not tag.keywords:
-            continue
-        s = 3 * count_keywords(title, tag.keywords) + count_keywords(body, tag.keywords)
-        s += 2 * count_keywords(hint_text, tag.keywords)
-        if tag.slug in (h.strip().lower() for h in extra_hints or []):
-            s += 3
+        s = 3 if tag.slug in hint_slugs else 0   # a hinted slug counts even for keyword-less tags (grade bands)
+        if tag.keywords:
+            s += 3 * count_keywords(title, tag.keywords) + count_keywords(body, tag.keywords)
+            s += 2 * count_keywords(hint_text, tag.keywords)
         if s:
             scores[tag.slug] = float(s)
 

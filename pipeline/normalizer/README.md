@@ -24,10 +24,36 @@ python normalize.py examples/infos_raw.json -o examples/infos_opportunities.json
 python taxonomy.py                                      # prints the tag list
 ```
 
+## Data for the database (hackathon: sources pulled by hand)
+
+`data/raw/<source>.json` = what was pulled from each source; `data/db/<source>.json` = the same items as
+`opportunities` rows, one file per source, ready to insert (upsert by `source_url`). Rebuild all with:
+
+```
+python build_db.py            # normalizes every raw file and checks the DB rules (enums, title ≤ 200, ends ≥ starts, tags)
+```
+
+| File | Source | What |
+| --- | --- | --- |
+| `infos_calendar` | https://infos.infosbg.com/calendar (adapter) | all informatics competitions and olympiads 2026/27 |
+| `fulbright` | https://www.fulbright.bg | Opportunity Funds (10.–11. клас), research grants for PhD students |
+| `karoll` | https://www.karollknowledge.bg | PhD scholarship, "Създай въздействие" competition |
+| `evrika` | https://evrika.org | space competition for students, named scholarships |
+| `fll` | https://www.fll.bg/challenge | FIRST LEGO League robotics season |
+| `mon_calendar_2026_2027` | [МОН/СМБ calendar plan 2026/27 (PDF)](https://infos.infosbg.com/files/Documents/2026-2027/Kalendaren_plan-2026-2027.pdf), transcribed by hand | math, IT and linguistics olympiads (one row per round), national and regional competitions, international olympiads; only events open to 8.–12. клас and not already in `infos_calendar` |
+| `dzhon_atanasov_2026`, `acts_2027_1`, `amcham_hackathon_2026`, `svishtov_hackathon_2026`, `hack_smart_sofia_2026`, `gate_deepmind_scholarships`, `liberhack`, `code_burgas_2027`, `petya_dubarova_2026` | the event's own page | single events |
+
+Dates: a multi-day event has `starts_at` and `ends_at`; a time from the source ("9:00 ч.", "16:00") is kept, otherwise
+start = 00:00 and end = 23:59 (Sofia time). "до 12.12.2026" (a round held by that date) sets only `ends_at`.
+
+Raw files written by hand contain only what the page says; anything the page doesn't say stays `null`.
+If one event comes from two sources, `DROP` in `build_db.py` keeps the dedicated page.
+
 ## Adapters (one per site with many items per page)
 
 | Adapter | Site | Notes |
 | --- | --- | --- |
+| [adapters/infos_calendar.py](adapters/infos_calendar.py) | https://infos.infosbg.com/calendar | one item per `<li>`; "до 20 декември" → `ends_at`, "? февруари" → no dates; `source_url` = `calendar#<hash of name>` |
 | [adapters/infos.py](adapters/infos.py) | https://infos.infosbg.com/home | one item per `<article>` card; the site has no page per announcement, so `source_url` = `home#<hash of title>`; `external_url` = the competition's own site; PDFs go to `_source.attachments` |
 
 A raw item may carry a `_source` block with site-specific extras (upload time, attachments); the normalizer ignores it.
@@ -96,11 +122,11 @@ to the database. `tags` is not a column: on insert each slug becomes a row in `o
 
 ## Tags (for the feed / recommendations)
 
-`taxonomy.py` is the single fixed list (65 tags) that goes into the `tags` table (`tags_seed.json`).
+`taxonomy.py` is the single fixed list (68 tags) for the whole project. It goes into the `tags` table (`tags_seed.json` / `tags_seed.sql`), and the scraper in [../scraper](../scraper) imports it too. Old or alternative slugs (`level-national`, `camp`, ...) are mapped by `ALIASES` / `canonical()`, so hints and old files still work.
 Groups (only in code, not in the DB):
 
 - **subject:** math, informatics, programming, web-development, ai-data, cybersecurity, robotics, physics, biology, ecology, history, economics, entrepreneurship, languages, arts, music, sports, …
-- **format:** olympiad, hackathon, contest, summer-school, workshop, conference, mentorship, research, volunteering, study-abroad, career, team
+- **format:** olympiad, hackathon, contest, tournament, summer-school, workshop, conference, mentorship, research, volunteering, study-abroad, career, team, girls-only
 - **reach / money:** national, international, regional, free, prizes, paid
 - **level:** `grades-1-4`, `grades-5-7`, `grades-8-10`, `grades-11-12`, `university-students` — the app maps `student_details.grade` to the band, so a grade-9 student gets items tagged `grades-8-10`
 

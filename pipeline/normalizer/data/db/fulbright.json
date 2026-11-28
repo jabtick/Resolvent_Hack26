@@ -1,0 +1,57 @@
+[
+  {
+    "type": "scholarship",
+    "organizer_id": null,
+    "title": "Opportunity Funds – Bulgaria 2027: стипендии до $5000 за ученици в 10. и 11. клас",
+    "description": "Комисия „Фулбрайт“ обявява конкурс за до 20 стипендии в размер до $5000 всяка за подготовка на талантливи ученици в 10. и 11. клас за кандидатстване в акредитирани американски колежи и университети и отпътуване в САЩ. Тази година приоритет имат кандидати със STEM профил. Стипендията покрива такси за TOEFL / IELTS и SAT, обучителен модул за писане на есе, такси за кандидатстване, виза, самолетен билет и едномесечна стипендия. Изисквания: редовни ученици в 10. или 11. клас в България, българско гражданство, отличен английски и отличен успех, нужда от финансова помощ (доход под 1200 евро на член от семейството). Документите се изпращат по имейл до 6 декември 2026 г. Интервюта: 14–18 декември 2026 г. Обявяване на номинираните: 21 декември 2026 г.",
+    "image_url": null,
+    "external_url": "https://www.fulbright.bg/konkurs-opportunity-funds-bulgaria/",
+    "city": null,
+    "is_online": true,
+    "audience": "school",
+    "starts_at": null,
+    "ends_at": null,
+    "deadline_at": "2026-12-06T23:59:00+02:00",
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://www.fulbright.bg/konkurs-opportunity-funds-bulgaria/",
+    "tags": [
+      "english",
+      "stem",
+      "international",
+      "study-abroad",
+      "grades-11-12",
+      "grades-8-10",
+      "creative-writing",
+      "foreign-languages",
+      "workshop"
+    ]
+  },
+  {
+    "type": "scholarship",
+    "organizer_id": null,
+    "title": "Стипендии „Фулбрайт“ за изследователска дейност на докторанти в САЩ (2027–28)",
+    "description": "Програмата „Фулбрайт“ дава възможност на докторанти в напреднал етап на редовна или задочна докторантура да работят 4–6 месеца в университети и институти в САЩ. Допускат се всички области на науката и изкуствата без клинична медицина и стоматология. Всяка година се дават 3–4 стипендии. Стипендията покрива месечна издръжка, самолетен билет и здравна застраховка. Изисквания: българско гражданство, отличен английски (TOEFL поне 81 т.), три препоръки. Краен срок за кандидатстване: 4 декември 2026 г. Интервютата са онлайн в средата на декември. Начало на програмата: най-рано август 2027 г.",
+    "image_url": null,
+    "external_url": "https://www.fulbright.bg/doktoranti-research/",
+    "city": null,
+    "is_online": true,
+    "audience": "university",
+    "starts_at": null,
+    "ends_at": null,
+    "deadline_at": "2026-12-04T23:59:00+02:00",
+    "status": "published",
+    "source": "scraper",
+    "source_url": "https://www.fulbright.bg/doktoranti-research/",
+    "tags": [
+      "international",
+      "study-abroad",
+      "english",
+      "research",
+      "university-students",
+      "medicine",
+      "foreign-languages",
+      "stem"
+    ]
+  }
+]

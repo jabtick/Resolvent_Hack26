@@ -1,7 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Bookmark, MapPin } from "lucide-react";
 
-import { formatDeadline, OPP_TYPE_LABEL, placeOf, type Opp, type OppColor } from "@/lib/opps";
+import {
+  formatStatus,
+  OPP_TYPE_LABEL,
+  placeOf,
+  titleFontSize,
+  type Opp,
+  type OppColor,
+} from "@/lib/opps";
 
 export const bg: Record<OppColor, string> = {
   primary: "bg-primary text-primary-foreground",
@@ -44,11 +51,15 @@ export function OppCard({
         to="/opp/$id"
         params={{ id: o.id }}
         className={`relative flex aspect-[4/3] flex-col justify-between overflow-hidden border-b-[3px] border-ink p-6 ${bg[o.color]}`}
+        style={{ containerType: "inline-size" }}
       >
         <span className="font-hand text-2xl">
           {o.tags[0] ? `#${o.tags[0].toLowerCase()}` : " "}
         </span>
-        <h3 className="font-display text-4xl leading-none transition-transform duration-300 group-hover:scale-[1.02] md:text-5xl">
+        <h3
+          className="font-display leading-none [overflow-wrap:anywhere] transition-transform duration-300 group-hover:scale-[1.02]"
+          style={{ fontSize: titleFontSize(o.title) }}
+        >
           {o.title}
         </h3>
         <div className="flex items-end justify-between gap-3">
@@ -57,9 +68,7 @@ export function OppCard({
               ПРИМЕРНА
             </span>
           )}
-          <span className="ml-auto -rotate-6 font-hand text-2xl">
-            {formatDeadline(o.deadlineAt)}
-          </span>
+          <span className="ml-auto -rotate-6 font-hand text-2xl">{formatStatus(o)}</span>
         </div>
       </Link>
       <div className="p-3">

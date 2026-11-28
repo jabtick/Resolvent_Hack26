@@ -8,6 +8,126 @@ export type Database = {
   };
   public: {
     Tables: {
+      badges: {
+        Row: {
+          awarded_at: string;
+          event_date: string;
+          event_title: string;
+          id: string;
+          is_hidden: boolean;
+          opportunity_id: string | null;
+          org_name: string;
+          place: number | null;
+          profile_id: string;
+          result_id: string | null;
+        };
+        Insert: {
+          awarded_at?: string;
+          event_date: string;
+          event_title: string;
+          id?: string;
+          is_hidden?: boolean;
+          opportunity_id?: string | null;
+          org_name: string;
+          place?: number | null;
+          profile_id: string;
+          result_id?: string | null;
+        };
+        Update: {
+          awarded_at?: string;
+          event_date?: string;
+          event_title?: string;
+          id?: string;
+          is_hidden?: boolean;
+          opportunity_id?: string | null;
+          org_name?: string;
+          place?: number | null;
+          profile_id?: string;
+          result_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "badges_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "badges_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "badges_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
+          {
+            foreignKeyName: "badges_result_id_fkey";
+            columns: ["result_id"];
+            isOneToOne: false;
+            referencedRelation: "event_results";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_results: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          full_name: string;
+          id: string;
+          opportunity_id: string;
+          profile_id: string | null;
+          rank: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          full_name: string;
+          id?: string;
+          opportunity_id: string;
+          profile_id?: string | null;
+          rank?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          full_name?: string;
+          id?: string;
+          opportunity_id?: string;
+          profile_id?: string | null;
+          rank?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_results_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_results_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_results_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
+        ];
+      };
       opportunities: {
         Row: {
           audience: Database["public"]["Enums"]["audience"];
@@ -80,6 +200,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "opportunities_organizer_id_fkey";
+            columns: ["organizer_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       opportunity_tags: {
@@ -145,6 +272,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "organizer_details_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       profile_interests: {
@@ -167,6 +301,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profile_interests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
           },
           {
             foreignKeyName: "profile_interests_tag_id_fkey";
@@ -238,6 +379,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "saved_opportunities_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       student_details: {
@@ -288,6 +436,13 @@ export type Database = {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "student_details_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "public_organizers";
+            referencedColumns: ["profile_id"];
+          },
         ];
       };
       tags: {
@@ -310,6 +465,32 @@ export type Database = {
       };
     };
     Views: {
+      public_badges: {
+        Row: {
+          awarded_at: string | null;
+          event_date: string | null;
+          event_title: string | null;
+          id: string | null;
+          opportunity_id: string | null;
+          org_name: string | null;
+          place: number | null;
+          username: string | null;
+        };
+        Relationships: [];
+      };
+      public_organizers: {
+        Row: {
+          avatar_url: string | null;
+          display_name: string | null;
+          org_name: string | null;
+          org_type: Database["public"]["Enums"]["org_type"] | null;
+          profile_id: string | null;
+          username: string | null;
+          verification_status: Database["public"]["Enums"]["verification_status"] | null;
+          website: string | null;
+        };
+        Relationships: [];
+      };
       public_profiles: {
         Row: {
           avatar_url: string | null;
@@ -326,6 +507,15 @@ export type Database = {
       check_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
+      };
+      my_opportunity_stats: {
+        Args: never;
+        Returns: {
+          opportunity_id: string;
+          saves: number;
+          status: Database["public"]["Enums"]["opportunity_status"];
+          title: string;
+        }[];
       };
     };
     Enums: {

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Pencil, Share2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { ACCOUNT_TYPE_LABEL, ORG_TYPE_LABEL } from "@/lib/auth";
 import { publicProfileUrl, type MyProfile, type ProfilePatch } from "@/lib/profiles";
-import { useMyProfile } from "@/lib/queries";
+import { useMyProfile, useMyStats } from "@/lib/queries";
 import { isUnder14, validateDisplayName, validateOrgName } from "@/lib/validators";
 
 export const Route = createFileRoute("/profile")({
@@ -163,9 +163,75 @@ function Body({
             text={[o.orgName, ORG_TYPE_LABEL[o.orgType], o.website].filter(Boolean).join(" · ")}
           />
           <Section title="ПРОВЕРКА" text={VERIFICATION[o.verificationStatus]} />
+          <Dashboard />
         </>
       )}
     </>
+  );
+}
+
+const STATUS_LABEL = { published: "публикувана", draft: "чернова", archived: "архив" } as const;
+
+/** Organizer dashboard: own items and how many people saved each. */
+function Dashboard() {
+  const stats = useMyStats(true);
+  const rows = stats.data ?? [];
+  const published = rows.filter((r) => r.status === "published").length;
+  const drafts = rows.filter((r) => r.status === "draft").length;
+  const saves = rows.reduce((n, r) => n + r.saves, 0);
+  const tiles = [
+    { n: published, label: "публикувани", cls: "bg-accent" },
+    { n: drafts, label: "чернови", cls: "bg-card" },
+    { n: saves, label: "запазвания", cls: "bg-primary text-primary-foreground" },
+  ];
+  return (
+    <section>
+      <h2 className="mb-4 font-heavy text-3xl">
+        <span className="ransom">ТАБЛО</span>
+      </h2>
+      {stats.isPending ? (
+        <div className="zine h-32 animate-pulse bg-muted" aria-busy="true" />
+      ) : stats.isError ? (
+        <p className="zine bg-card p-4" role="alert">
+          Таблото не се зареди.{" "}
+          <button onClick={() => void stats.refetch()} className="font-bold underline">
+            Пак
+          </button>
+        </p>
+      ) : (
+        <>
+          <div className="mb-6 flex flex-wrap gap-4">
+            {tiles.map((t) => (
+              <div key={t.label} className={`zine flex items-end gap-2 px-5 py-3 ${t.cls}`}>
+                <span className="font-heavy text-4xl leading-none">{t.n}</span>
+                <span className="font-hand text-2xl leading-none">{t.label}</span>
+              </div>
+            ))}
+          </div>
+          {rows.length ? (
+            <ul className="zine divide-y-[3px] divide-ink bg-card">
+              {rows.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 p-3">
+                  <span className="min-w-0 flex-1 truncate font-bold">{r.title}</span>
+                  <span className="border-2 border-ink px-2 text-xs font-bold uppercase">
+                    {STATUS_LABEL[r.status]}
+                  </span>
+                  <span className="w-24 text-right font-heavy">{r.saves} запазв.</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="zine bg-card p-6 font-hand text-2xl">
+              Още нямаш обяви.{" "}
+              <Link to="/calendar" className="underline">
+                Добави от календара
+              </Link>
+              .
+            </p>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 

@@ -1,0 +1,35 @@
+[
+  {
+    "type": "competition",
+    "organizer_id": null,
+    "title": "Inherit the Past. Code the Future. – хакатон, Свищов 2026",
+    "description": "Хакатон на Стопанска академия „Д. А. Ценов“ в Свищов, част от алианса KreativEU, който съчетава изкуствен интелект, културно наследство, предприемачество и иновации: дигитални преживявания за древни крепости, AI аватари на български дарители, инструменти за устойчив туризъм. За студенти от всички специалности – икономика, изкуства, компютърни науки, инженерство, хуманитарни науки, бизнес и дизайн. Състезание за начално финансиране (seed funding). Провежда се 26–28 май 2026 г.; срок за регистрация: 30 април 2026 г.",
+    "image_url": null,
+    "external_url": "https://www.uni-svishtov.bg/en/news/inherit-the-past-code-the-future-26-28-may-2026-svishtov-bulgaria",
+    "city": "Свищов",
+    "is_online": false,
+    "audience": "university",
+    "starts_at": "2026-05-26T00:00:00+03:00",
+    "ends_at": "2026-05-28T23:59:00+03:00",
+    "deadline_at": "2026-04-30T23:59:00+03:00",
+    "status": "archived",
+    "source": "scraper",
+    "source_url": "https://www.uni-svishtov.bg/en/news/inherit-the-past-code-the-future-26-28-may-2026-svishtov-bulgaria",
+    "tags": [
+      "hackathon",
+      "ai-data",
+      "entrepreneurship",
+      "history",
+      "international",
+      "team",
+      "design",
+      "ecology",
+      "economics",
+      "engineering",
+      "informatics",
+      "programming",
+      "stem",
+      "university-students"
+    ]
+  }
+]
