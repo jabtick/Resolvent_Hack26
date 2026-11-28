@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/i18n/language.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../feed_sample.dart';
 
 /// One opportunity in the feed: a tilted zine "post" with the org, a loud
@@ -27,11 +25,11 @@ class _OppCardState extends State<OppCard> {
     final p = context.zine;
     final o = widget.opp;
     final bg = o.tone.bg(p), fg = o.tone.fg(p);
-    final ink = BorderSide(color: p.ink, width: 3);
+    final ink = BorderSide(color: p.ink, width: ZineSize.border);
     void open() => context.go('/opp/${o.id}');
 
     return ZineBox(
-      tilt: widget.index.isOdd ? 1.2 : -1.5,
+      tilt: ZineSize.tiltFor(widget.index),
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -48,22 +46,11 @@ class _OppCardState extends State<OppCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        o.org,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      Row(
-                        children: [
-                          Icon(LucideIcons.mapPin, size: 12, color: p.mutedFg),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '${o.location}'
-                              '${o.remote ? context.tr(' · remote ok', ' · може дистанционно') : ''}',
-                              style: TextStyle(fontSize: 12, color: p.mutedFg),
-                            ),
-                          ),
-                        ],
+                      Text(o.org, style: ZineText.bold),
+                      IconLabel(
+                        LucideIcons.mapPin,
+                        '${o.location}'
+                        '${o.remote ? context.tr(' · remote ok', ' · може дистанционно') : ''}',
                       ),
                     ],
                   ),
@@ -105,23 +92,6 @@ class _OppCardState extends State<OppCard> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: p.card,
-                                    border: Border.all(color: p.ink, width: 3),
-                                  ),
-                                  child: Text(
-                                    o.amount,
-                                    style: ZineText.heavy(28, color: p.ink),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
                               Expanded(
                                 child: Transform.rotate(
                                   angle: -0.1,
@@ -171,25 +141,22 @@ class _OppCardState extends State<OppCard> {
                 Text(
                   '${o.likes + (_liked ? 1 : 0)} '
                   '${context.tr('punks dig this', 'пънкари харесват това')}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: ZineText.bold,
                 ),
                 const SizedBox(height: 4),
                 Text.rich(
                   TextSpan(
                     children: [
-                      TextSpan(
-                        text: '${o.org} ',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
+                      TextSpan(text: '${o.org} ', style: ZineText.bold),
                       TextSpan(text: o.desc),
                     ],
                   ),
-                  style: const TextStyle(fontSize: 13),
+                  style: ZineText.small(size: 13),
                 ),
                 const SizedBox(height: 12),
                 ZineButton(
                   label: context.tr('MORE INFO →', 'ОЩЕ ИНФО →'),
-                  pink: true,
+                  kind: ZineButtonKind.primary,
                   onPressed: open,
                 ),
               ],

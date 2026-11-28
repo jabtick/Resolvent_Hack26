@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/achievements/pages/achievements_page.dart';
 import '../features/auth/pages/code_page.dart';
 import '../features/auth/pages/create_profile_page.dart';
 import '../features/auth/pages/forgot_page.dart';
 import '../features/auth/pages/join_page.dart';
 import '../features/auth/pages/login_page.dart';
-import '../features/profile/pages/my_profile_page.dart';
-import '../features/profile/pages/public_profile_page.dart';
-import '../features/settings/pages/settings_page.dart';
-import '../features/achievements/pages/achievements_page.dart';
 import '../features/calendar/pages/calendar_page.dart';
 import '../features/feed/pages/feed_page.dart';
 import '../features/feed/pages/opp_page.dart';
 import '../features/feed/pages/saved_page.dart';
+import '../features/profile/pages/my_profile_page.dart';
+import '../features/profile/pages/public_profile_page.dart';
+import '../features/settings/pages/settings_page.dart';
 import 'config.dart';
 import 'i18n/language.dart';
 import 'router.dart';
 import 'services.dart';
 import 'theme/app_theme.dart';
 
-/// Every route and the page that fills it. Features replace their entry.
+/// Every route and the page that fills it. A new page = one line here (and,
+/// if it needs a menu entry, one in `_menuItems` in app_shell.dart; if it
+/// needs a signed-in user, add its path to `_private` in router.dart).
 Map<String, PageBuilder> appPages() => {
   '/': (c, s) => const FeedPage(),
   '/opp/:id': (c, s) => OppPage(id: s.pathParameters['id']!),

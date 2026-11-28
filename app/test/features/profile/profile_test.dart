@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:nofuture/core/app.dart';
 import 'package:nofuture/core/services.dart';
 import 'package:nofuture/features/auth/auth_repo.dart';
-import 'package:nofuture/features/profile/fake_profile_repo.dart';
 import 'package:nofuture/features/auth/fake_auth_repo.dart';
+import 'package:nofuture/features/profile/fake_profile_repo.dart';
 import 'package:nofuture/features/profile/profile_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

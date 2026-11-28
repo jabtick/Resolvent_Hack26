@@ -3,10 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/app_error.dart';
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../../auth/auth_repo.dart';
 import '../../auth/validators.dart';
 import '../profile_models.dart';
@@ -44,15 +42,11 @@ class _MyProfilePageState extends State<MyProfilePage> {
     _me = _repo.loadMine();
   });
 
-  void _say(String msg) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(msg)));
-
   Future<void> _try(Future<void> Function() fn) async {
     try {
       await fn();
     } on AppError catch (e) {
-      if (mounted) _say(e.message);
+      if (mounted) showSnack(context, e.message);
     }
   }
 
@@ -61,17 +55,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
     future: _me,
     builder: (context, snap) {
       if (snap.hasError) {
-        return ZineBox(
-          child: Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
-            children: [
-              Text(
-                context.tr('Could not load profile.', 'Профилът не се зареди.'),
-              ),
-              ZineButton(label: context.tr('RETRY', 'ПАК'), onPressed: _reload),
-            ],
+        return LoadError(
+          message: context.tr(
+            'Could not load profile.',
+            'Профилът не се зареди.',
           ),
+          onRetry: _reload,
         );
       }
       if (!snap.hasData) {
@@ -82,7 +71,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
   );
 
   Widget _body(MyProfile me) {
-    final p = context.zine;
     final s = me.student;
     final o = me.organizer;
     final under14NoConsent =
@@ -98,119 +86,116 @@ class _MyProfilePageState extends State<MyProfilePage> {
       if (s?.city != null && s!.city!.isNotEmpty) s.city!,
     ].join(' · ');
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 768),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ProfileHeader(
-              displayName: me.displayName,
-              subtitle: subtitle,
-              action: ZineButton(
-                label: context.tr('EDIT', 'РЕДАКТИРАЙ'),
-                icon: LucideIcons.pencil,
-                onPressed: () => _edit(me),
-              ),
-              below: [
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (s != null)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Switch(
-                            value: s.isPublic,
-                            onChanged: (v) =>
-                                _try(() => _repo.updateMine(isPublic: v)),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            s.isPublic
-                                ? context.tr(
-                                    'Your profile is public',
-                                    'Профилът ти е публичен',
-                                  )
-                                : context.tr(
-                                    'Your profile is hidden',
-                                    'Профилът ти е скрит',
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ZineButton(
-                      label: context.tr('COPY LINK', 'КОПИРАЙ ЛИНК'),
-                      icon: LucideIcons.share2,
-                      onPressed: () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: publicProfileUrl(me.username)),
+    return PageColumn(
+      maxWidth: PageWidth.reading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ProfileHeader(
+            displayName: me.displayName,
+            subtitle: subtitle,
+            action: ZineButton(
+              label: context.tr('EDIT', 'РЕДАКТИРАЙ'),
+              icon: LucideIcons.pencil,
+              onPressed: () => _edit(me),
+            ),
+            below: [
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (s != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: s.isPublic,
+                          onChanged: (v) =>
+                              _try(() => _repo.updateMine(isPublic: v)),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          s.isPublic
+                              ? context.tr(
+                                  'Your profile is public',
+                                  'Профилът ти е публичен',
+                                )
+                              : context.tr(
+                                  'Your profile is hidden',
+                                  'Профилът ти е скрит',
+                                ),
+                        ),
+                      ],
+                    ),
+                  ZineButton(
+                    label: context.tr('COPY LINK', 'КОПИРАЙ ЛИНК'),
+                    icon: LucideIcons.share2,
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: publicProfileUrl(me.username)),
+                      );
+                      if (mounted) {
+                        showSnack(
+                          context,
+                          context.tr('Link copied.', 'Линкът е копиран.'),
                         );
-                        if (mounted) {
-                          _say(context.tr('Link copied.', 'Линкът е копиран.'));
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                if (under14NoConsent) ...[
-                  const SizedBox(height: 16),
-                  ZineBox(
-                    color: p.accent,
-                    child: Text(
-                      context.tr(
-                        'Under 14: your profile stays hidden until a parent gives consent.',
-                        'Под 14 г.: профилът остава скрит, докато родител не даде съгласие.',
-                      ),
-                      style: TextStyle(color: Color(0xFF070707)),
-                    ),
+                      }
+                    },
                   ),
                 ],
+              ),
+              if (under14NoConsent) ...[
+                const SizedBox(height: 16),
+                Notice(
+                  context.tr(
+                    'Under 14: your profile stays hidden until a parent gives consent.',
+                    'Под 14 г.: профилът остава скрит, докато родител не даде съгласие.',
+                  ),
+                ),
               ],
+            ],
+          ),
+          if (s != null) ...[
+            ProfileSection(title: context.tr('ABOUT', 'ЗА МЕН'), text: s.bio),
+            ProfileSection(
+              title: context.tr('EDUCATION', 'УЧИЛИЩЕ'),
+              text: [
+                if (s.school != null) s.school!,
+                if (s.grade != null)
+                  context.tr('Grade ${s.grade}', '${s.grade} клас'),
+              ].join(' · '),
             ),
-            if (s != null) ...[
-              ProfileSection(title: context.tr('ABOUT', 'ЗА МЕН'), text: s.bio),
-              ProfileSection(
-                title: context.tr('EDUCATION', 'УЧИЛИЩЕ'),
-                text: [
-                  if (s.school != null) s.school!,
-                  if (s.grade != null)
-                    context.tr('Grade ${s.grade}', '${s.grade} клас'),
-                ].join(' · '),
-              ),
-            ],
-            if (o != null) ...[
-              ProfileSection(
-                title: context.tr('ORGANISATION', 'ОРГАНИЗАЦИЯ'),
-                text: [
-                  o.orgName,
-                  o.orgType.label,
-                  if (o.website != null) o.website!,
-                ].join(' · '),
-              ),
-              ProfileSection(
-                title: context.tr('VERIFICATION', 'ПРОВЕРКА'),
-                text: switch (o.verificationStatus) {
-                  'verified' => context.tr(
-                    'Verified organisation — you can publish.',
-                    'Проверена организация — можеш да публикуваш.',
-                  ),
-                  'rejected' => context.tr(
-                    'Verification was rejected. Write to us.',
-                    'Проверката е отказана. Пиши ни.',
-                  ),
-                  _ => context.tr(
-                    'Waiting for verification. Until then your posts are drafts.',
-                    'Чака проверка. Дотогава обявите ти са чернови.',
-                  ),
-                },
-              ),
-            ],
           ],
-        ),
+          if (o != null) ...[
+            ProfileSection(
+              title: context.tr('ORGANISATION', 'ОРГАНИЗАЦИЯ'),
+              text: [
+                o.orgName,
+                o.orgType.label,
+                if (o.website != null) o.website!,
+              ].join(' · '),
+            ),
+            ProfileSection(
+              title: context.tr('VERIFICATION', 'ПРОВЕРКА'),
+              text: switch (o.verificationStatus) {
+                'verified' => context.tr(
+                  'Verified organisation — you can publish.',
+                  'Проверена организация — можеш да публикуваш.',
+                ),
+                'rejected' => context.tr(
+                  'Verification was rejected. Write to us.',
+                  'Проверката е отказана. Пиши ни.',
+                ),
+                _ => context.tr(
+                  'Waiting for verification. Until then your posts are drafts.',
+                  'Чака проверка. Дотогава обявите ти са чернови.',
+                ),
+              },
+            ),
+          ],
+        ],
       ),
     );
   }

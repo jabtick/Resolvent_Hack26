@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
 
@@ -52,12 +51,10 @@ class _LoginPageState extends State<LoginPage> with BusyAction {
           autofill: const [AutofillHints.password],
         ),
         const SizedBox(height: 6),
-        ZineButton(
-          label: busy
-              ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
-              : context.tr('GET IN', 'ВЛИЗАМ'),
-          pink: true,
-          onPressed: busy ? null : _submit,
+        SubmitButton(
+          busy: busy,
+          label: context.tr('GET IN', 'ВЛИЗАМ'),
+          onPressed: _submit,
         ),
         const SizedBox(height: 12),
         Wrap(

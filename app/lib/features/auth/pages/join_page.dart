@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../auth_repo.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
@@ -74,7 +72,7 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
                 ),
                 icon: LucideIcons.rocket,
                 color: p.secondary,
-                textColor: const Color(0xFF070707),
+                textColor: p.onBright,
                 tilt: -1.5,
                 onTap: () => setState(() => _side = AccountType.student),
               ),
@@ -123,12 +121,10 @@ class _JoinPageState extends State<JoinPage> with BusyAction {
             validator: validatePassword,
           ),
           const SizedBox(height: 6),
-          ZineButton(
-            label: busy
-                ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
-                : context.tr('LET’S GO', 'ДАВАЙ'),
-            pink: true,
-            onPressed: busy ? null : _submit,
+          SubmitButton(
+            busy: busy,
+            label: context.tr('LET’S GO', 'ДАВАЙ'),
+            onPressed: _submit,
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -173,25 +169,17 @@ class _SideCard extends StatelessWidget {
     child: ZineBox(
       color: color,
       tilt: tilt,
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, size: 48, color: textColor),
-                const SizedBox(height: 12),
-                Text(title, style: ZineText.display(34, color: textColor)),
-                const SizedBox(height: 8),
-                Text(sub, style: TextStyle(color: textColor)),
-              ],
-            ),
-          ),
-        ),
+      padding: const EdgeInsets.all(32),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 48, color: textColor),
+          const SizedBox(height: 12),
+          Text(title, style: ZineText.display(34, color: textColor)),
+          const SizedBox(height: 8),
+          Text(sub, style: TextStyle(color: textColor)),
+        ],
       ),
     ),
   );

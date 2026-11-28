@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/i18n/language.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/palette.dart';
-import '../../../core/widgets/sticky_rail.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
+import '../calendar_sample.dart';
 
 /// The calendar (owner: Niki), UI only — a copy of the Lovable calendar
 /// (design/lovable, src/routes/calendar.tsx).
 ///
-/// Months can be flipped and a day picked, but the events are [_sample] and
-/// ADD EVENT does nothing. To wire it up: calendar_repo.dart (+ fake_/supabase_),
-/// add it to core/services.dart and swap [_sample] for the repo's events.
+/// Months can be flipped and a day picked, but the events are
+/// [kSampleEvents] and ADD EVENT / edit / delete do nothing. To wire it up:
+/// calendar_repo.dart (+ fake_/supabase_), add it to core/services.dart and
+/// swap [kSampleEvents] for the repo's events.
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -20,200 +18,67 @@ class CalendarPage extends StatefulWidget {
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _Event {
-  final DateTime start, end;
-  final String title, field, location, description;
-  final bool published;
-  final List<String> qualities;
-  const _Event({
-    required this.start,
-    required this.end,
-    required this.title,
-    required this.field,
-    required this.location,
-    required this.description,
-    this.published = true,
-    this.qualities = const [],
-  });
-}
-
-final _sample = [
-  _Event(
-    start: DateTime(2026, 12, 3, 10),
-    end: DateTime(2026, 12, 3, 16),
-    title: 'Hack the Coast — Burgas',
-    field: 'Tech',
-    location: 'Burgas Free University, Hall 2',
-    description: '24 hours, teams of 3–5, mentors on site. Pizza included.',
-    qualities: ['Teamwork', 'Python', 'Pitching'],
-  ),
-  _Event(
-    start: DateTime(2026, 12, 9, 14),
-    end: DateTime(2026, 12, 9, 15),
-    title: 'Street Art Stipend — Q&A',
-    field: 'Art',
-    location: 'meet.example.org/loud-canvas',
-    description: 'Ask the jury anything before the January deadline.',
-  ),
-  _Event(
-    start: DateTime(2026, 12, 12, 9),
-    end: DateTime(2026, 12, 12, 13),
-    title: 'National Maths Olympiad — round 2',
-    field: 'Education',
-    location: 'Sofia, Mathematical High School',
-    description: 'Bring a pen, a calculator and your student ID.',
-    qualities: ['Logic', 'Persistence'],
-  ),
-  _Event(
-    start: DateTime(2026, 12, 18, 17),
-    end: DateTime(2026, 12, 18, 18),
-    title: 'Finish motivation letter',
-    field: 'Personal',
-    location: '',
-    description: 'For the Open Science Fellowship.',
-    published: false,
-  ),
-];
-
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-const _weekdays = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-String _two(int n) => n.toString().padLeft(2, '0');
-const _monthsBg = [
-  'януари',
-  'февруари',
-  'март',
-  'април',
-  'май',
-  'юни',
-  'юли',
-  'август',
-  'септември',
-  'октомври',
-  'ноември',
-  'декември',
-];
-const _weekdaysBg = [
-  'понеделник',
-  'вторник',
-  'сряда',
-  'четвъртък',
-  'петък',
-  'събота',
-  'неделя',
-];
-
-String _monthName(BuildContext c, int m) =>
-    c.lang == AppLang.bg ? _monthsBg[m - 1] : _months[m - 1];
-String _weekdayName(BuildContext c, int d) =>
-    c.lang == AppLang.bg ? _weekdaysBg[d - 1] : _weekdays[d - 1];
-String _short(BuildContext c, DateTime d) =>
-    '${_two(d.day)} ${_monthName(c, d.month).substring(0, 3)}';
-String _time(DateTime d) => '${_two(d.hour)}:${_two(d.minute)}';
-bool _sameDay(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;
-
 class _CalendarPageState extends State<CalendarPage> {
+  final _events = kSampleEvents;
   DateTime _date = DateTime.now();
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   bool _dayView = false;
 
+  void _pickDay(DateTime d) => setState(() {
+    _date = d;
+    _month = DateTime(d.year, d.month);
+    _dayView = true;
+  });
+
   @override
   Widget build(BuildContext context) {
-    final p = context.zine;
     final visible = _dayView
-        ? _sample.where((e) => _sameDay(e.start, _date)).toList()
-        : _sample;
+        ? _events.where((e) => sameDay(e.start, _date)).toList()
+        : _events;
+    final aside = _aside(context);
+    final list = _list(context, visible);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.end,
-          runSpacing: 16,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.tr(
-                    'make time for something good',
-                    'намери време за нещо хубаво',
-                  ),
-                  style: ZineText.hand(22, color: p.primary),
-                ),
-                Text.rich(
-                  TextSpan(
-                    style: ZineText.heavy(60, color: p.ink),
-                    children: [
-                      TextSpan(text: context.tr('YOUR ', 'ТВОЯТ ')),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: RansomText(
-                          context.tr('CALENDAR', 'КАЛЕНДАР'),
-                          size: 60,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _SecondaryButton(
-              icon: LucideIcons.plus,
-              label: context.tr('ADD EVENT', 'ДОБАВИ СЪБИТИЕ'),
-              onTap: () {},
-            ),
-          ],
+        PageHeading(
+          kicker: context.tr(
+            'make time for something good',
+            'намери време за нещо хубаво',
+          ),
+          title: context.tr('YOUR ', 'ТВОЯТ '),
+          ransom: context.tr('CALENDAR', 'КАЛЕНДАР'),
+          trailing: ZineButton(
+            icon: LucideIcons.plus,
+            label: context.tr('ADD EVENT', 'ДОБАВИ СЪБИТИЕ'),
+            kind: ZineButtonKind.bright,
+            onPressed: () {},
+          ),
         ),
         const SizedBox(height: 32),
         LayoutBuilder(
-          builder: (context, c) {
-            final aside = _aside(p);
-            final list = _list(p, visible);
-            if (c.maxWidth < 1024) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [aside, const SizedBox(height: 32), list],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 340, child: StickyRail(child: aside)),
-                const SizedBox(width: 32),
-                Expanded(child: list),
-              ],
-            );
-          },
+          builder: (context, c) => c.maxWidth < Breakpoints.desktop
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [aside, const SizedBox(height: 32), list],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 340, child: StickyRail(child: aside)),
+                    const SizedBox(width: 32),
+                    Expanded(child: list),
+                  ],
+                ),
         ),
       ],
     );
   }
 
-  Widget _aside(Palette p) {
-    final pub = _sample.where((e) => e.published).length;
+  /// Month grid, counts, TODAY.
+  Widget _aside(BuildContext context) {
+    final p = context.zine;
+    final pub = _events.where((e) => e.published).length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,12 +87,9 @@ class _CalendarPageState extends State<CalendarPage> {
           child: _MonthGrid(
             month: _month,
             selected: _date,
-            marked: _sample.map((e) => e.start).toList(),
+            marked: [for (final e in _events) e.start],
             onMonth: (m) => setState(() => _month = m),
-            onPick: (d) => setState(() {
-              _date = d;
-              _dayView = true;
-            }),
+            onPick: _pickDay,
           ),
         ),
         const SizedBox(height: 20),
@@ -241,82 +103,69 @@ class _CalendarPageState extends State<CalendarPage> {
             children: [
               Text(
                 context.tr(
-                  '${_sample.length} SCHEDULED',
-                  '${_sample.length} ПЛАНИРАНИ',
+                  '${_events.length} SCHEDULED',
+                  '${_events.length} ПЛАНИРАНИ',
                 ),
                 style: ZineText.heavy(32, color: p.ink),
               ),
               Text(
                 context.tr(
-                  '$pub public · ${_sample.length - pub} personal',
-                  '$pub публични · ${_sample.length - pub} лични',
+                  '$pub public · ${_events.length - pub} personal',
+                  '$pub публични · ${_events.length - pub} лични',
                 ),
-                style: TextStyle(fontSize: 13, color: p.mutedFg),
+                style: ZineText.small(color: p.mutedFg, size: 13),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
         OutlinedButton(
-          onPressed: () => setState(() {
-            final now = DateTime.now();
-            _date = now;
-            _month = DateTime(now.year, now.month);
-            _dayView = true;
-          }),
+          onPressed: () => _pickDay(DateTime.now()),
           child: Text(context.tr('Today', 'Днес')),
         ),
       ],
     );
   }
 
-  Widget _list(Palette p, List<_Event> visible) {
-    Widget tab(String label, bool on, VoidCallback tap) => Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: on
-          ? FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: p.secondary,
-                foregroundColor: const Color(0xFF070707),
-                side: BorderSide(color: p.ink, width: 3),
-              ),
-              onPressed: tap,
-              child: Text(label),
-            )
-          : OutlinedButton(onPressed: tap, child: Text(label)),
-    );
+  /// Heading, ALL / DAY tabs, event cards.
+  Widget _list(BuildContext context, List<CalendarEvent> visible) {
+    final p = context.zine;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
           padding: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: p.ink, width: 3)),
+            border: Border(
+              bottom: BorderSide(color: p.ink, width: ZineSize.border),
+            ),
           ),
           child: Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
             runSpacing: 12,
             children: [
               Text(
                 _dayView
-                    ? '${_weekdayName(context, _date.weekday)}, ${_date.day} '
-                          '${_monthName(context, _date.month).substring(0, 3)}'
+                    ? '${context.weekdayName(_date.weekday)}, '
+                          '${context.shortDate(_date)}'
                     : context.tr('ALL EVENTS', 'ВСИЧКИ СЪБИТИЯ'),
                 style: ZineText.heavy(32, color: p.ink),
               ),
               Wrap(
+                spacing: 8,
                 runSpacing: 8,
                 children: [
-                  tab(
+                  ZineChip(
                     context.tr('All events', 'Всички събития'),
-                    !_dayView,
-                    () => setState(() => _dayView = false),
+                    selected: !_dayView,
+                    onTap: () => setState(() => _dayView = false),
                   ),
-                  tab(
+                  ZineChip(
                     context.tr('Selected day', 'Избран ден'),
-                    _dayView,
-                    () => setState(() => _dayView = true),
+                    selected: _dayView,
+                    onTap: () => setState(() => _dayView = true),
                   ),
                 ],
               ),
@@ -325,18 +174,9 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
         const SizedBox(height: 20),
         if (visible.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            child: Column(
-              children: [
-                Icon(LucideIcons.calendarDays, size: 40, color: p.primary),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('NO PLANS. YET.', 'НЯМА ПЛАНОВЕ. ОЩЕ.'),
-                  style: ZineText.heavy(32, color: p.ink),
-                ),
-              ],
-            ),
+          EmptyState(
+            icon: LucideIcons.calendarDays,
+            title: context.tr('NO PLANS. YET.', 'НЯМА ПЛАНОВЕ. ОЩЕ.'),
           )
         else
           for (final e in visible) ...[
@@ -349,7 +189,7 @@ class _CalendarPageState extends State<CalendarPage> {
 }
 
 class _EventCard extends StatelessWidget {
-  final _Event e;
+  final CalendarEvent e;
   const _EventCard({required this.e});
 
   @override
@@ -368,7 +208,7 @@ class _EventCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_short(context, e.start)} ${e.start.year} · '
+                      '${context.shortDate(e.start)} ${e.start.year} · '
                       '${e.published ? e.field : context.tr('PERSONAL', 'ЛИЧНО')}',
                       style: ZineText.heavy(20, color: p.primary),
                     ),
@@ -377,35 +217,35 @@ class _EventCard extends StatelessWidget {
                   ],
                 ),
               ),
-              for (final (icon, tip) in [
-                (LucideIcons.pencil, context.tr('Edit event', 'Редактирай')),
-                (LucideIcons.trash2, context.tr('Delete event', 'Изтрий')),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: IconButton.outlined(
-                    tooltip: tip,
-                    style: IconButton.styleFrom(
-                      shape: const RoundedRectangleBorder(),
-                      side: BorderSide(color: p.ink, width: 3),
-                    ),
-                    onPressed: () {},
-                    icon: Icon(icon, size: 18, color: p.ink),
-                  ),
-                ),
+              const SizedBox(width: 4),
+              ZineIconButton(
+                icon: LucideIcons.pencil,
+                tooltip: context.tr('Edit event', 'Редактирай'),
+                filled: false,
+                onPressed: () {},
+              ),
+              const SizedBox(width: 4),
+              ZineIconButton(
+                icon: LucideIcons.trash2,
+                tooltip: context.tr('Delete event', 'Изтрий'),
+                filled: false,
+                onPressed: () {},
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          _line(
+          IconLabel(
             LucideIcons.clock,
-            '${_time(e.start)} – ${_short(context, e.end)} ${_time(e.end)}',
+            '${hhmm(e.start)} – ${context.shortDate(e.end)} ${hhmm(e.end)}',
+            color: p.ink,
+            size: 13,
           ),
           if (e.location.isNotEmpty) ...[
             const SizedBox(height: 8),
-            _line(LucideIcons.mapPin, e.location),
+            IconLabel(LucideIcons.mapPin, e.location, color: p.ink, size: 13),
           ],
           const SizedBox(height: 12),
-          Text(e.description, style: const TextStyle(fontSize: 13)),
+          Text(e.description, style: ZineText.small(size: 13)),
           if (e.qualities.isNotEmpty) ...[
             const SizedBox(height: 16),
             const DashedLine(),
@@ -418,40 +258,13 @@ class _EventCard extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: [
-                for (final q in e.qualities)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: p.accent,
-                      border: Border.all(color: p.ink, width: 2),
-                    ),
-                    child: Text(
-                      q,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF070707),
-                      ),
-                    ),
-                  ),
-              ],
+              children: [for (final q in e.qualities) ZineTag(q)],
             ),
           ],
         ],
       ),
     );
   }
-
-  Widget _line(IconData icon, String text) => Row(
-    children: [
-      Icon(icon, size: 16),
-      const SizedBox(width: 8),
-      Flexible(child: Text(text, style: const TextStyle(fontSize: 13))),
-    ],
-  );
 }
 
 /// A small month view: arrows, weekday initials, day cells. Days with an
@@ -471,22 +284,9 @@ class _MonthGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
-    final first = DateTime(month.year, month.month);
     final days = DateTime(month.year, month.month + 1, 0).day;
-    final lead = first.weekday - 1; // Monday first
+    final lead = DateTime(month.year, month.month).weekday - 1; // Monday first
     final today = DateTime.now();
-    final cells = <Widget>[
-      for (final d
-          in context.lang == AppLang.bg
-              ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
-              : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'])
-        Center(
-          child: Text(d, style: TextStyle(fontSize: 12, color: p.mutedFg)),
-        ),
-      for (var i = 0; i < lead; i++) const SizedBox(),
-      for (var d = 1; d <= days; d++)
-        _day(context, DateTime(month.year, month.month, d), today),
-    ];
     return Column(
       children: [
         Row(
@@ -499,7 +299,7 @@ class _MonthGrid extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  '${_monthName(context, month.month)} ${month.year}',
+                  '${context.monthName(month.month)} ${month.year}',
                   style: ZineText.heavy(22, color: p.ink),
                 ),
               ),
@@ -516,7 +316,15 @@ class _MonthGrid extends StatelessWidget {
           crossAxisCount: 7,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          children: cells,
+          children: [
+            for (final d in context.weekdayInitials)
+              Center(
+                child: Text(d, style: ZineText.small(color: p.mutedFg)),
+              ),
+            for (var i = 0; i < lead; i++) const SizedBox(),
+            for (var d = 1; d <= days; d++)
+              _day(context, DateTime(month.year, month.month, d), today),
+          ],
         ),
       ],
     );
@@ -524,18 +332,19 @@ class _MonthGrid extends StatelessWidget {
 
   Widget _day(BuildContext context, DateTime d, DateTime today) {
     final p = context.zine;
-    final isSel = _sameDay(d, selected);
-    final isMarked = marked.any((m) => _sameDay(m, d));
-    final isToday = _sameDay(d, today);
+    final isSel = sameDay(d, selected);
+    final isMarked = marked.any((m) => sameDay(m, d));
     return InkWell(
       onTap: () => onPick(d),
       child: Container(
         margin: const EdgeInsets.all(2),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSel ? p.primary : (isToday ? p.muted : null),
+          color: isSel ? p.primary : (sameDay(d, today) ? p.muted : null),
           border: isMarked
-              ? Border(bottom: BorderSide(color: p.primary, width: 3))
+              ? Border(
+                  bottom: BorderSide(color: p.primary, width: ZineSize.border),
+                )
               : null,
         ),
         child: Text(
@@ -543,51 +352,6 @@ class _MonthGrid extends StatelessWidget {
           style: TextStyle(
             fontWeight: isMarked ? FontWeight.w700 : FontWeight.w400,
             color: isSel ? p.onPrimary : p.ink,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SecondaryButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _SecondaryButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.zine;
-    const fg = Color(0xFF070707);
-    return Jitter(
-      child: ZineBox(
-        color: p.secondary,
-        padding: EdgeInsets.zero,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: fg),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(label, style: ZineText.heavy(24, color: fg)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ),

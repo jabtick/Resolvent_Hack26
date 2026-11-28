@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/i18n/language.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/sticky_rail.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../feed_sample.dart';
 
 /// `/opp/<id>`: one opportunity in full, UI only
@@ -19,73 +16,56 @@ class OppPage extends StatelessWidget {
     final p = context.zine;
     final o = sampleOppById(id);
     if (o == null) {
-      return Center(
-        child: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          children: [
-            Text(
-              context.tr('GONE.', 'ИЗЧЕЗНА.'),
-              style: ZineText.display(40, color: p.ink),
-            ),
-            TextButton(
-              onPressed: () => context.go('/'),
-              child: Text(
-                context.tr('back', 'назад'),
-                style: ZineText.display(
-                  40,
-                  color: p.ink,
-                ).copyWith(decoration: TextDecoration.underline),
-              ),
-            ),
-          ],
+      return EmptyState(
+        title: context.tr('GONE.', 'ИЗЧЕЗНА.'),
+        action: TextLink(
+          context.tr('back to the feed', 'обратно към фийда'),
+          onTap: () => context.go('/'),
         ),
       );
     }
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1024),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () => context.go('/'),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(LucideIcons.arrowLeft, color: p.ink),
-                  const SizedBox(width: 8),
-                  Text(
-                    context.tr('BACK TO FEED', 'КЪМ ФИЙДА'),
-                    style: ZineText.heavy(22, color: p.ink),
-                  ),
-                ],
-              ),
+    return PageColumn(
+      maxWidth: PageWidth.wide,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => context.go('/'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.arrowLeft, color: p.ink),
+                const SizedBox(width: 8),
+                Text(
+                  context.tr('BACK TO FEED', 'КЪМ ФИЙДА'),
+                  style: ZineText.heavy(22, color: p.ink),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            LayoutBuilder(
-              builder: (context, c) {
-                final main = _Main(o: o);
-                final side = _Aside(o: o);
-                if (c.maxWidth < 768) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [main, const SizedBox(height: 32), side],
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: main),
-                    const SizedBox(width: 32),
-                    SizedBox(width: 300, child: StickyRail(child: side)),
-                  ],
+          ),
+          const SizedBox(height: 24),
+          LayoutBuilder(
+            builder: (context, c) {
+              final main = _Main(o: o);
+              final side = _Aside(o: o);
+              if (c.maxWidth < Breakpoints.tablet) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [main, const SizedBox(height: 32), side],
                 );
-              },
-            ),
-          ],
-        ),
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: main),
+                  const SizedBox(width: 32),
+                  SizedBox(width: 300, child: StickyRail(child: side)),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -100,7 +80,6 @@ class _Main extends StatelessWidget {
     final p = context.zine;
     final fg = o.tone.fg(p);
     final facts = [
-      (LucideIcons.wallet, context.tr('Pay', 'Заплащане'), o.amount),
       (LucideIcons.clock, context.tr('Deadline', 'Срок'), o.deadline),
       (LucideIcons.mapPin, context.tr('Location', 'Място'), o.location),
       (
@@ -156,36 +135,24 @@ class _Main extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        LayoutBuilder(
-          builder: (context, c) {
-            final cols = c.maxWidth < 560 ? 2 : 4;
-            final w = (c.maxWidth - 12 * (cols - 1)) / cols;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final (icon, label, value) in facts)
-                  SizedBox(
-                    width: w,
-                    child: ZineBox(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(icon, color: p.primary),
-                          const SizedBox(height: 4),
-                          Text(
-                            label,
-                            style: TextStyle(fontSize: 12, color: p.mutedFg),
-                          ),
-                          Text(value, style: ZineText.heavy(24, color: p.ink)),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+        ZineGrid(
+          columns: (w) => w < 560 ? 2 : 3,
+          spacing: 12,
+          children: [
+            for (final (icon, label, value) in facts)
+              ZineBox(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: p.primary),
+                    const SizedBox(height: 4),
+                    Text(label, style: ZineText.small(color: p.mutedFg)),
+                    Text(value, style: ZineText.heavy(24, color: p.ink)),
+                  ],
+                ),
+              ),
+          ],
         ),
         section(
           context.tr('THE DEAL', 'СДЕЛКАТА'),
@@ -201,7 +168,6 @@ class _Main extends StatelessWidget {
           context.tr('WHAT YOU GET', 'КАКВО ПОЛУЧАВАШ'),
           Column(
             children: [
-              check('${o.amount} paid on time'),
               check("Mentorship from the org's crew"),
               check('Certificate + reference letter'),
               check('Access to the NO FUTURE? community'),
@@ -231,9 +197,7 @@ class _Aside extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
-    void say(String msg) => ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
+    void say(String msg) => showSnack(context, msg);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -253,12 +217,12 @@ class _Aside extends StatelessWidget {
                     'We pass your profile to ${o.org} and keep you posted.',
                     'Пращаме профила ти на ${o.org} и те държим в течение.',
                   ),
-                  style: TextStyle(fontSize: 13, color: p.mutedFg),
+                  style: ZineText.small(color: p.mutedFg, size: 13),
                 ),
                 const SizedBox(height: 16),
                 ZineButton(
                   label: context.tr('APPLY NOW', 'КАНДИДАТСТВАЙ'),
-                  pink: true,
+                  kind: ZineButtonKind.primary,
                   onPressed: () => say(
                     context.tr(
                       'Application sent to ${o.org}!',
@@ -296,31 +260,13 @@ class _Aside extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          o.org,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        Row(
-                          children: [
-                            Icon(
-                              LucideIcons.shieldCheck,
-                              size: 12,
-                              color: p.mutedFg,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                context.tr(
-                                  'Verified organiser',
-                                  'Проверен организатор',
-                                ),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: p.mutedFg,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(o.org, style: ZineText.bold),
+                        IconLabel(
+                          LucideIcons.shieldCheck,
+                          context.tr(
+                            'Verified organiser',
+                            'Проверен организатор',
+                          ),
                         ),
                       ],
                     ),
@@ -333,7 +279,7 @@ class _Aside extends StatelessWidget {
                   '${o.likes} punks follow this org · 6 open opportunities',
                   '${o.likes} пънкари следват организацията · 6 отворени възможности',
                 ),
-                style: const TextStyle(fontSize: 13),
+                style: ZineText.small(size: 13),
               ),
             ],
           ),

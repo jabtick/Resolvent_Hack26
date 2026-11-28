@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../core/i18n/language.dart';
-import '../../core/widgets/zine.dart';
+import '../../core/ui.dart';
 
 /// UI-only sample data copied from the Lovable prototype
 /// (design/lovable/no-future-source/src/data/opps.ts).

@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/i18n/language.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/sticky_rail.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../feed_sample.dart';
 import '../widgets/opp_card.dart';
 
@@ -23,7 +20,7 @@ class FeedPage extends StatelessWidget {
     // The design's `lg:` breakpoint is on the screen width. (A LayoutBuilder
     // here trips a framework assertion when the search TextField is disposed.)
     const main = _FeedMain();
-    if (MediaQuery.sizeOf(context).width < 1024) return main;
+    if (MediaQuery.sizeOf(context).width < Breakpoints.desktop) return main;
     return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,6 +44,7 @@ class _FeedMain extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // "FIND YOUR [ESCAPE] FROM THE 9–5" — too custom for PageHeading.
         Text.rich(
           TextSpan(
             style: ZineText.heavy(60, color: p.ink),
@@ -81,13 +79,6 @@ class _FeedMain extends StatelessWidget {
                   '${opps.length} резултата. ',
                 ),
               ),
-              TextSpan(
-                text: context.tr(
-                  'no gods, no masters.',
-                  'без богове, без господари.',
-                ),
-                style: TextStyle(color: p.primary),
-              ),
             ],
           ),
         ),
@@ -121,7 +112,8 @@ class _SearchAndFilterState extends State<_SearchAndFilter> {
   Widget build(BuildContext context) {
     final p = context.zine;
     final active = _picked.length + (_remote ? 1 : 0);
-    final narrow = MediaQuery.sizeOf(context).width < 480;
+    final narrow = MediaQuery.sizeOf(context).width < Breakpoints.small;
+    final fg = p.onBright;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -153,56 +145,32 @@ class _SearchAndFilterState extends State<_SearchAndFilter> {
               ),
             ),
             const SizedBox(width: 8),
-            Jitter(
-              child: ZineBox(
-                color: p.secondary,
-                padding: EdgeInsets.zero,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () => setState(() => _open = !_open),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 13,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            LucideIcons.slidersHorizontal,
-                            size: 20,
-                            color: Color(0xFF070707),
-                          ),
-                          if (!narrow) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              context.tr('FILTER', 'ФИЛТЪР'),
-                              style: ZineText.heavy(
-                                22,
-                                color: const Color(0xFF070707),
-                              ),
-                            ),
-                          ],
-                          if (active > 0) ...[
-                            const SizedBox(width: 6),
-                            RansomText('$active', size: 20),
-                          ],
-                          const SizedBox(width: 4),
-                          AnimatedRotation(
-                            turns: _open ? .5 : 0,
-                            duration: const Duration(milliseconds: 150),
-                            child: const Icon(
-                              LucideIcons.chevronDown,
-                              size: 16,
-                              color: Color(0xFF070707),
-                            ),
-                          ),
-                        ],
-                      ),
+            ZineBox(
+              color: p.secondary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              onTap: () => setState(() => _open = !_open),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.slidersHorizontal, size: 20, color: fg),
+                  if (!narrow) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      context.tr('FILTER', 'ФИЛТЪР'),
+                      style: ZineText.heavy(22, color: fg),
                     ),
+                  ],
+                  if (active > 0) ...[
+                    const SizedBox(width: 6),
+                    RansomText('$active', size: 20),
+                  ],
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _open ? .5 : 0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Icon(LucideIcons.chevronDown, size: 16, color: fg),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -234,18 +202,12 @@ class _SearchAndFilterState extends State<_SearchAndFilter> {
                         onTap: () => setState(() => _remote = !_remote),
                       ),
                       const Spacer(),
-                      TextButton(
-                        onPressed: () => setState(() {
+                      TextLink(
+                        context.tr('wipe it all', 'изчисти всичко'),
+                        onTap: () => setState(() {
                           _picked.clear();
                           _remote = false;
                         }),
-                        child: Text(
-                          context.tr('wipe it all', 'изчисти всичко'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -290,12 +252,12 @@ class _LeftRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
-    Widget stat(String l, String v) => Padding(
+    Widget stat(String label, String value) => Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Expanded(child: Text(l, style: const TextStyle(fontSize: 13))),
-          Text(v, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Expanded(child: Text(label, style: ZineText.small(size: 13))),
+          Text(value, style: ZineText.bold),
         ],
       ),
     );
@@ -304,17 +266,23 @@ class _LeftRail extends StatelessWidget {
       children: [
         ZineBox(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const InitialsAvatar('HK', size: 64),
+              const Center(child: InitialsAvatar('HK', size: 64)),
               const SizedBox(height: 8),
-              Text('Hristo K.', style: ZineText.heavy(24, color: p.ink)),
+              Text(
+                'Hristo K.',
+                textAlign: TextAlign.center,
+                style: ZineText.heavy(24, color: p.ink),
+              ),
               const SizedBox(height: 4),
               Text(
                 '${context.tr('Candidate', 'Кандидат')} · Sofia',
-                style: TextStyle(fontSize: 12, color: p.mutedFg),
+                textAlign: TextAlign.center,
+                style: ZineText.small(color: p.mutedFg),
               ),
               const SizedBox(height: 12),
-              _OutlineLink(
+              ZineChip(
                 context.tr('VIEW PROFILE', 'ВИЖ ПРОФИЛА'),
                 onTap: () => context.go('/profile'),
               ),
@@ -348,13 +316,13 @@ class _RightRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.zine;
-    const onAccent = Color(0xFF070707);
-    Widget counter(IconData icon, String n, String l) => Expanded(
+    final onAccent = p.onBright;
+    Widget counter(IconData icon, String n, String label) => Expanded(
       child: Column(
         children: [
           Icon(icon, color: onAccent),
           Text(n, style: ZineText.heavy(24, color: onAccent)),
-          Text(l, style: const TextStyle(fontSize: 12, color: onAccent)),
+          Text(label, style: ZineText.small(color: onAccent)),
         ],
       ),
     );
@@ -389,14 +357,11 @@ class _RightRail extends StatelessWidget {
                       children: [
                         Text(
                           o.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                          ),
+                          style: ZineText.bold.copyWith(height: 1.2),
                         ),
                         Text(
                           '${o.org} · ${o.deadline}',
-                          style: TextStyle(fontSize: 12, color: p.mutedFg),
+                          style: ZineText.small(color: p.mutedFg),
                         ),
                       ],
                     ),
@@ -427,66 +392,29 @@ class _RightRail extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Jitter(
-          child: ZineBox(
-            pink: true,
-            color: p.ink,
-            padding: EdgeInsets.zero,
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: () => context.go('/join'),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('GOT AN OPPORTUNITY?', 'ИМАШ ВЪЗМОЖНОСТ?'),
-                        style: ZineText.heavy(24, color: p.background),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        context.tr(
-                          'Post it as an organiser →',
-                          'Публикувай я като организатор →',
-                        ),
-                        style: TextStyle(fontSize: 13, color: p.background),
-                      ),
-                    ],
-                  ),
-                ),
+        ZineBox(
+          pink: true,
+          color: p.ink,
+          onTap: () => context.go('/join'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.tr('GOT AN OPPORTUNITY?', 'ИМАШ ВЪЗМОЖНОСТ?'),
+                style: ZineText.heavy(24, color: p.background),
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                context.tr(
+                  'Post it as an organiser →',
+                  'Публикувай я като организатор →',
+                ),
+                style: ZineText.small(color: p.background, size: 13),
+              ),
+            ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _OutlineLink extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _OutlineLink(this.label, {required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.zine;
-    return Jitter(
-      child: Material(
-        type: MaterialType.transparency,
-        shape: Border.all(color: p.ink, width: 3),
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Center(
-              child: Text(label, style: ZineText.heavy(18, color: p.ink)),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

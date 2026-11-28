@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../auth_repo.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
@@ -73,7 +71,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.zine;
     final student = _type == AccountType.student;
     final under14 =
         _birthDate != null && isUnder14(_birthDate!, DateTime.now());
@@ -128,14 +125,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
             if (under14)
               Padding(
                 padding: const EdgeInsets.only(bottom: 14),
-                child: ZineBox(
-                  color: p.accent,
-                  child: Text(
-                    context.tr(
-                      'Your profile will stay hidden until a parent gives consent.',
-                      'Профилът ти ще е скрит, докато родител не даде съгласие.',
-                    ),
-                    style: TextStyle(color: Color(0xFF070707)),
+                child: Notice(
+                  context.tr(
+                    'Your profile will stay hidden until a parent gives consent.',
+                    'Профилът ти ще е скрит, докато родител не даде съгласие.',
                   ),
                 ),
               ),
@@ -184,12 +177,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> with BusyAction {
             ),
           ),
           const SizedBox(height: 6),
-          ZineButton(
-            label: busy
-                ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
-                : context.tr('CREATE PROFILE', 'СЪЗДАЙ ПРОФИЛ'),
-            pink: true,
-            onPressed: busy || !_terms ? null : _submit,
+          SubmitButton(
+            busy: busy,
+            label: context.tr('CREATE PROFILE', 'СЪЗДАЙ ПРОФИЛ'),
+            onPressed: _terms ? _submit : null,
           ),
         ],
       ),

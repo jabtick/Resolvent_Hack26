@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/app_error.dart';
-import '../../../core/app_shell.dart' show LanguagePicker;
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/palette.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../../auth/auth_repo.dart';
 import '../../profile/profile_models.dart';
 
-/// Look, log out, delete account (design/lovable, routes/settings.tsx).
+/// Look, language, notifications, log out, delete account
+/// (design/lovable, routes/settings.tsx).
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -49,11 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
       await auth.deleteAccount();
       router.go('/');
     } on AppError catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      if (mounted) showSnack(context, e.message);
     }
   }
 
@@ -61,190 +54,128 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final p = context.zine;
     final s = ServicesScope.of(context);
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 672),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.tr('SETTINGS', 'НАСТРОЙКИ'),
-              style: ZineText.heavy(64, color: p.ink),
-            ),
-            const SizedBox(height: 24),
-            ZineBox(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RansomText(context.tr('THEME', 'ВИЗИЯ')),
-                  const SizedBox(height: 16),
-                  ListenableBuilder(
-                    listenable: s.theme,
-                    builder: (context, _) => Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        for (final v in ZineVibe.values)
-                          _VibeButton(
-                            vibe: v,
-                            selected: s.theme.vibe == v,
-                            onTap: () => s.theme.set(v),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+    return PageColumn(
+      maxWidth: PageWidth.narrow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PageHeading(title: context.tr('SETTINGS', 'НАСТРОЙКИ'), size: 64),
+          _Section(
+            title: context.tr('THEME', 'ВИЗИЯ'),
+            children: const [VibePicker(fontSize: 24, padding: 16)],
+          ),
+          _Section(
+            title: context.tr('LANGUAGE', 'ЕЗИК'),
+            children: [
+              Text(
+                context.tr(
+                  "Changes the site's buttons and headings. Posts stay in the "
+                      'language the organiser wrote them in.',
+                  'Сменя бутоните и заглавията на сайта. Обявите остават на '
+                      'езика, на който ги е написал организаторът.',
+                ),
+                style: ZineText.small(color: p.mutedFg, size: 13),
               ),
-            ),
-            const SizedBox(height: 24),
-            ZineBox(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: RansomText(context.tr('LANGUAGE', 'ЕЗИК')),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.tr(
-                      'Changes the site\'s buttons and headings. Posts stay in the language the organiser wrote them in.',
-                      'Сменя бутоните и заглавията на сайта. Обявите остават на езика, на който ги е написал организаторът.',
-                    ),
-                    style: TextStyle(fontSize: 13, color: p.mutedFg),
-                  ),
-                  const SizedBox(height: 16),
-                  const SizedBox(
-                    width: 372,
-                    child: LanguagePicker(fontSize: 24, padding: 16),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 372,
+                  child: LanguagePicker(fontSize: 24, padding: 16),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            ZineBox(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: RansomText(context.tr('NOTIFICATIONS', 'ИЗВЕСТИЯ')),
-                  ),
-                  const SizedBox(height: 8),
-                  for (final (i, e) in _notify.entries.indexed) ...[
-                    if (i > 0) const DashedLine(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text(context.tr(e.key.$1, e.key.$2))),
-                          Switch(
-                            value: e.value,
-                            onChanged: (v) =>
-                                setState(() => _notify[e.key] = v),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            ZineBox(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RansomText(context.tr('ACCOUNT', 'АКАУНТ')),
-                  const SizedBox(height: 16),
-                  FutureBuilder<MyProfile>(
-                    future: _me,
-                    builder: (context, snap) => Text(
-                      snap.hasData
-                          ? '${context.tr('Role', 'Роля')}: '
-                                '${snap.data!.type == AccountType.student ? context.tr('Candidate', 'Ученик') : context.tr('Organiser', 'Организатор')}'
-                          : ' ',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
+            ],
+          ),
+          _Section(
+            title: context.tr('NOTIFICATIONS', 'ИЗВЕСТИЯ'),
+            children: [
+              for (final (i, e) in _notify.entries.indexed) ...[
+                if (i > 0) const DashedLine(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
                     children: [
-                      ZineButton(
-                        label: context.tr('LOG OUT', 'ИЗХОД'),
-                        onPressed: () => s.auth.signOut(),
-                      ),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: p.destructive,
-                          side: BorderSide(color: p.destructive, width: 3),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                        ),
-                        onPressed: _delete,
-                        child: Text(
-                          context.tr('DELETE ACCOUNT', 'ИЗТРИЙ АКАУНТА'),
-                          style: ZineText.heavy(22, color: p.destructive),
-                        ),
+                      Expanded(child: Text(context.tr(e.key.$1, e.key.$2))),
+                      Switch(
+                        value: e.value,
+                        onChanged: (v) => setState(() => _notify[e.key] = v),
                       ),
                     ],
                   ),
+                ),
+              ],
+            ],
+          ),
+          _Section(
+            title: context.tr('ACCOUNT', 'АКАУНТ'),
+            children: [
+              FutureBuilder<MyProfile>(
+                future: _me,
+                builder: (context, snap) => Text(
+                  snap.hasData
+                      ? '${context.tr('Role', 'Роля')}: '
+                            '${snap.data!.type == AccountType.student ? context.tr('Candidate', 'Ученик') : context.tr('Organiser', 'Организатор')}'
+                      : ' ',
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  ZineButton(
+                    label: context.tr('LOG OUT', 'ИЗХОД'),
+                    onPressed: () => s.auth.signOut(),
+                  ),
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: p.destructive,
+                      side: BorderSide(
+                        color: p.destructive,
+                        width: ZineSize.border,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onPressed: _delete,
+                    child: Text(
+                      context.tr('DELETE ACCOUNT', 'ИЗТРИЙ АКАУНТА'),
+                      style: ZineText.heavy(22, color: p.destructive),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _VibeButton extends StatelessWidget {
-  final ZineVibe vibe;
-  final bool selected;
-  final VoidCallback onTap;
-  const _VibeButton({
-    required this.vibe,
-    required this.selected,
-    required this.onTap,
-  });
+/// One settings card: ransom title, then its content.
+class _Section extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const _Section({required this.title, required this.children});
 
   @override
-  Widget build(BuildContext context) {
-    final p = context.zine;
-    return SizedBox(
-      width: 180,
-      child: ZineBox(
-        color: selected ? p.primary : p.card,
-        padding: EdgeInsets.zero,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: Text(
-                  context.tr(vibe.label, vibe.labelBg),
-                  style: ZineText.heavy(
-                    24,
-                    color: selected ? p.onPrimary : p.ink,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 24),
+    child: ZineBox(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(alignment: Alignment.centerLeft, child: RansomText(title)),
+          const SizedBox(height: 16),
+          ...children,
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 /// Asks for the word DELETE (ИЗТРИЙ in Bulgarian): deleting is forever.

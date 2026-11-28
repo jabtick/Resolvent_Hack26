@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/i18n/language.dart';
 import '../../../core/services.dart';
-import '../../../core/widgets/zine.dart';
+import '../../../core/ui.dart';
 import '../validators.dart';
 import 'auth_widgets.dart';
 
@@ -82,14 +81,12 @@ class _ForgotPageState extends State<ForgotPage> with BusyAction {
           ),
         ],
         const SizedBox(height: 6),
-        ZineButton(
-          label: busy
-              ? context.tr('PLEASE WAIT…', 'ЧАКАЙ…')
-              : _sent
+        SubmitButton(
+          busy: busy,
+          label: _sent
               ? context.tr('CHANGE PASSWORD', 'СМЕНИ ПАРОЛАТА')
               : context.tr('SEND CODE', 'ПРАТИ КОД'),
-          pink: true,
-          onPressed: busy ? null : _submit,
+          onPressed: _submit,
         ),
         const SizedBox(height: 12),
         TextLink(
