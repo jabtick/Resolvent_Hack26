@@ -78,6 +78,43 @@ export function initialsOf(name: string): string {
     .join("");
 }
 
+// ---- Profile pictures (Storage bucket "avatars", one folder per user) ----
+
+export const AVATAR_BUCKET = "avatars";
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // same limit as the bucket
+const AVATAR_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+export const AVATAR_ACCEPT = Object.keys(AVATAR_EXT).join(",");
+
+/** Null when the file can be used as a profile picture, otherwise the reason. */
+export function validateAvatar(f: { type: string; size: number }): string | null {
+  if (!AVATAR_EXT[f.type]) return "Снимката трябва да е JPG, PNG, WebP или GIF.";
+  if (f.size > AVATAR_MAX_BYTES) return "Снимката е над 2 MB. Избери по-малка.";
+  return null;
+}
+
+/** profiles.avatar_url holds a Storage path; the site needs a URL. Full URLs pass through. */
+function avatarSrc(db: Db, path: string | null): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  return db.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/** Storage errors are not PostgREST errors; a missing bucket means the migration isn't applied. */
+function storageError(e: { message?: string }): AppError {
+  if (/bucket not found/i.test(e.message ?? "")) {
+    return new AppError("Качването на снимки още не е включено.");
+  }
+  if (/exceeded the maximum|too large|payload/i.test(e.message ?? "")) {
+    return new AppError("Снимката е над 2 MB. Избери по-малка.");
+  }
+  return new AppError("Снимката не се качи. Опитай пак.");
+}
+
 /** The shareable link: `https://<site>/u/<username>`. */
 export function publicProfileUrl(username: string, origin: string): string {
   return `${origin.replace(/\/+$/, "")}/u/${username}`;
@@ -97,6 +134,13 @@ export function createProfilesApi(db: Db) {
     const id = data.session?.user.id;
     if (!id) throw new AppError("Влез, за да видиш профила си.");
     return id;
+  }
+
+  /** The stored Storage path of my picture (null for none or an external URL). */
+  async function currentAvatarPath(id: string): Promise<string | null> {
+    const { data } = await db.from("profiles").select("avatar_url").eq("id", id).maybeSingle();
+    const p = (data as { avatar_url: string | null } | null)?.avatar_url ?? null;
+    return p && !/^https?:\/\//.test(p) ? p : null;
   }
 
   return {
@@ -140,7 +184,7 @@ export function createProfilesApi(db: Db) {
           type: row.account_type,
           username: row.username,
           displayName: row.display_name,
-          avatarUrl: row.avatar_url,
+          avatarUrl: avatarSrc(db, row.avatar_url),
           student: s && {
             birthDate: new Date(`${s.birth_date}T00:00:00`),
             city: s.city,
@@ -188,6 +232,42 @@ export function createProfilesApi(db: Db) {
         }
       }),
 
+    /**
+     * New profile picture: uploads to "avatars/<uid>/<time>.<ext>", points
+     * profiles.avatar_url at it, then deletes the previous file (best effort).
+     */
+    uploadAvatar: (file: File) =>
+      guard(async () => {
+        const problem = validateAvatar(file);
+        if (problem) throw new AppError(problem);
+        const id = await uid();
+        const old = await currentAvatarPath(id);
+        const path = `${id}/${Date.now()}.${AVATAR_EXT[file.type]}`;
+        const bucket = db.storage.from(AVATAR_BUCKET);
+        const up = await bucket.upload(path, file, {
+          contentType: file.type,
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (up.error) throw storageError(up.error);
+        const { error } = await db.from("profiles").update({ avatar_url: path }).eq("id", id);
+        if (error) {
+          await bucket.remove([path]);
+          throw error;
+        }
+        if (old && old !== path) await bucket.remove([old]);
+      }),
+
+    /** Back to initials: clears profiles.avatar_url and deletes the file. */
+    removeAvatar: () =>
+      guard(async () => {
+        const id = await uid();
+        const old = await currentAvatarPath(id);
+        const { error } = await db.from("profiles").update({ avatar_url: null }).eq("id", id);
+        if (error) throw error;
+        if (old) await db.storage.from(AVATAR_BUCKET).remove([old]);
+      }),
+
     /** Anyone's public profile, or null if it doesn't exist or is hidden. */
     loadPublic: (username: string) =>
       guard(async (): Promise<PublicProfile | null> => {
@@ -205,7 +285,7 @@ export function createProfilesApi(db: Db) {
         return {
           username: data.username ?? username,
           displayName: data.display_name ?? username,
-          avatarUrl: data.avatar_url,
+          avatarUrl: avatarSrc(db, data.avatar_url),
           bio: data.bio,
           school: data.school,
           interests: (data.interests as string[] | null) ?? [],

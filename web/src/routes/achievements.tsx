@@ -1,12 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Hourglass } from "lucide-react";
 import { toast } from "sonner";
 
 import { BadgeCard } from "@/components/BadgeCard";
 import { Nav } from "@/components/Nav";
 import { api } from "@/lib/api";
-import { badgeStats, SAMPLE_BADGES } from "@/lib/achievements";
+import { badgeStats } from "@/lib/achievements";
 import { useMyBadges } from "@/lib/queries";
 
 export const Route = createFileRoute("/achievements")({
@@ -19,10 +19,7 @@ export const Route = createFileRoute("/achievements")({
 function Achievements() {
   const mine = useMyBadges();
   const cache = useQueryClient();
-  // No badges yet: show examples, clearly marked, so the page isn't empty.
-  const real = mine.data ?? [];
-  const sample = !mine.isPending && !mine.isError && real.length === 0;
-  const badges = sample ? SAMPLE_BADGES : real;
+  const badges = mine.data ?? [];
   const stats = badgeStats(badges);
 
   async function setHidden(id: string, hidden: boolean) {
@@ -43,11 +40,6 @@ function Achievements() {
         <h1 className="mb-6 font-heavy text-6xl">
           ТВОИТЕ <span className="ransom">ЗНАЧКИ</span>
         </h1>
-        {sample && (
-          <p className="mb-6 inline-block bg-accent px-2 font-mono text-sm font-bold">
-            ПРИМЕРНИ ДАННИ — още нямаш значки. Истинските идват от резултатите на организаторите.
-          </p>
-        )}
         {mine.isError ? (
           <div className="zine bg-card p-6" role="alert">
             <p>Значките не се заредиха.</p>
@@ -60,6 +52,19 @@ function Achievements() {
           </div>
         ) : mine.isPending ? (
           <div className="zine h-48 animate-pulse bg-muted" aria-busy="true" />
+        ) : badges.length === 0 ? (
+          <div className="zine bg-card p-8 text-center">
+            <p className="font-display text-4xl">ОЩЕ НЯМАШ ЗНАЧКИ</p>
+            <p className="font-hand text-2xl">
+              участвай в състезание — значката идва, щом организаторът качи резултатите
+            </p>
+            <Link
+              to="/"
+              className="zine-pink jitter mt-4 inline-block bg-ink px-4 py-2 font-heavy text-xl text-paper"
+            >
+              КЪМ ФИЙДА
+            </Link>
+          </div>
         ) : (
           <>
             <div className="mb-10 flex flex-wrap gap-4">
@@ -73,12 +78,7 @@ function Achievements() {
             </div>
             <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
               {badges.map((b, i) => (
-                <BadgeCard
-                  key={b.id}
-                  b={b}
-                  i={i}
-                  onToggleHidden={sample ? undefined : (h) => void setHidden(b.id, h)}
-                />
+                <BadgeCard key={b.id} b={b} i={i} onToggleHidden={(h) => void setHidden(b.id, h)} />
               ))}
             </div>
           </>

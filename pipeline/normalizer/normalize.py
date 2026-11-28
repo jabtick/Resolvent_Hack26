@@ -71,7 +71,9 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
     abroad = detect_abroad(t_low) or (detect_abroad(location.lower()) if location else None)
     city = None if abroad else (normalize_city(raw.get("city")) or known_city(location))
     city_scores: dict = {}
-    if not city and not abroad:
+    # "city": null in the raw item = the source covers several places; don't guess one from the text.
+    no_city = "city" in raw and raw["city"] is None
+    if not city and not abroad and not no_city:
         city, city_scores = detect_city(t_low, b_low)
     is_online = bool(raw["is_online"]) if isinstance(raw.get("is_online"), bool) else detect_online(full)
 
@@ -110,6 +112,10 @@ def normalize_item(raw: dict, debug: bool = False) -> dict:
     # status: scraped items are published, unless everything is already in the past
     last = max((d for d in (ends_at, starts_at, deadline_at) if d), default=None)
     status = "archived" if last and last.date() < ref else "published"
+    # A source can say outright that an item is over (e.g. "for the 2025/2026 school year")
+    # even when it gives no dates.
+    if raw.get("status") in ("published", "archived"):
+        status = raw["status"]
 
     row = {
         "type": opp_type,

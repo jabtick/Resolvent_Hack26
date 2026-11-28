@@ -34,24 +34,6 @@ function toPlace(n: number | null): Badge["place"] {
   return n === 1 || n === 2 || n === 3 ? n : null;
 }
 
-/** Shown while a person has no badges yet, clearly marked as examples. */
-export const SAMPLE_BADGES: Badge[] = [
-  ["Национална олимпиада по математика", "Министерство на образованието", "Апр 2026", 1],
-  ["Роботика Купа Варна", "TechSchool Варна", "Мар 2026", 3],
-  ["Конкурс за млади писатели", "Фондация Силно платно", "Фев 2026", null],
-  ["Informatics Open", "Riot Code Collective", "Яну 2026", 2],
-  ["Климатичен спринт на идеи", "Climate Mosh Pit", "Ное 2025", null],
-  ["Турнир по физика", "Garage Science Club", "Окт 2025", null],
-].map(([event, org, date, place], i) => ({
-  id: `sample-${i + 1}`,
-  event: event as string,
-  org: org as string,
-  date: date as string,
-  place: place as Badge["place"],
-  isHidden: false,
-  isSample: true,
-}));
-
 export const PLACE_LABEL: Record<1 | 2 | 3, string> = {
   1: "1-ВО МЯСТО",
   2: "2-РО МЯСТО",
@@ -63,6 +45,27 @@ export function badgeStats(badges: Badge[]) {
     total: badges.length,
     podium: badges.filter((b) => b.place !== null).length,
     orgs: new Set(badges.map((b) => b.org)).size,
+  };
+}
+
+type PublicRow = {
+  id: string | null;
+  event_title: string | null;
+  org_name: string | null;
+  event_date: string | null;
+  place: number | null;
+};
+
+/** View columns are all nullable in the generated types; skip a row missing any. */
+function fromPublic(r: PublicRow): Badge | null {
+  if (!r.id || !r.event_title || !r.org_name || !r.event_date) return null;
+  return {
+    id: r.id,
+    event: r.event_title,
+    org: r.org_name,
+    date: formatBadgeDate(r.event_date),
+    place: toPlace(r.place),
+    isHidden: false,
   };
 }
 
@@ -95,7 +98,6 @@ export function createAchievementsApi(db: Db) {
           date: formatBadgeDate(r.event_date),
           place: toPlace(r.place),
           isHidden: r.is_hidden,
-          isSample: false,
         }));
       }),
 
@@ -108,15 +110,25 @@ export function createAchievementsApi(db: Db) {
           .eq("username", username)
           .order("event_date", { ascending: false });
         if (error) throw error;
-        return (data ?? []).map((r) => ({
-          id: r.id ?? "",
-          event: r.event_title ?? "",
-          org: r.org_name ?? "",
-          date: formatBadgeDate(r.event_date ?? ""),
-          place: toPlace(r.place),
-          isHidden: false,
-          isSample: false,
-        }));
+        return (data ?? []).flatMap((r) => fromPublic(r) ?? []);
+      }),
+
+    /**
+     * One badge for its shared link (/b/<id>), with the owner's username. Null when it
+     * doesn't exist or isn't public: the view hides badges of private profiles, of
+     * under-14s without parental consent, and hidden ones.
+     */
+    getPublic: (id: string) =>
+      guard(async (): Promise<{ badge: Badge; username: string } | null> => {
+        if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+        const { data, error } = await db
+          .from("public_badges")
+          .select("username, id, event_title, org_name, event_date, place")
+          .eq("id", id)
+          .maybeSingle();
+        if (error) throw error;
+        const badge = data && fromPublic(data);
+        return badge && data.username ? { badge, username: data.username } : null;
       }),
 
     /** Hide or show one of my badges on my public profile. */
